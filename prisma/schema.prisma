@@ -1,0 +1,191 @@
+// Client Management — data model.
+//
+// Provider is SQLite so the app runs with zero external services. To move to
+// Postgres, change `provider` to "postgresql" and point DATABASE_URL at the
+// server; every model below is provider-agnostic (no SQLite-only types, and
+// money is stored as integer cents rather than a float).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("MEMBER") // ADMIN | MEMBER
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedClients Client[]     @relation("ClientOwner")
+  tasks        Task[]       @relation("TaskAssignee")
+  notes        Note[]
+  activities   Activity[]
+}
+
+model Client {
+  id         String   @id @default(cuid())
+  name       String
+  company    String?
+  email      String?
+  phone      String?
+  website    String?
+  industry   String?
+  status     String   @default("LEAD") // LEAD | ACTIVE | INACTIVE | ARCHIVED
+  addressLine String?
+  city       String?
+  state      String?
+  postalCode String?
+  country    String?
+  notes      String?
+  ownerId    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner      User?      @relation("ClientOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  contacts   Contact[]
+  projects   Project[]
+  invoices   Invoice[]
+  tasks      Task[]
+  noteLog    Note[]
+  activities Activity[]
+
+  @@index([status])
+  @@index([ownerId])
+  @@index([name])
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  clientId  String
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  title     String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([lastName])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  clientId    String
+  name        String
+  description String?
+  status      String    @default("PLANNING") // PLANNING | ACTIVE | ON_HOLD | COMPLETED | CANCELLED
+  budgetCents Int       @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks    Task[]
+  invoices Invoice[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("TODO") // TODO | IN_PROGRESS | DONE
+  priority    String    @default("MEDIUM") // LOW | MEDIUM | HIGH
+  dueDate     DateTime?
+  completedAt DateTime?
+  clientId    String?
+  projectId   String?
+  assigneeId  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  client   Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?    @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([clientId])
+  @@index([projectId])
+}
+
+model Invoice {
+  id        String    @id @default(cuid())
+  number    String    @unique
+  clientId  String
+  projectId String?
+  status    String    @default("DRAFT") // DRAFT | SENT | PAID | OVERDUE | VOID
+  issueDate DateTime  @default(now())
+  dueDate   DateTime
+  paidAt    DateTime?
+  taxRate   Float     @default(0) // percent, e.g. 8.5
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  client  Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  items   InvoiceItem[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model InvoiceItem {
+  id            String @id @default(cuid())
+  invoiceId     String
+  description   String
+  quantity      Float  @default(1)
+  unitPriceCents Int   @default(0)
+  position      Int    @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  clientId  String
+  authorId  String?
+  body      String
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  author User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+}
+
+/// Append-only audit/activity feed rendered on the dashboard and client timeline.
+model Activity {
+  id         String   @id @default(cuid())
+  type       String // CLIENT_CREATED | CLIENT_UPDATED | NOTE_ADDED | PROJECT_CREATED | ...
+  message    String
+  clientId   String?
+  actorId    String?
+  entityType String?
+  entityId   String?
+  createdAt  DateTime @default(now())
+
+  client Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  actor  User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([createdAt])
+}
