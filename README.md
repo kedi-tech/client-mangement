@@ -40,11 +40,32 @@ same password so you can try owner and assignee filtering.
 > Set a real `AUTH_SECRET` before deploying — it signs the session cookie.
 > Generate one with `openssl rand -base64 32`.
 
+## Upgrading an existing install
+
+After pulling changes that touch `prisma/schema.prisma`, refresh the generated
+client and the database before starting the app:
+
+```bash
+npm install          # runs prisma generate via postinstall
+npm run db:push      # adds new columns and tables in place
+```
+
+Then restart the dev server — the Prisma client is loaded into memory at boot, so
+a running server keeps using the old one. Skipping this produces errors like
+`Unknown field 'clientId' for select statement on model 'User'`, which means the
+generated client predates the schema.
+
+`db:push` is additive for this change: existing rows are kept, the new columns
+(`User.clientId`, `User.lastLoginAt`, `Project.liveUrl`) arrive as `NULL`, and the
+`Attachment` table is created empty. Use `npm run db:reset` only when you want to
+wipe and re-seed.
+
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Development server with hot reload |
+| `npm run postinstall` | Regenerates the Prisma client (runs automatically on install) |
 | `npm run build` | Generates the Prisma client and builds for production |
 | `npm start` | Serves the production build |
 | `npm test` | Unit tests for money, invoice, progress and upload logic |
