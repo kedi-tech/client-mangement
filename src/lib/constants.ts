@@ -23,8 +23,16 @@ export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 export const INVOICE_STATUSES = ["DRAFT", "SENT", "PAID", "OVERDUE", "VOID"] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
-export const USER_ROLES = ["ADMIN", "MEMBER"] as const;
+export const USER_ROLES = ["ADMIN", "MEMBER", "CLIENT"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
+
+export const STAFF_ROLES = ["ADMIN", "MEMBER"] as const;
+
+/**
+ * Prisma filter for team members only. Portal logins are User rows too, so every
+ * owner/assignee picker must exclude them.
+ */
+export const STAFF_ONLY = { role: { in: ["ADMIN", "MEMBER"] } };
 
 /** Human-readable label for any SCREAMING_SNAKE_CASE enum value. */
 export function label(value: string): string {

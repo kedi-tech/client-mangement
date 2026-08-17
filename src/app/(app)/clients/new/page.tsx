@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/ui";
+import { STAFF_ONLY } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { emptyClient } from "@/lib/form-defaults";
@@ -13,6 +14,7 @@ export const metadata: Metadata = { title: "New client" };
 export default async function NewClientPage() {
   const user = await requireUser();
   const owners = await prisma.user.findMany({
+    where: STAFF_ONLY,
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });

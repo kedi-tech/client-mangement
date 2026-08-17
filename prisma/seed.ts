@@ -4,6 +4,9 @@
  *
  * Safe to re-run — it clears the tables it owns first.
  */
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
 import { PrismaClient, type Client, type Project } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -11,6 +14,10 @@ const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@example.com";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "password123";
+const PORTAL_EMAIL = process.env.SEED_PORTAL_EMAIL ?? "client@example.com";
+const UPLOAD_DIR = process.env.UPLOAD_DIR
+  ? path.resolve(process.env.UPLOAD_DIR)
+  : path.join(process.cwd(), "uploads");
 
 function daysFromNow(days: number): Date {
   const d = new Date();
@@ -22,6 +29,7 @@ function daysFromNow(days: number): Date {
 async function main() {
   console.log("Clearing existing data…");
   await prisma.activity.deleteMany();
+  await prisma.attachment.deleteMany();
   await prisma.note.deleteMany();
   await prisma.invoiceItem.deleteMany();
   await prisma.invoice.deleteMany();
@@ -274,14 +282,14 @@ async function main() {
 
   console.log("Creating projects…");
   const projectSeeds = [
-    { client: "Northwind Logistics", name: "Fleet Tracking Portal", description: "Real-time vehicle tracking dashboard for dispatchers.", status: "ACTIVE", budgetCents: 8_400_000, startDate: daysFromNow(-70), endDate: daysFromNow(35) },
+    { client: "Northwind Logistics", name: "Fleet Tracking Portal", description: "Real-time vehicle tracking dashboard for dispatchers.", status: "ACTIVE", budgetCents: 8_400_000, startDate: daysFromNow(-70), endDate: daysFromNow(35), liveUrl: "https://fleet.northwind.example" },
     { client: "Northwind Logistics", name: "Warehouse Mobile App", description: "Barcode scanning app for inbound receiving.", status: "PLANNING", budgetCents: 3_200_000, startDate: daysFromNow(20), endDate: daysFromNow(140) },
-    { client: "Harbor Health", name: "Patient Intake Redesign", description: "Rebuild the intake flow with accessibility compliance.", status: "ACTIVE", budgetCents: 12_500_000, startDate: daysFromNow(-45), endDate: daysFromNow(60) },
+    { client: "Harbor Health", name: "Patient Intake Redesign", description: "Rebuild the intake flow with accessibility compliance.", status: "ACTIVE", budgetCents: 12_500_000, startDate: daysFromNow(-45), endDate: daysFromNow(60), liveUrl: "https://intake-staging.harborhealth.example" },
     { client: "Bright Path Education", name: "Course Authoring Tools", description: "Editor for instructors to build interactive lessons.", status: "ACTIVE", budgetCents: 6_750_000, startDate: daysFromNow(-30), endDate: daysFromNow(90) },
     { client: "Bright Path Education", name: "Analytics Reporting v2", description: "Cohort progress reporting for district administrators.", status: "ON_HOLD", budgetCents: 2_900_000, startDate: daysFromNow(-15), endDate: null },
     { client: "Vertex Manufacturing", name: "Shop Floor Dashboards", description: "Line throughput and downtime monitoring screens.", status: "ACTIVE", budgetCents: 9_100_000, startDate: daysFromNow(-60), endDate: daysFromNow(45) },
-    { client: "Atlas Media", name: "Asset Library Migration", description: "Move 40TB of media assets to the new storage tier.", status: "COMPLETED", budgetCents: 4_800_000, startDate: daysFromNow(-180), endDate: daysFromNow(-25) },
-    { client: "Quill Software", name: "Design System Rollout", description: "Component library and documentation site.", status: "ACTIVE", budgetCents: 5_600_000, startDate: daysFromNow(-40), endDate: daysFromNow(50) },
+    { client: "Atlas Media", name: "Asset Library Migration", description: "Move 40TB of media assets to the new storage tier.", status: "COMPLETED", budgetCents: 4_800_000, startDate: daysFromNow(-180), endDate: daysFromNow(-25), liveUrl: "https://assets.atlasmedia.example" },
+    { client: "Quill Software", name: "Design System Rollout", description: "Component library and documentation site.", status: "ACTIVE", budgetCents: 5_600_000, startDate: daysFromNow(-40), endDate: daysFromNow(50), liveUrl: "https://design.quillsw.example" },
     { client: "Greenfield Farms", name: "Yield Forecasting Model", description: "Season-over-season yield projections.", status: "CANCELLED", budgetCents: 2_100_000, startDate: daysFromNow(-200), endDate: daysFromNow(-150) },
     { client: "Cedar & Co.", name: "Pilot Engagement", description: "Two-week discovery sprint to scope the full build.", status: "PLANNING", budgetCents: 950_000, startDate: daysFromNow(14), endDate: daysFromNow(28) },
   ] as const;
@@ -475,6 +483,90 @@ async function main() {
     });
   }
 
+  console.log("Creating a portal login…");
+  const northwind = byName("Northwind Logistics");
+  const portalUser = await prisma.user.create({
+    data: {
+      email: PORTAL_EMAIL.toLowerCase(),
+      name: "Grace Okafor",
+      passwordHash,
+      role: "CLIENT",
+      clientId: northwind.id,
+    },
+  });
+
+  await prisma.activity.create({
+    data: {
+      type: "PORTAL_ACCESS_GRANTED",
+      message: `Portal access granted to ${portalUser.email} for ${northwind.name}`,
+      clientId: northwind.id,
+      actorId: admin.id,
+      entityType: "User",
+      entityId: portalUser.id,
+      createdAt: daysFromNow(-9),
+    },
+  });
+
+  console.log("Creating demo files…");
+  await mkdir(UPLOAD_DIR, { recursive: true });
+
+  const fleetProject = projectByName("Fleet Tracking Portal");
+  const demoFiles = [
+    {
+      filename: "Fleet-Portal-Milestone-2.md",
+      body: "# Milestone 2 summary\n\nDispatcher map, driver roster and the first round of alerting are live on staging.\n",
+      mimeType: "text/markdown",
+      uploadedBy: "STAFF" as const,
+      uploaderId: admin.id,
+      projectId: fleetProject.id,
+      note: "Milestone summary for your review.",
+      createdAt: daysFromNow(-5),
+    },
+    {
+      filename: "Northwind-Depot-List.csv",
+      body: "depot,city,vehicles\nOakland,Oakland CA,42\nFresno,Fresno CA,18\nReno,Reno NV,11\n",
+      mimeType: "text/csv",
+      uploadedBy: "CLIENT" as const,
+      uploaderId: portalUser.id,
+      projectId: fleetProject.id,
+      note: "Depot list you asked for — vehicle counts as of this morning.",
+      createdAt: daysFromNow(-2),
+    },
+  ];
+
+  for (const file of demoFiles) {
+    const storedName = `seed-${file.filename.toLowerCase().replace(/[^a-z0-9.]+/g, "-")}`;
+    await writeFile(path.join(UPLOAD_DIR, storedName), file.body, "utf8");
+    const attachment = await prisma.attachment.create({
+      data: {
+        clientId: northwind.id,
+        projectId: file.projectId,
+        filename: file.filename,
+        storedName,
+        mimeType: file.mimeType,
+        sizeBytes: Buffer.byteLength(file.body, "utf8"),
+        uploadedBy: file.uploadedBy,
+        uploaderId: file.uploaderId,
+        note: file.note,
+        createdAt: file.createdAt,
+      },
+    });
+    await prisma.activity.create({
+      data: {
+        type: file.uploadedBy === "CLIENT" ? "FILE_RECEIVED" : "FILE_SHARED",
+        message:
+          file.uploadedBy === "CLIENT"
+            ? `${portalUser.name} uploaded ${attachment.filename} through the portal`
+            : `${attachment.filename} was shared with ${northwind.name}`,
+        clientId: northwind.id,
+        actorId: file.uploaderId,
+        entityType: "Attachment",
+        entityId: attachment.id,
+        createdAt: file.createdAt,
+      },
+    });
+  }
+
   const counts = {
     users: await prisma.user.count(),
     clients: await prisma.client.count(),
@@ -483,11 +575,14 @@ async function main() {
     tasks: await prisma.task.count(),
     invoices: await prisma.invoice.count(),
     notes: await prisma.note.count(),
+    files: await prisma.attachment.count(),
+    portalLogins: await prisma.user.count({ where: { role: "CLIENT" } }),
     activity: await prisma.activity.count(),
   };
 
   console.log("\nSeed complete:", counts);
-  console.log(`\nSign in with:  ${ADMIN_EMAIL}  /  ${ADMIN_PASSWORD}\n`);
+  console.log(`\nStaff sign-in:   ${ADMIN_EMAIL}  /  ${ADMIN_PASSWORD}`);
+  console.log(`Client portal:   ${PORTAL_EMAIL}  /  ${ADMIN_PASSWORD}   (Northwind Logistics)\n`);
 }
 
 main()

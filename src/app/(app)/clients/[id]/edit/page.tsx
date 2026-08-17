@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/ui";
+import { STAFF_ONLY } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { updateClientAction } from "@/server/actions/clients";
@@ -20,7 +21,11 @@ export default async function EditClientPage({
 
   const [client, owners] = await Promise.all([
     prisma.client.findUnique({ where: { id } }),
-    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.user.findMany({
+      where: STAFF_ONLY,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   if (!client) notFound();

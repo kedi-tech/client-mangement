@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/ui";
+import { STAFF_ONLY } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { dateToInput } from "@/lib/format";
 import { requireUser } from "@/lib/session";
@@ -22,7 +23,11 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
       orderBy: { name: "asc" },
       select: { id: true, name: true, clientId: true },
     }),
-    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.user.findMany({
+      where: STAFF_ONLY,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   if (!task) notFound();

@@ -15,6 +15,7 @@ function readProjectForm(formData: FormData) {
     description: formData.get("description"),
     status: formData.get("status"),
     budget: formData.get("budget"),
+    liveUrl: formData.get("liveUrl"),
     startDate: formData.get("startDate"),
     endDate: formData.get("endDate"),
   });

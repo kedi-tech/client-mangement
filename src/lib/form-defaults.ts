@@ -45,6 +45,7 @@ export type ProjectFormValues = {
   description: string;
   status: string;
   budget: string;
+  liveUrl: string;
   startDate: string;
   endDate: string;
 };
@@ -55,6 +56,7 @@ export const emptyProject: ProjectFormValues = {
   description: "",
   status: "PLANNING",
   budget: "0.00",
+  liveUrl: "",
   startDate: "",
   endDate: "",
 };

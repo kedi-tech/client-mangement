@@ -12,6 +12,7 @@ const NAV = [
   { href: "/projects", label: "Projects", icon: "M3 7h6l2 2h10v10H3z" },
   { href: "/tasks", label: "Tasks", icon: "M4 6h16M4 12h16M4 18h10" },
   { href: "/invoices", label: "Invoices", icon: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" },
+  { href: "/files", label: "Files", icon: "M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" },
   { href: "/reports", label: "Reports", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2" },
 ];
 

@@ -15,46 +15,55 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   name         String
   passwordHash String
-  role         String   @default("MEMBER") // ADMIN | MEMBER
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         String    @default("MEMBER") // ADMIN | MEMBER | CLIENT
+  /// Set only for CLIENT accounts: the client whose portal this login can see.
+  clientId     String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
+  portalClient Client?      @relation("PortalUser", fields: [clientId], references: [id], onDelete: Cascade)
   ownedClients Client[]     @relation("ClientOwner")
   tasks        Task[]       @relation("TaskAssignee")
   notes        Note[]
   activities   Activity[]
+  attachments  Attachment[]
+
+  @@index([clientId])
 }
 
 model Client {
-  id         String   @id @default(cuid())
-  name       String
-  company    String?
-  email      String?
-  phone      String?
-  website    String?
-  industry   String?
-  status     String   @default("LEAD") // LEAD | ACTIVE | INACTIVE | ARCHIVED
+  id          String   @id @default(cuid())
+  name        String
+  company     String?
+  email       String?
+  phone       String?
+  website     String?
+  industry    String?
+  status      String   @default("LEAD") // LEAD | ACTIVE | INACTIVE | ARCHIVED
   addressLine String?
-  city       String?
-  state      String?
-  postalCode String?
-  country    String?
-  notes      String?
-  ownerId    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  city        String?
+  state       String?
+  postalCode  String?
+  country     String?
+  notes       String?
+  ownerId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  owner      User?      @relation("ClientOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  contacts   Contact[]
-  projects   Project[]
-  invoices   Invoice[]
-  tasks      Task[]
-  noteLog    Note[]
-  activities Activity[]
+  owner       User?        @relation("ClientOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  portalUsers User[]       @relation("PortalUser")
+  contacts    Contact[]
+  projects    Project[]
+  invoices    Invoice[]
+  tasks       Task[]
+  noteLog     Note[]
+  activities  Activity[]
+  attachments Attachment[]
 
   @@index([status])
   @@index([ownerId])
@@ -88,12 +97,15 @@ model Project {
   budgetCents Int       @default(0)
   startDate   DateTime?
   endDate     DateTime?
+  /// Where the delivered work lives — shown as a "Visit project" link in the portal.
+  liveUrl     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  tasks    Task[]
-  invoices Invoice[]
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  invoices    Invoice[]
+  attachments Attachment[]
 
   @@index([clientId])
   @@index([status])
@@ -147,12 +159,12 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id            String @id @default(cuid())
-  invoiceId     String
-  description   String
-  quantity      Float  @default(1)
-  unitPriceCents Int   @default(0)
-  position      Int    @default(0)
+  id             String @id @default(cuid())
+  invoiceId      String
+  description    String
+  quantity       Float  @default(1)
+  unitPriceCents Int    @default(0)
+  position       Int    @default(0)
 
   invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
@@ -170,6 +182,34 @@ model Note {
   author User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([clientId])
+}
+
+/// A file exchanged with a client. Bytes live on disk under UPLOAD_DIR; only
+/// metadata is stored here. Downloads are streamed through an authorised route
+/// so files are never publicly reachable by URL.
+model Attachment {
+  id         String   @id @default(cuid())
+  clientId   String
+  projectId  String?
+  /// Name as the uploader saw it, used for the download filename.
+  filename   String
+  /// Randomised name on disk; never derived from user input.
+  storedName String   @unique
+  mimeType   String
+  sizeBytes  Int
+  /// STAFF files are uploaded by your team; CLIENT files come from the portal.
+  uploadedBy String   @default("STAFF") // STAFF | CLIENT
+  uploaderId String?
+  note       String?
+  createdAt  DateTime @default(now())
+
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  uploader User?    @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([createdAt])
 }
 
 /// Append-only audit/activity feed rendered on the dashboard and client timeline.

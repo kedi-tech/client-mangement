@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { homePathFor } from "@/lib/auth-token";
 import { prisma } from "@/lib/db";
 import { createSession, destroySession, hashPassword, verifyPassword } from "@/lib/session";
 import { loginSchema, registerSchema, toFieldErrors, type FormState } from "@/lib/validation";
@@ -32,9 +33,16 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     email: user.email,
     name: user.name,
     role: user.role,
+    clientId: user.clientId,
   });
 
-  redirect("/dashboard");
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  });
+
+  // Clients land in their portal; staff land in the admin app.
+  redirect(homePathFor(user.role));
 }
 
 export async function registerAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -54,8 +62,9 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
     return { fieldErrors: { email: ["That email is already registered."] } };
   }
 
-  // The very first account to sign up owns the workspace.
-  const isFirstUser = (await prisma.user.count()) === 0;
+  // The very first staff account to sign up owns the workspace. Portal logins
+  // are created by staff from a client's page, so they never count here.
+  const isFirstUser = (await prisma.user.count({ where: { role: { not: "CLIENT" } } })) === 0;
 
   const user = await prisma.user.create({
     data: {
@@ -71,6 +80,7 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
     email: user.email,
     name: user.name,
     role: user.role,
+    clientId: null,
   });
 
   redirect("/dashboard");

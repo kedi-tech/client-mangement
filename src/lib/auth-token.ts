@@ -10,6 +10,8 @@ export type SessionPayload = {
   email: string;
   name: string;
   role: string;
+  /** Present only for CLIENT accounts: the client this login may see. */
+  clientId?: string | null;
 };
 
 function secretKey(): Uint8Array {
@@ -39,10 +41,21 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       email: payload.email,
       name: typeof payload.name === "string" ? payload.name : "",
       role: typeof payload.role === "string" ? payload.role : "MEMBER",
+      clientId: typeof payload.clientId === "string" ? payload.clientId : null,
     };
   } catch {
     return null;
   }
+}
+
+/** Portal accounts are confined to /portal; everyone else works in the admin app. */
+export function isPortalRole(role: string): boolean {
+  return role === "CLIENT";
+}
+
+/** Where a signed-in user belongs after login or a stray navigation. */
+export function homePathFor(role: string): string {
+  return isPortalRole(role) ? "/portal" : "/dashboard";
 }
 
 export const sessionCookieOptions = {

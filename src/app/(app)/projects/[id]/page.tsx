@@ -81,6 +81,26 @@ export default async function ProjectDetailPage({ params }: { params: Params }) 
         actions={
           <>
             <Badge value={project.status} className="self-center" />
+            {project.liveUrl ? (
+              <a
+                href={project.liveUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Visit project
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  className="size-4"
+                  aria-hidden
+                >
+                  <path d="M14 4h6v6M20 4l-8 8M10 6H5v13h13v-5" />
+                </svg>
+              </a>
+            ) : null}
             <LinkButton href={`/invoices/new?clientId=${project.clientId}&projectId=${project.id}`} variant="secondary">
               New invoice
             </LinkButton>
@@ -184,6 +204,20 @@ export default async function ProjectDetailPage({ params }: { params: Params }) 
               </DetailRow>
               <DetailRow term="Budget">{formatMoney(project.budgetCents)}</DetailRow>
               <DetailRow term="Invoiced">{formatMoney(invoicedCents)}</DetailRow>
+              <DetailRow term="Project link">
+                {project.liveUrl ? (
+                  <a
+                    href={project.liveUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-indigo-600 hover:underline dark:text-indigo-400"
+                  >
+                    {project.liveUrl.replace(/^https?:\/\//, "")}
+                  </a>
+                ) : (
+                  <span className="text-slate-500 dark:text-slate-400">Not set</span>
+                )}
+              </DetailRow>
               <DetailRow term="Start">{formatDate(project.startDate)}</DetailRow>
               <DetailRow term="End">{formatDate(project.endDate)}</DetailRow>
             </DetailList>

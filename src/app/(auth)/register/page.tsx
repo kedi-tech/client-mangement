@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { homePathFor } from "@/lib/auth-token";
 import { getCurrentUser } from "@/lib/session";
 import { RegisterForm } from "./register-form";
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = { title: "Create account" };
 
 export default async function RegisterPage() {
   const user = await getCurrentUser();
-  if (user) redirect("/dashboard");
+  if (user) redirect(homePathFor(user.role));
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">

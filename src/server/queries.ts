@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
+import { projectProgress } from "@/lib/progress";
 
 /** Every invoice with its lines, so totals can be computed in one place. */
 export async function invoicesWithTotals(where: Record<string, unknown> = {}) {
@@ -154,4 +155,113 @@ export async function getClientRollups() {
         .reduce((sum, invoice) => sum + invoice.totals.totalCents, 0),
     };
   });
+}
+
+/* --------------------------------------------------------------- portal reads
+ *
+ * Every function below takes the client id from the session and filters on it,
+ * so a portal user can only ever read their own records. Draft invoices are
+ * withheld: they are not yet issued.
+ */
+
+const PORTAL_HIDDEN_INVOICE_STATUSES = ["DRAFT"];
+
+export async function getPortalOverview(clientId: string) {
+  const [client, projects, invoices, files] = await Promise.all([
+    prisma.client.findUnique({
+      where: { id: clientId },
+      include: { owner: { select: { name: true, email: true } } },
+    }),
+    prisma.project.findMany({
+      where: { clientId },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      include: { tasks: { select: { id: true, status: true } } },
+    }),
+    invoicesWithTotals({
+      clientId,
+      status: { notIn: PORTAL_HIDDEN_INVOICE_STATUSES },
+    }),
+    prisma.attachment.findMany({
+      where: { clientId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: {
+        uploader: { select: { name: true } },
+        project: { select: { id: true, name: true } },
+      },
+    }),
+  ]);
+
+  const outstandingCents = invoices
+    .filter((invoice) => isOutstanding(invoice.effectiveStatus))
+    .reduce((sum, invoice) => sum + invoice.totals.totalCents, 0);
+  const overdue = invoices.filter((invoice) => invoice.effectiveStatus === "OVERDUE");
+
+  return {
+    client,
+    projects: projects.map((project) => ({
+      ...project,
+      progress: projectProgress(project.tasks),
+    })),
+    invoices,
+    files,
+    totals: {
+      outstandingCents,
+      overdueCents: overdue.reduce((sum, invoice) => sum + invoice.totals.totalCents, 0),
+      overdueCount: overdue.length,
+      paidCents: invoices
+        .filter((invoice) => invoice.effectiveStatus === "PAID")
+        .reduce((sum, invoice) => sum + invoice.totals.totalCents, 0),
+      activeProjects: projects.filter((project) => project.status === "ACTIVE").length,
+    },
+  };
+}
+
+/** One project, or null when it does not belong to this client. */
+export async function getPortalProject(clientId: string, projectId: string) {
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, clientId },
+    include: {
+      tasks: {
+        orderBy: [{ status: "asc" }, { dueDate: "asc" }],
+        select: { id: true, title: true, status: true, dueDate: true },
+      },
+      attachments: {
+        orderBy: { createdAt: "desc" },
+        include: { uploader: { select: { name: true } } },
+      },
+    },
+  });
+  if (!project) return null;
+
+  const invoices = await invoicesWithTotals({
+    clientId,
+    projectId: project.id,
+    status: { notIn: PORTAL_HIDDEN_INVOICE_STATUSES },
+  });
+
+  return { ...project, progress: projectProgress(project.tasks), invoices };
+}
+
+/** A single invoice for the portal, scoped to the client and never a draft. */
+export async function getPortalInvoice(clientId: string, invoiceId: string) {
+  const invoice = await prisma.invoice.findFirst({
+    where: {
+      id: invoiceId,
+      clientId,
+      status: { notIn: PORTAL_HIDDEN_INVOICE_STATUSES },
+    },
+    include: {
+      items: { orderBy: { position: "asc" } },
+      client: true,
+      project: { select: { id: true, name: true } },
+    },
+  });
+  if (!invoice) return null;
+
+  return {
+    ...invoice,
+    effectiveStatus: effectiveInvoiceStatus(invoice),
+    totals: invoiceTotals(invoice.items, invoice.taxRate),
+  };
 }

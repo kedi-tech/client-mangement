@@ -1,8 +1,16 @@
 # Client Management
 
-A full client-management workspace (CRM) for a services business: clients and
-their contacts, projects with budgets and timelines, tasks, line-item invoices,
-notes, an activity timeline, dashboards and reports.
+A full client-management workspace (CRM) for a services business, plus a
+client-facing portal.
+
+**Your team** gets clients and their contacts, projects with budgets and
+timelines, tasks, line-item invoices, notes, an activity timeline, dashboards
+and reports.
+
+**Your clients** get their own sign-in at `/portal`, where they can follow
+project progress, open the live project link, read and pay attention to their
+invoices, and exchange files with you — scoped so a client can only ever see
+their own account.
 
 Built with Next.js 15 (App Router), TypeScript, Tailwind CSS v4, Prisma and
 SQLite. No external services are required to run it.
@@ -18,11 +26,13 @@ npm run setup             # prisma generate + db push + seed demo data
 npm run dev               # http://localhost:3000
 ```
 
-Sign in with the seeded account:
+Sign in with the seeded accounts — both use the same login page, and each role
+lands in its own area:
 
-| Email | Password |
-| --- | --- |
-| `admin@example.com` | `password123` |
+| Email | Password | Lands on |
+| --- | --- | --- |
+| `admin@example.com` | `password123` | `/dashboard` — the admin app |
+| `client@example.com` | `password123` | `/portal` — Northwind Logistics' portal |
 
 Two additional team members (`dana@example.com`, `priya@example.com`) share the
 same password so you can try owner and assignee filtering.
@@ -37,7 +47,7 @@ same password so you can try owner and assignee filtering.
 | `npm run dev` | Development server with hot reload |
 | `npm run build` | Generates the Prisma client and builds for production |
 | `npm start` | Serves the production build |
-| `npm test` | Unit tests for the money and invoice logic |
+| `npm test` | Unit tests for money, invoice, progress and upload logic |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run setup` | Generate client, sync the schema, seed demo data |
 | `npm run db:push` | Sync the schema to the database without a migration |
@@ -79,13 +89,42 @@ timeline recording creations, status changes, notes and completions.
 invoice value, top clients by revenue, project pipeline by status with budget
 sums, delivery progress and revenue by industry.
 
+**Files, both directions** — upload deliverables and documents for a client from
+their page; clients upload to you from the portal. Every file is listed with who
+sent it, an optional message, size and the related project. A staff-wide Files
+inbox groups everything by client and filters by direction. Downloads stream
+through an authorised route, never as static assets.
+
+**Client portal** (`/portal`) — a separate, deliberately simple area for clients:
+
+- **Overview** — active projects with live progress bars, balance due, amount
+  past due, paid to date, invoices needing attention and recent files.
+- **Projects** — progress derived from completed tasks, target dates, the
+  published step list ("what's next" and "completed"), and a **Visit project**
+  button pointing at the project's live URL.
+- **Invoices** — every issued invoice with line items, tax and totals. Drafts are
+  withheld until you send them.
+- **Files** — pick up what you shared, and send files to you. A client can
+  withdraw their own uploads but not yours.
+
 **Global search** — one page across clients, contacts, projects, tasks and
 invoices, including matches on the related client's name.
 
-**Auth** — email and password with bcrypt hashing and a signed, httpOnly JWT
-session cookie. The first account to register becomes the workspace admin.
-Middleware gates every app route; each page and server action re-checks the
-session independently.
+**Auth and roles** — email and password with bcrypt hashing and a signed,
+httpOnly JWT session cookie. Three roles: `ADMIN` and `MEMBER` are your team;
+`CLIENT` is a portal login tied to exactly one client. The first account to
+register becomes the workspace admin; portal logins are created by staff (see
+below), never by self-registration. Middleware gates every route and keeps each
+role inside its own area, and each page and server action re-checks the session
+independently.
+
+### Giving a client access
+
+Open the client, then **Portal access → Invite to portal**. Name and email are
+pre-filled from the primary contact, and **Generate** produces a strong temporary
+password to pass on over a channel you trust. From the same card you can reset
+that password or revoke the login entirely — revoking deletes only the login, not
+any client data. The card also shows whether they have ever signed in.
 
 ## Project layout
 
@@ -96,23 +135,31 @@ prisma/
 src/
   app/
     (auth)/              Sign in and registration
-    (app)/               Authenticated shell — sidebar, header, all app pages
+    (app)/               Staff shell — sidebar, header, all admin pages
       dashboard/  clients/  contacts/  projects/  tasks/  invoices/
-      reports/  search/
+      files/  reports/  search/
+    portal/              Client-facing area (own layout and nav)
+      projects/  invoices/  files/
+    api/files/[id]/      Authorised file download
   components/            UI primitives, sidebar, filters, shared rows
   lib/
-    auth-token.ts        JWT sign/verify (edge-safe, no Node or Prisma imports)
-    session.ts           Password hashing, cookie session, requireUser()
+    auth-token.ts        JWT sign/verify + role routing (edge-safe: no Node or
+                         Prisma imports, so middleware can use it)
+    session.ts           Password hashing, cookie session, requireUser() and
+                         requirePortalUser()
     constants.ts         Status vocabularies and badge styling
     form-defaults.ts     Form value shapes shared by server and client modules
     format.ts            Money, date and relative-time formatting
     invoice.ts           Totals, derived status, numbering
+    progress.ts          Task counts → client-facing project progress
+    upload-rules.ts      Size cap, type allowlist, filename sanitising (pure)
+    storage.ts           Disk writes/reads for uploads (server-only)
     validation.ts        Zod schemas for every form
     db.ts                Prisma client singleton
   server/
     actions/             Server Actions (auth, clients, contacts, projects,
-                         tasks, invoices)
-    queries.ts           Dashboard and reporting reads
+                         tasks, invoices, files, portal-access)
+    queries.ts           Dashboard, reporting and portal reads
     activity.ts          Activity-feed writer
   middleware.ts          Route gate
 tests/                   Unit tests
@@ -134,7 +181,21 @@ tests/                   Unit tests
   proxy rather than the value itself, silently blanking every default — hence
   `src/lib/form-defaults.ts`.
 - **Deletes cascade** along the relations declared in the schema: removing a
-  client removes its contacts, projects, tasks, invoices and notes.
+  client removes its contacts, projects, tasks, invoices, notes, files and
+  portal logins.
+- **Portal isolation is enforced on the server, per query.**
+  `requirePortalUser()` returns a user whose `clientId` is guaranteed, and every
+  portal read filters on it — a client following a guessed project or invoice id
+  gets a 404, not someone else's data. Portal uploads take the client id from the
+  session and ignore anything in the form.
+- **Files are never public.** Bytes live outside the served tree (`./uploads` by
+  default, `UPLOAD_DIR` to relocate) under randomised names; `/api/files/[id]`
+  authorises each request, and unauthorised ids 404 rather than 403 so the
+  endpoint leaks nothing. Uploads are limited to 25 MB and an extension + MIME
+  allowlist, and only PDFs and raster images may render inline — SVG is always
+  downloaded, since an inline SVG could run script on this origin.
+- **Drafts stay internal.** The portal withholds `DRAFT` invoices, so an invoice
+  becomes visible to the client when you mark it sent.
 
 ## Switching to Postgres
 
@@ -151,8 +212,18 @@ already treats case-insensitively for ASCII. On Postgres, add
 `mode: "insensitive"` to the search filters in the list pages to keep the same
 behaviour.
 
+## Deployment notes
+
+Two things need to survive a restart: the database and the uploads directory. On
+SQLite that means a persistent volume for both — set `DATABASE_URL` and
+`UPLOAD_DIR` to paths on it. On a platform with an ephemeral filesystem, move the
+database to Postgres (above) and reimplement the three functions in
+`src/lib/storage.ts` against object storage; nothing else touches the disk.
+
 ## Testing
 
-`npm test` covers money parsing and formatting, invoice totals and rounding,
-derived invoice status and invoice numbering — the logic where a silent error
-would be most expensive. `npm run typecheck` and `npm run build` cover the rest.
+`npm test` covers the logic where a silent error would be most expensive: money
+parsing and formatting, invoice totals and rounding, derived invoice status,
+invoice numbering, project-progress maths, role routing, and the upload policy
+(filename sanitising, type allowlist, inline-render rules). `npm run typecheck`
+and `npm run build` cover the rest.

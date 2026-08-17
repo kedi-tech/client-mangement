@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { homePathFor } from "@/lib/auth-token";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { LoginForm } from "./login-form";
@@ -10,11 +11,11 @@ export const metadata: Metadata = { title: "Sign in" };
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
-  if (user) redirect("/dashboard");
+  if (user) redirect(homePathFor(user.role));
 
   // Point a brand new install at registration instead of a form nobody can pass.
-  const hasUsers = (await prisma.user.count()) > 0;
-  if (!hasUsers) redirect("/register");
+  const hasStaff = (await prisma.user.count({ where: { role: { not: "CLIENT" } } })) > 0;
+  if (!hasStaff) redirect("/register");
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">

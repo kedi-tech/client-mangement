@@ -13,7 +13,7 @@ import {
   Td,
   Th,
 } from "@/components/ui";
-import { CLIENT_STATUSES, label } from "@/lib/constants";
+import { CLIENT_STATUSES, STAFF_ONLY, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { formatMoney, relativeTime } from "@/lib/format";
 import { requireUser } from "@/lib/session";
@@ -73,7 +73,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Sear
         invoices: { select: { status: true, dueDate: true, paidAt: true, taxRate: true, items: true } },
       },
     }),
-    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.user.findMany({
+      where: STAFF_ONLY,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));

@@ -49,6 +49,7 @@ export default async function EditProjectPage({
           description: project.description ?? "",
           status: project.status,
           budget: centsToInput(project.budgetCents),
+          liveUrl: project.liveUrl ?? "",
           startDate: dateToInput(project.startDate),
           endDate: dateToInput(project.endDate),
         }}

@@ -6,7 +6,7 @@ import { ConfirmForm } from "@/components/confirm-form";
 import { FilterSelect } from "@/components/filters";
 import { SearchInput } from "@/components/search-input";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
-import { TASK_PRIORITIES, TASK_STATUSES, label } from "@/lib/constants";
+import { STAFF_ONLY, TASK_PRIORITIES, TASK_STATUSES, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { requireUser } from "@/lib/session";
@@ -53,7 +53,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Search
       orderBy: { name: "asc" },
       select: { id: true, name: true, clientId: true },
     }),
-    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.user.findMany({
+      where: STAFF_ONLY,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   const open = tasks.filter((task) => task.status !== "DONE");

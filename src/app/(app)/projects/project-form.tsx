@@ -79,6 +79,22 @@ export function ProjectForm({
             />
           </Field>
 
+          <Field
+            label="Project link"
+            htmlFor="liveUrl"
+            errors={errors.liveUrl}
+            hint="Shown to the client in their portal as “Visit project”."
+            className="sm:col-span-2"
+          >
+            <Input
+              id="liveUrl"
+              name="liveUrl"
+              type="url"
+              defaultValue={values.liveUrl}
+              placeholder="https://app.example.com"
+            />
+          </Field>
+
           <Field label="Start date" htmlFor="startDate" errors={errors.startDate}>
             <Input id="startDate" name="startDate" type="date" defaultValue={values.startDate} />
           </Field>

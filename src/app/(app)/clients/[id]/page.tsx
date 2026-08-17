@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ConfirmForm } from "@/components/confirm-form";
+import { FileList } from "@/components/file-list";
 import { TaskRow } from "@/components/task-row";
+import { UploadForm } from "@/components/upload-form";
 import {
   Avatar,
   Badge,
@@ -16,12 +18,16 @@ import {
   PageHeader,
 } from "@/components/ui";
 import { prisma } from "@/lib/db";
-import { formatDate, formatMoney, initials, relativeTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatMoney, initials, relativeTime } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
 import { requireUser } from "@/lib/session";
 import { deleteClientAction, deleteNoteAction } from "@/server/actions/clients";
 import { deleteContactAction } from "@/server/actions/contacts";
+import { uploadStaffFileAction } from "@/server/actions/files";
+import { revokePortalUserAction } from "@/server/actions/portal-access";
+import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 import { AddContactForm, AddNoteForm } from "./client-panels";
+import { CreatePortalUser, ResetPortalPassword } from "./portal-access";
 
 type Params = Promise<{ id: string }>;
 
@@ -54,6 +60,17 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
         orderBy: { createdAt: "desc" },
         take: 12,
         include: { actor: { select: { name: true } } },
+      },
+      portalUsers: {
+        orderBy: { createdAt: "asc" },
+        select: { id: true, name: true, email: true, lastLoginAt: true, createdAt: true },
+      },
+      attachments: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          uploader: { select: { name: true } },
+          project: { select: { id: true, name: true } },
+        },
       },
     },
   });
@@ -270,6 +287,35 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
             )}
           </Card>
 
+          {/* Files */}
+          <Card>
+            <CardHeader
+              title="Files"
+              description={`${client.attachments.length} shared with this client`}
+              action={
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {client.attachments.filter((file) => file.uploadedBy === "CLIENT").length} received
+                </span>
+              }
+            />
+            <FileList
+              files={client.attachments}
+              perspective="staff"
+              emptyTitle="No files yet"
+              emptyDescription="Upload a deliverable for the client, or wait for them to send one through the portal."
+            />
+            <div className="border-t border-slate-200 dark:border-slate-800">
+              <UploadForm
+                action={uploadStaffFileAction}
+                clientId={client.id}
+                projects={client.projects.map((project) => ({ id: project.id, name: project.name }))}
+                accept={ACCEPT_ATTRIBUTE}
+                maxBytes={MAX_UPLOAD_BYTES}
+                submitLabel="Share with client"
+              />
+            </div>
+          </Card>
+
           {/* Tasks */}
           <Card>
             <CardHeader
@@ -350,6 +396,72 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
                 Delete client
               </ConfirmForm>
             </div>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Portal access"
+              description={
+                client.portalUsers.length === 0
+                  ? "No portal login yet"
+                  : `${client.portalUsers.length} login${client.portalUsers.length === 1 ? "" : "s"}`
+              }
+              action={
+                <CreatePortalUser
+                  clientId={client.id}
+                  defaultName={
+                    client.contacts.find((contact) => contact.isPrimary)
+                      ? `${client.contacts.find((contact) => contact.isPrimary)!.firstName} ${
+                          client.contacts.find((contact) => contact.isPrimary)!.lastName
+                        }`
+                      : ""
+                  }
+                  defaultEmail={
+                    client.contacts.find((contact) => contact.isPrimary)?.email ??
+                    client.email ??
+                    ""
+                  }
+                />
+              }
+            />
+            {client.portalUsers.length === 0 ? (
+              <p className="px-5 py-4 text-sm text-slate-500 dark:text-slate-400">
+                Invite this client to sign in at{" "}
+                <span className="font-medium text-slate-700 dark:text-slate-200">/login</span> and see
+                their projects, invoices and files.
+              </p>
+            ) : (
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                {client.portalUsers.map((portalUser) => (
+                  <li key={portalUser.id} className="flex flex-wrap items-start gap-2 px-5 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {portalUser.name}
+                      </p>
+                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        {portalUser.email}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {portalUser.lastLoginAt
+                          ? `Last signed in ${formatDateTime(portalUser.lastLoginAt)}`
+                          : "Has not signed in yet"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <ResetPortalPassword userId={portalUser.id} />
+                      <ConfirmForm
+                        action={revokePortalUserAction}
+                        hidden={{ userId: portalUser.id }}
+                        confirmMessage={`Revoke portal access for ${portalUser.email}? They will no longer be able to sign in.`}
+                        variant="subtle"
+                      >
+                        Revoke
+                      </ConfirmForm>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           <Card>

@@ -20,6 +20,20 @@ const optionalEmail = optionalText.refine(
   { message: "Enter a valid email address" },
 );
 
+/** An optional absolute http(s) URL — used for the client-facing project link. */
+const optionalUrl = optionalText.refine(
+  (value) => {
+    if (value === undefined) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  },
+  { message: "Enter a full URL starting with http:// or https://" },
+);
+
 const optionalDate = z
   .string()
   .trim()
@@ -92,6 +106,7 @@ export const projectSchema = z.object({
   description: optionalText,
   status: z.enum(PROJECT_STATUSES),
   budget: moneyText,
+  liveUrl: optionalUrl,
   startDate: optionalDate,
   endDate: optionalDate,
 });

@@ -11,6 +11,9 @@ next-env.d.ts
 # production
 /build
 
+# uploaded files (local storage)
+/uploads
+
 # database
 *.db
 *.db-journal

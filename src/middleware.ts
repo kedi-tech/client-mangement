@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth-token";
+import { SESSION_COOKIE, homePathFor, isPortalRole, verifySessionToken } from "@/lib/auth-token";
 
 const PUBLIC_PATHS = ["/login", "/register"];
 
 /**
- * Cheap edge-level gate so signed-out visitors never reach an app route, and
- * signed-in ones skip the auth pages. `requireUser()` in each page remains the
- * authoritative check — this only saves a round trip.
+ * Cheap edge-level gate: signed-out visitors never reach an app route, signed-in
+ * ones skip the auth pages, and each role is kept inside its own area. The
+ * `requireUser()` / `requirePortalUser()` calls in each page and action remain
+ * the authoritative checks — this only saves a round trip.
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -15,18 +16,25 @@ export async function middleware(request: NextRequest) {
   const session = token ? await verifySessionToken(token) : null;
   const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
-  if (!session && !isPublic) {
+  const redirectTo = (path: string) => {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = path;
     url.search = "";
     return NextResponse.redirect(url);
-  }
+  };
 
-  if (session && isPublic) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    url.search = "";
-    return NextResponse.redirect(url);
+  if (!session && !isPublic) return redirectTo("/login");
+  if (session && isPublic) return redirectTo(homePathFor(session.role));
+
+  if (session) {
+    const portal = isPortalRole(session.role);
+    const inPortal = pathname === "/portal" || pathname.startsWith("/portal/");
+    // Downloads are authorised per-file inside the route handler, so both roles
+    // may reach them.
+    const shared = pathname.startsWith("/api/");
+
+    if (portal && !inPortal && !shared) return redirectTo("/portal");
+    if (!portal && inPortal) return redirectTo("/dashboard");
   }
 
   return NextResponse.next();

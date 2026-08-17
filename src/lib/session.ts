@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import {
   SESSION_COOKIE,
+  isPortalRole,
   sessionCookieOptions,
   signSessionToken,
   verifySessionToken,
@@ -40,6 +41,7 @@ export type CurrentUser = {
   email: string;
   name: string;
   role: string;
+  clientId: string | null;
 };
 
 /**
@@ -55,17 +57,36 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const payload = await verifySessionToken(token);
   if (!payload) return null;
 
-  // The token is signed, but the user may have been deleted since it was issued.
+  // The token is signed, but the account may have been deleted or had its role
+  // changed since it was issued, so the database is the authority.
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, clientId: true },
   });
   return user;
 });
 
-/** Use in any authenticated page or server action. Redirects when signed out. */
+/**
+ * Guard for the admin app. Portal accounts are bounced to their own area rather
+ * than being shown staff data.
+ */
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  if (isPortalRole(user.role)) redirect("/portal");
   return user;
+}
+
+export type PortalUser = CurrentUser & { clientId: string };
+
+/**
+ * Guard for the client portal. Returns a user whose `clientId` is guaranteed —
+ * every portal query must be scoped by it so one client can never read another's
+ * records.
+ */
+export async function requirePortalUser(): Promise<PortalUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (!isPortalRole(user.role) || !user.clientId) redirect("/dashboard");
+  return user as PortalUser;
 }

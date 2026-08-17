@@ -91,3 +91,21 @@ export function initials(name: string): string {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+/** Byte count as a short human string: 812 B, 4.2 KB, 25 MB. */
+export function humanFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+/** "1 step" / "3 steps" — keeps client-facing copy grammatical. */
+export function plural(count: number, singular: string, pluralForm?: string): string {
+  return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
+}
