@@ -48,7 +48,7 @@ export function AddContactForm({ clientId }: { clientId: string }) {
     <form
       ref={formRef}
       action={formAction}
-      className="space-y-4 border-t border-slate-200 bg-slate-50/60 px-5 py-5 dark:border-slate-800 dark:bg-slate-800/30"
+      className="mt-3 w-full space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-800/30"
     >
       <input type="hidden" name="clientId" value={clientId} />
       <FormError message={state.error} />

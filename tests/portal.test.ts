@@ -53,7 +53,10 @@ describe("upload filename safety", () => {
   it("strips directory traversal", () => {
     assert.equal(safeFilename("../../etc/passwd"), "passwd");
     assert.equal(safeFilename("/absolute/path/report.pdf"), "report.pdf");
-    assert.equal(safeFilename("C:\\Users\\me\\notes.txt"), "C_Users_me_notes.txt");
+    // Windows-style paths must be stripped the same way whatever OS the server
+    // runs on, so this expectation is platform-independent.
+    assert.equal(safeFilename("C:\\Users\\me\\notes.txt"), "notes.txt");
+    assert.equal(safeFilename("..\\..\\windows\\system32\\config"), "config");
   });
 
   it("keeps ordinary names readable", () => {

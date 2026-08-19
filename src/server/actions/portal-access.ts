@@ -92,7 +92,12 @@ export async function resetPortalPasswordAction(
 
   await prisma.user.update({
     where: { id: portalUser.id },
-    data: { passwordHash: await hashPassword(parsed.data.password) },
+    data: {
+      passwordHash: await hashPassword(parsed.data.password),
+      // A reset usually means the old password is no longer trusted, so sign the
+      // account out everywhere instead of letting existing cookies run their term.
+      sessionsValidFrom: new Date(),
+    },
   });
 
   await logActivity({

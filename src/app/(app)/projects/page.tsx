@@ -15,6 +15,7 @@ import {
 } from "@/components/ui";
 import { PROJECT_STATUSES, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
+import { like } from "@/lib/search";
 import { formatDate, formatMoney } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 
@@ -39,9 +40,9 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
     ...(q
       ? {
           OR: [
-            { name: { contains: q } },
-            { description: { contains: q } },
-            { client: { name: { contains: q } } },
+            { name: like(q) },
+            { description: like(q) },
+            { client: { name: like(q) } },
           ],
         }
       : {}),

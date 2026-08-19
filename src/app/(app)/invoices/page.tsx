@@ -15,6 +15,7 @@ import {
 } from "@/components/ui";
 import { INVOICE_STATUSES, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
+import { like } from "@/lib/search";
 import { formatDate, formatMoney } from "@/lib/format";
 import { isOutstanding } from "@/lib/invoice";
 import { requireUser } from "@/lib/session";
@@ -36,7 +37,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
     invoicesWithTotals({
       ...(clientId ? { clientId } : {}),
       ...(q
-        ? { OR: [{ number: { contains: q } }, { client: { name: { contains: q } } }] }
+        ? { OR: [{ number: like(q) }, { client: { name: like(q) } }] }
         : {}),
     }),
     prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),

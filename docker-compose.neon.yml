@@ -1,0 +1,48 @@
+# The app alone, with Neon (or any managed Postgres) as the database.
+#
+# Use this instead of docker-compose.yml when you do not want a Postgres
+# container: there is no `db` service and no database volume, so nothing but the
+# uploaded files lives on this host.
+#
+#   cp .env.example .env
+#   # set AUTH_SECRET, DATABASE_URL (pooled) and DATABASE_URL_UNPOOLED (direct)
+#   docker compose -f docker-compose.neon.yml up -d --build
+#
+# Migrations still run on boot, through DATABASE_URL_UNPOOLED — Neon's pooled
+# endpoint cannot serve them. See the `directUrl` note in prisma/schema.prisma.
+#
+# Put a TLS terminating reverse proxy in front of this: session cookies are
+# marked `secure`, so sign-in does not work over plain HTTP.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      # Pooled connection for the app's own queries.
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL to your pooled Neon string}
+      # Direct connection, used only by `prisma migrate deploy` at startup.
+      DATABASE_URL_UNPOOLED: ${DATABASE_URL_UNPOOLED:?set DATABASE_URL_UNPOOLED to your direct Neon string}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env — openssl rand -base64 32}
+      APP_URL: ${APP_URL:-}
+      UPLOAD_DIR: /data/uploads
+    ports:
+      # Loopback only; the reverse proxy is the way in.
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    volumes:
+      # Uploaded files are the one piece of state still on this host. Neon holds
+      # the database; these bytes do not live there, so back this volume up.
+      - uploads:/data/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # Neon scales to zero, so a cold start can add a few seconds on first boot.
+      start_period: 60s
+
+volumes:
+  uploads:

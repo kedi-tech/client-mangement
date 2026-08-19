@@ -37,7 +37,9 @@ async function main() {
   await prisma.project.deleteMany();
   await prisma.contact.deleteMany();
   await prisma.client.deleteMany();
-  await prisma.user.deleteMany();
+  // Everything else is demo data, but the super admin is a real account someone
+  // created deliberately — wiping it would lock them out of /team with no way back.
+  await prisma.user.deleteMany({ where: { role: { not: "SUPER_ADMIN" } } });
 
   console.log("Creating users…");
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);

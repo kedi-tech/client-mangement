@@ -5,10 +5,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 
+import { isAdminRole, isSuperAdmin } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import {
   SESSION_COOKIE,
   isPortalRole,
+  isSessionRevoked,
   sessionCookieOptions,
   signSessionToken,
   verifySessionToken,
@@ -45,6 +47,18 @@ export type CurrentUser = {
 };
 
 /**
+ * Invalidate every session token already issued for an account. Call after any
+ * change that should log the user out everywhere — a password reset, a role
+ * change, or an admin revoking access.
+ */
+export async function revokeSessionsFor(userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { sessionsValidFrom: new Date() },
+  });
+}
+
+/**
  * Resolve the signed-in user for the current request. Wrapped in React's `cache`
  * so the layout, the page and any server action in one render share a single
  * cookie verification and database read.
@@ -61,9 +75,22 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   // changed since it was issued, so the database is the authority.
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, email: true, name: true, role: true, clientId: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      clientId: true,
+      sessionsValidFrom: true,
+    },
   });
-  return user;
+  if (!user) return null;
+
+  // Reject tokens minted before the account's sessions were last revoked.
+  if (isSessionRevoked(payload.issuedAtMs, user.sessionsValidFrom)) return null;
+
+  const { sessionsValidFrom: _revokedAt, ...current } = user;
+  return current;
 });
 
 /**
@@ -74,6 +101,28 @@ export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (isPortalRole(user.role)) redirect("/portal");
+  return user;
+}
+
+/**
+ * Guard for account administration (/team). Both SUPER_ADMIN and ADMIN pass;
+ * what each may actually change is decided per target by `canManageRole()`.
+ * Members keep full access to client data — this gates accounts only.
+ */
+export async function requireAdmin(): Promise<CurrentUser> {
+  const user = await requireUser();
+  if (!isAdminRole(user.role)) redirect("/dashboard");
+  return user;
+}
+
+/**
+ * Guard for the few actions reserved to the workspace owner. Kept separate from
+ * `requireAdmin()` so a future super-admin-only screen does not have to
+ * re-derive the check.
+ */
+export async function requireSuperAdmin(): Promise<CurrentUser> {
+  const user = await requireUser();
+  if (!isSuperAdmin(user.role)) redirect("/dashboard");
   return user;
 }
 

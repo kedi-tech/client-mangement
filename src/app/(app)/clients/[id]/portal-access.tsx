@@ -48,7 +48,7 @@ function PasswordField({
       hint="Share this with the client over a channel you trust. They can keep using it, or you can reset it here later."
       required
     >
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Input
           id={id}
           name="password"
@@ -59,9 +59,14 @@ function PasswordField({
           required
           autoComplete="off"
           spellCheck={false}
-          className="font-mono"
+          className="min-w-0 flex-1 font-mono"
         />
-        <Button type="button" variant="secondary" onClick={() => onChange(generatePassword())}>
+        <Button
+          type="button"
+          variant="secondary"
+          className="shrink-0"
+          onClick={() => onChange(generatePassword())}
+        >
           Generate
         </Button>
       </div>
@@ -113,7 +118,7 @@ export function CreatePortalUser({
     <form
       ref={formRef}
       action={formAction}
-      className="space-y-4 border-t border-slate-200 bg-slate-50/60 px-5 py-5 dark:border-slate-800 dark:bg-slate-800/30"
+      className="mt-3 w-full space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-800/30"
     >
       <input type="hidden" name="clientId" value={clientId} />
       <FormError message={state.error} />

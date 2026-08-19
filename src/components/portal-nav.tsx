@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/portal/projects", label: "Projects" },
   { href: "/portal/invoices", label: "Invoices" },
   { href: "/portal/files", label: "Files" },
+  { href: "/portal/account", label: "Account" },
 ];
 
 export function PortalNav() {

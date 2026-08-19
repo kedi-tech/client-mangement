@@ -1,17 +1,28 @@
 // Client Management — data model.
 //
-// Provider is SQLite so the app runs with zero external services. To move to
-// Postgres, change `provider` to "postgresql" and point DATABASE_URL at the
-// server; every model below is provider-agnostic (no SQLite-only types, and
-// money is stored as integer cents rather than a float).
+// Provider is Postgres (Neon in production). Schema changes are applied with
+// versioned migrations (`prisma/migrations`), never `db push`: run
+// `npm run db:migrate:dev` locally to author one, and the entrypoint runs
+// `prisma migrate deploy` on boot. Money is integer cents so totals never drift.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  // Pooled connection — what the running app uses for every query.
+  url       = env("DATABASE_URL")
+  // Direct (unpooled) connection, used only by Prisma Migrate.
+  //
+  // Neon's pooled endpoint is PgBouncer in transaction mode: it cannot hold the
+  // session-level advisory lock migrations take, and it discards the prepared
+  // statements DDL relies on. Running `migrate deploy` through the pooler hangs
+  // or fails outright, so it gets its own direct URL. This is not a Prisma
+  // <5.10 workaround — it is still required on Prisma 6.
+  //
+  // Self-hosting a single Postgres with no pooler? Point both at the same URL.
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
@@ -19,10 +30,14 @@ model User {
   email        String    @unique
   name         String
   passwordHash String
-  role         String    @default("MEMBER") // ADMIN | MEMBER | CLIENT
+  role         String    @default("MEMBER") // SUPER_ADMIN | ADMIN | MEMBER | CLIENT
   /// Set only for CLIENT accounts: the client whose portal this login can see.
   clientId     String?
   lastLoginAt  DateTime?
+  /// Session tokens issued before this instant are rejected. Bumped whenever the
+  /// password changes or an admin revokes access, so a stolen cookie stops
+  /// working immediately instead of lasting until the JWT expires.
+  sessionsValidFrom DateTime @default(now())
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -209,6 +224,22 @@ model Attachment {
 
   @@index([clientId])
   @@index([projectId])
+  @@index([createdAt])
+}
+
+/// One failed sign-in attempt, used to throttle password guessing.
+///
+/// Rows are keyed by both the submitted email and the caller's IP so neither a
+/// single account nor a spray across many accounts can be brute forced. Entries
+/// older than the throttle window are pruned as they are read, so the table
+/// stays small without a scheduled job.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  /// "email:someone@example.com" or "ip:203.0.113.7".
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
   @@index([createdAt])
 }
 

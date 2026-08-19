@@ -145,7 +145,7 @@ export default async function PortalInvoicePage({ params }: { params: Params }) 
 
       <p className="mx-auto mt-4 max-w-3xl text-xs text-slate-500 dark:text-slate-400">
         Need a change to this invoice, or a copy for your finance team? Reply to your account
-        manager and we'll sort it out.
+        manager and we&rsquo;ll sort it out.
       </p>
     </>
   );

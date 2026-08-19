@@ -65,7 +65,9 @@ export async function saveUpload(file: File): Promise<UploadResult | UploadRejec
 /** Absolute path for a stored file, guarding against traversal via storedName. */
 export function uploadPath(storedName: string): string {
   const resolved = path.resolve(UPLOAD_DIR, path.basename(storedName));
-  if (!resolved.startsWith(UPLOAD_DIR)) {
+  // Compare against the directory *plus its separator*, so a sibling directory
+  // that merely shares a prefix ("/var/uploads-old") cannot pass the check.
+  if (!resolved.startsWith(UPLOAD_DIR + path.sep)) {
     throw new Error("Refusing to resolve a path outside the upload directory");
   }
   return resolved;

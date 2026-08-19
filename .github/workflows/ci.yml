@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# A newer push to the same branch makes an in-flight run redundant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      # The suite is mostly pure, but `prisma migrate deploy` is checked against a
+      # real Postgres so a broken migration cannot reach a deployment.
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: client_management_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/client_management_test?schema=public
+      # No pooler in CI, so the direct URL is the same connection.
+      DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@localhost:5432/client_management_test?schema=public
+      # Test-only value. Long enough to satisfy the boot-time check.
+      AUTH_SECRET: ci-only-secret-not-used-anywhere-real-0123456789
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` installs exactly what package-lock.json pins, and fails if the
+      # lockfile and package.json have drifted.
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Apply migrations to a real Postgres
+        run: npx prisma migrate deploy
+
+      # `migrate diff` replays the migrations into this database; unlike
+      # `migrate dev`, it will not create it for us.
+      - name: Create the shadow database
+        run: PGPASSWORD=postgres psql -h localhost -U postgres -c 'CREATE DATABASE prisma_shadow;'
+
+      # Catches a schema edit that was never turned into a migration — the most
+      # common way a deployment breaks at boot.
+      - name: Check the schema and migrations agree
+        run: |
+          npx prisma migrate diff \
+            --from-migrations ./prisma/migrations \
+            --to-schema-datamodel ./prisma/schema.prisma \
+            --shadow-database-url "postgresql://postgres:postgres@localhost:5432/prisma_shadow" \
+            --exit-code \
+          && echo "Schema matches migrations." \
+          || { echo "::error::prisma/schema.prisma has changes with no migration. Run: npm run db:migrate:dev"; exit 1; }
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image is what actually ships, so a build failure must fail CI.
+      - name: Build the production image
+        run: docker build -t kediclient:ci .
+
+      - name: Boot the stack and wait for the health endpoint
+        run: |
+          cp .env.example .env
+          sed -i 's|^AUTH_SECRET=.*|AUTH_SECRET="ci-only-secret-not-used-anywhere-real-0123456789"|' .env
+          sed -i 's|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD="ci-postgres-password"|' .env
+          docker compose up -d --build
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/api/health > /dev/null; then
+              echo "Healthy after ${i} attempts."
+              curl -s http://127.0.0.1:3000/api/health
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::The app never became healthy."
+          docker compose logs
+          exit 1
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

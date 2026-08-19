@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { homePathFor } from "@/lib/auth-token";
@@ -26,11 +25,13 @@ export default async function LoginPage() {
 
       <LoginForm />
 
+      {/*
+        No sign-up link. Accounts are created by an admin from /team, and client
+        portal logins from the client's page — offering "Create one" would send
+        people to a route that refuses them once the workspace has an owner.
+      */}
       <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-        Need an account?{" "}
-        <Link href="/register" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-          Create one
-        </Link>
+        Trouble signing in? Ask your administrator to reset your password.
       </p>
     </div>
   );

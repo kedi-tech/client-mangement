@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -14,6 +15,24 @@ const NAV = [
   { href: "/invoices", label: "Invoices", icon: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" },
   { href: "/files", label: "Files", icon: "M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" },
   { href: "/reports", label: "Reports", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2" },
+];
+
+/** Reserved to the workspace owner. */
+const SUPER_ADMIN_NAV = [
+  {
+    href: "/oversight",
+    label: "Oversight",
+    icon: "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7zM12 15a3 3 0 100-6 3 3 0 000 6z",
+  },
+];
+
+/** Admin-only entries, appended for ADMIN accounts. */
+const ADMIN_NAV = [
+  {
+    href: "/team",
+    label: "Team",
+    icon: "M17 20v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 10a4 4 0 100-8 4 4 0 000 8zM23 20v-2a4 4 0 00-3-3.87M16 2.13a4 4 0 010 7.75",
+  },
 ];
 
 function NavIcon({ path }: { path: string }) {
@@ -33,13 +52,30 @@ function NavIcon({ path }: { path: string }) {
   );
 }
 
-export function Sidebar({ userName, userEmail }: { userName: string; userEmail: string }) {
+export function Sidebar({
+  userName,
+  userEmail,
+  isAdmin = false,
+  isSuperAdmin = false,
+}: {
+  userName: string;
+  userEmail: string;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  // Hiding a link is presentation only — each page enforces its own role.
+  const items = [
+    ...NAV,
+    ...(isAdmin ? ADMIN_NAV : []),
+    ...(isSuperAdmin ? SUPER_ADMIN_NAV : []),
+  ];
+
   const links = (
     <nav className="space-y-0.5">
-      {NAV.map((item) => {
+      {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
@@ -92,11 +128,17 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail: 
         )}
       >
         <div className="flex h-16 items-center gap-2 px-5">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">
-            CM
-          </span>
+          <Image
+            src="/logo-mark.png"
+            alt=""
+            width={32}
+            height={32}
+            priority
+            unoptimized
+            className="size-8 shrink-0 rounded-lg bg-white ring-1 ring-slate-200 dark:ring-slate-700"
+          />
           <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-            Client Management
+            KediClient
           </span>
         </div>
 

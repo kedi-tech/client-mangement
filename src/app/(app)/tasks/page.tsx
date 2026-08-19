@@ -8,6 +8,7 @@ import { SearchInput } from "@/components/search-input";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
 import { STAFF_ONLY, TASK_PRIORITIES, TASK_STATUSES, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
+import { like } from "@/lib/search";
 import { formatDate } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { emptyTask } from "@/lib/form-defaults";
@@ -35,7 +36,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Search
     ...(clientId ? { clientId } : {}),
     ...(projectId ? { projectId } : {}),
     ...(assigneeId ? { assigneeId } : {}),
-    ...(q ? { OR: [{ title: { contains: q } }, { description: { contains: q } }] } : {}),
+    ...(q ? { OR: [{ title: like(q) }, { description: like(q) }] } : {}),
   };
 
   const [tasks, clients, projects, users] = await Promise.all([

@@ -5,7 +5,11 @@ import { FileList } from "@/components/file-list";
 import { FilterSelect } from "@/components/filters";
 import { SearchInput } from "@/components/search-input";
 import { Card, CardHeader, PageHeader } from "@/components/ui";
+import { UploadForm } from "@/components/upload-form";
 import { prisma } from "@/lib/db";
+import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
+import { uploadStaffFileAction } from "@/server/actions/files";
+import { like } from "@/lib/search";
 import { humanFileSize } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 
@@ -14,6 +18,7 @@ export const metadata: Metadata = { title: "Files" };
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 export default async function FilesPage({ searchParams }: { searchParams: SearchParams }) {
+  // Any staff account may share a file with a client — admin, member or owner.
   await requireUser();
   const params = await searchParams;
 
@@ -27,15 +32,15 @@ export default async function FilesPage({ searchParams }: { searchParams: Search
     ...(q
       ? {
           OR: [
-            { filename: { contains: q } },
-            { note: { contains: q } },
-            { client: { name: { contains: q } } },
+            { filename: like(q) },
+            { note: like(q) },
+            { client: { name: like(q) } },
           ],
         }
       : {}),
   };
 
-  const [files, clients] = await Promise.all([
+  const [files, clients, projects] = await Promise.all([
     prisma.attachment.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -47,6 +52,11 @@ export default async function FilesPage({ searchParams }: { searchParams: Search
       },
     }),
     prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    // Every project, so the form can narrow them once a client is chosen.
+    prisma.project.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, clientId: true },
+    }),
   ]);
 
   const received = files.filter((file) => file.uploadedBy === "CLIENT");
@@ -91,13 +101,34 @@ export default async function FilesPage({ searchParams }: { searchParams: Search
         </div>
       </Card>
 
+      <Card className="mb-6">
+        <CardHeader
+          title="Share a file with a client"
+          description="Uploads appear in that client's portal straight away. Nothing is public — downloads are authorised per file."
+        />
+        {clients.length === 0 ? (
+          <p className="px-5 py-4 text-sm text-slate-500 dark:text-slate-400">
+            Add a client first, then you can share files with them.
+          </p>
+        ) : (
+          <UploadForm
+            action={uploadStaffFileAction}
+            clients={clients}
+            projects={projects}
+            accept={ACCEPT_ATTRIBUTE}
+            maxBytes={MAX_UPLOAD_BYTES}
+            submitLabel="Share with client"
+          />
+        )}
+      </Card>
+
       {byClient.size === 0 ? (
         <Card>
           <FileList
             files={[]}
             perspective="staff"
             emptyTitle="No files match those filters"
-            emptyDescription="Files are uploaded from a client's page, or sent to you through their portal."
+            emptyDescription="Share one above, or wait for a client to send you something through their portal."
           />
         </Card>
       ) : (

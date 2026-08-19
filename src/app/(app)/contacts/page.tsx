@@ -15,6 +15,7 @@ import {
   Th,
 } from "@/components/ui";
 import { prisma } from "@/lib/db";
+import { like } from "@/lib/search";
 import { initials } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { deleteContactAction } from "@/server/actions/contacts";
@@ -38,11 +39,11 @@ export default async function ContactsPage({ searchParams }: { searchParams: Sea
     ...(q
       ? {
           OR: [
-            { firstName: { contains: q } },
-            { lastName: { contains: q } },
-            { email: { contains: q } },
-            { title: { contains: q } },
-            { client: { name: { contains: q } } },
+            { firstName: like(q) },
+            { lastName: like(q) },
+            { email: like(q) },
+            { title: like(q) },
+            { client: { name: like(q) } },
           ],
         }
       : {}),

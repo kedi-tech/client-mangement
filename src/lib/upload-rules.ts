@@ -63,7 +63,11 @@ export const REJECTED_TYPE_MESSAGE =
 
 /** Strip any path information and unsafe characters from a client-supplied name. */
 export function safeFilename(raw: string): string {
-  const base = path.basename(raw);
+  // Split on both separators rather than using `path.basename`, which follows the
+  // *server's* platform: on Linux it treats "C:\dir\file.txt" as one long name and
+  // leaves the directory part in. Uploads arrive from browsers on every OS, so the
+  // result must not depend on where the server happens to run.
+  const base = raw.split(/[\\/]/).pop() ?? "";
   // Drop control characters, then keep only characters that are safe in a
   // Content-Disposition header and on every filesystem.
   const withoutControls = base.replace(/[\u0000-\u001f\u007f]/g, "");

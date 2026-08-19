@@ -15,6 +15,7 @@ import {
 } from "@/components/ui";
 import { CLIENT_STATUSES, STAFF_ONLY, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
+import { like } from "@/lib/search";
 import { formatMoney, relativeTime } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
@@ -43,11 +44,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Sear
     ...(q
       ? {
           OR: [
-            { name: { contains: q } },
-            { company: { contains: q } },
-            { email: { contains: q } },
-            { industry: { contains: q } },
-            { city: { contains: q } },
+            { name: like(q) },
+            { company: like(q) },
+            { email: like(q) },
+            { industry: like(q) },
+            { city: like(q) },
           ],
         }
       : {}),

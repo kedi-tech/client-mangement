@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -20,9 +21,15 @@ export default async function PortalLayout({ children }: { children: ReactNode }
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Link href="/portal" className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">
-              CM
-            </span>
+            <Image
+            src="/logo-mark.png"
+            alt=""
+            width={32}
+            height={32}
+            priority
+            unoptimized
+            className="size-8 shrink-0 rounded-lg bg-white ring-1 ring-slate-200 dark:ring-slate-700"
+          />
             <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50">
               {client?.name ?? "Client portal"}
             </span>

@@ -1,0 +1,66 @@
+# Production-shaped stack: Postgres plus the app.
+#
+#   cp .env.example .env      # then set AUTH_SECRET and POSTGRES_PASSWORD
+#   docker compose up -d --build
+#   docker compose exec app node /opt/prisma/node_modules/prisma/build/index.js migrate status
+#
+# Neither service publishes anything but the app's HTTP port. Put a TLS
+# terminating reverse proxy in front of it before exposing this to the internet —
+# session cookies are marked `secure`, so sign-in does not work over plain HTTP.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-client_management}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # Published on loopback so `npm run dev` on the host can reach it. Pick a
+      # DB_PORT that does not collide with any Postgres already installed on the
+      # machine — 5432 and 5433 are often taken by a native install.
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-client_management}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-client_management}?schema=public
+      # No pooler in this stack, so migrations use the same connection.
+      DATABASE_URL_UNPOOLED: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-client_management}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env — openssl rand -base64 32}
+      APP_URL: ${APP_URL:-}
+      UPLOAD_DIR: /data/uploads
+    ports:
+      # Bound to loopback so the reverse proxy is the only way in. Drop the
+      # 127.0.0.1 prefix only if this host is not directly internet facing.
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    volumes:
+      # Uploaded files must outlive the container — the image filesystem is
+      # discarded on every redeploy.
+      - uploads:/data/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  db-data:
+  uploads:

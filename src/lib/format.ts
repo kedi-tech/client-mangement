@@ -109,3 +109,15 @@ export function humanFileSize(bytes: number): string {
 export function plural(count: number, singular: string, pluralForm?: string): string {
   return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
 }
+
+/**
+ * "15 minutes" / "45 seconds" — how long a throttled user must wait.
+ *
+ * Always rounds up, so the message never invites someone to retry before the
+ * block has actually lifted. Lives here rather than beside the throttle itself
+ * because that module is server-only and this is pure presentation.
+ */
+export function describeRetryAfter(seconds: number): string {
+  if (seconds < 90) return plural(seconds, "second");
+  return plural(Math.ceil(seconds / 60), "minute");
+}

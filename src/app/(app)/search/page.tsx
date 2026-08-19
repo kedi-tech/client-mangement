@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SearchInput } from "@/components/search-input";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/db";
+import { like } from "@/lib/search";
 import { formatDate, formatMoney } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoice";
 import { requireUser } from "@/lib/session";
@@ -26,10 +27,10 @@ export default async function SearchPage({
         prisma.client.findMany({
           where: {
             OR: [
-              { name: { contains: q } },
-              { company: { contains: q } },
-              { email: { contains: q } },
-              { industry: { contains: q } },
+              { name: like(q) },
+              { company: like(q) },
+              { email: like(q) },
+              { industry: like(q) },
             ],
           },
           take: LIMIT,
@@ -37,10 +38,10 @@ export default async function SearchPage({
         prisma.contact.findMany({
           where: {
             OR: [
-              { firstName: { contains: q } },
-              { lastName: { contains: q } },
-              { email: { contains: q } },
-              { title: { contains: q } },
+              { firstName: like(q) },
+              { lastName: like(q) },
+              { email: like(q) },
+              { title: like(q) },
             ],
           },
           take: LIMIT,
@@ -49,9 +50,9 @@ export default async function SearchPage({
         prisma.project.findMany({
           where: {
             OR: [
-              { name: { contains: q } },
-              { description: { contains: q } },
-              { client: { name: { contains: q } } },
+              { name: like(q) },
+              { description: like(q) },
+              { client: { name: like(q) } },
             ],
           },
           take: LIMIT,
@@ -60,9 +61,9 @@ export default async function SearchPage({
         prisma.task.findMany({
           where: {
             OR: [
-              { title: { contains: q } },
-              { description: { contains: q } },
-              { client: { name: { contains: q } } },
+              { title: like(q) },
+              { description: like(q) },
+              { client: { name: like(q) } },
             ],
           },
           take: LIMIT,
@@ -71,9 +72,9 @@ export default async function SearchPage({
         prisma.invoice.findMany({
           where: {
             OR: [
-              { number: { contains: q } },
-              { notes: { contains: q } },
-              { client: { name: { contains: q } } },
+              { number: like(q) },
+              { notes: like(q) },
+              { client: { name: like(q) } },
             ],
           },
           take: LIMIT,

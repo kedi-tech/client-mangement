@@ -24,6 +24,7 @@ export function Card({
   );
 }
 
+/** * Card heading with an optional action on the right. * * `flex-wrap` and `max-w-full` on the action matter more than they look: several * actions expand into a full form when clicked, and a non-wrapping `shrink-0` * child sizes itself to that form's intrinsic width and bursts out of the card. */
 export function CardHeader({
   title,
   description,
@@ -34,14 +35,14 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-      <div className="min-w-0">
+    <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+      <div className="min-w-0 flex-1">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
         {description ? (
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
         ) : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="min-w-0 max-w-full shrink-0">{action}</div> : null}
     </div>
   );
 }

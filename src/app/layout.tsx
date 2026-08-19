@@ -4,11 +4,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Client Management",
-    template: "%s · Client Management",
+    default: "KediClient",
+    template: "%s · KediClient",
   },
   description:
     "Track clients, contacts, projects, tasks and invoices in one workspace.",
+  // Private client data behind a login: keep it out of search results.
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export default function RootLayout({

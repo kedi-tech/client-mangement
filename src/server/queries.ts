@@ -1,5 +1,10 @@
 import "server-only";
 
+import {
+  ACTIVITY_CATEGORIES,
+  STAFF_ROLES,
+  type ActivityCategory,
+} from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
 import { projectProgress } from "@/lib/progress";
@@ -263,5 +268,98 @@ export async function getPortalInvoice(clientId: string, invoiceId: string) {
     ...invoice,
     effectiveStatus: effectiveInvoiceStatus(invoice),
     totals: invoiceTotals(invoice.items, invoice.taxRate),
+  };
+}
+
+/* -------------------------------------------------------------- oversight */
+
+export type OversightFilters = {
+  /** Restrict to one actor, or all staff when null. */
+  actorId: string | null;
+  category: ActivityCategory | null;
+  /** Only activity at or after this instant. */
+  since: Date | null;
+  page: number;
+  pageSize: number;
+};
+
+/**
+ * Everything the super admin's oversight page renders: who is on staff, how
+ * busy each has been in the window, and the matching slice of the activity feed.
+ *
+ * Read-only by construction — it is a window onto the append-only Activity log,
+ * which every server action already writes to.
+ */
+export async function getOversightData(filters: OversightFilters) {
+  const { actorId, category, since, page, pageSize } = filters;
+
+  const where = {
+    // Portal uploads are logged too; oversight is about the team, so activity
+    // with no actor (or a client actor) is excluded by the staff join below.
+    ...(actorId ? { actorId } : {}),
+    ...(category ? { type: { in: [...ACTIVITY_CATEGORIES[category].types] } } : {}),
+    ...(since ? { createdAt: { gte: since } } : {}),
+  };
+
+  const [staff, total, entries, byActor, accessCount, deletionCount] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: { in: [...STAFF_ROLES] } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, email: true, role: true, lastLoginAt: true },
+    }),
+    prisma.activity.count({ where }),
+    prisma.activity.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        actor: { select: { id: true, name: true, email: true, role: true } },
+        client: { select: { id: true, name: true } },
+      },
+    }),
+    // Per-person totals for the same window, so the roster and the feed agree.
+    prisma.activity.groupBy({
+      by: ["actorId"],
+      where: { ...(since ? { createdAt: { gte: since } } : {}) },
+      _count: { _all: true },
+      _max: { createdAt: true },
+    }),
+    prisma.activity.count({
+      where: {
+        ...(since ? { createdAt: { gte: since } } : {}),
+        type: { in: [...ACTIVITY_CATEGORIES.ACCESS.types] },
+      },
+    }),
+    prisma.activity.count({
+      where: {
+        ...(since ? { createdAt: { gte: since } } : {}),
+        type: { in: [...ACTIVITY_CATEGORIES.DELETION.types] },
+      },
+    }),
+  ]);
+
+  const counts = new Map(
+    byActor.map((row) => [row.actorId, { total: row._count._all, last: row._max.createdAt }]),
+  );
+
+  const roster = staff.map((member) => ({
+    ...member,
+    actionCount: counts.get(member.id)?.total ?? 0,
+    lastActionAt: counts.get(member.id)?.last ?? null,
+  }));
+
+  return {
+    roster,
+    entries,
+    total,
+    pageCount: Math.max(1, Math.ceil(total / pageSize)),
+    totals: {
+      // Activity in the window across everyone, not just the filtered slice.
+      actions: byActor.reduce((sum, row) => sum + row._count._all, 0),
+      accessChanges: accessCount,
+      deletions: deletionCount,
+      activeStaff: roster.filter((member) => member.actionCount > 0).length,
+    },
   };
 }

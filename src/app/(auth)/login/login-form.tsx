@@ -47,11 +47,11 @@ export function LoginForm() {
       </Field>
 
       <SubmitButton />
-
+{/* 
       <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         Demo credentials from <code>npm run db:seed</code> are pre-filled:
         admin@example.com / password123
-      </p>
+      </p> */}
     </form>
   );
 }
