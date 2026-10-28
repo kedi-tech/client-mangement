@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 
+import { LogoMark } from "@/components/logo";
 import { PortalNav } from "@/components/portal-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { prisma } from "@/lib/db";
-import { initials } from "@/lib/format";
 import { requirePortalUser } from "@/lib/session";
 import { readTheme } from "@/lib/theme";
 import { logoutAction } from "@/server/actions/auth";
@@ -25,12 +25,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     <div className="portal flex min-h-screen flex-col bg-bg text-tx">
       <div className="bg-band pt-4 text-white min-[720px]:pt-[22px]">
         <div className="mx-auto box-border flex max-w-[1080px] items-center gap-3 px-4 text-[13.5px] min-[720px]:px-8">
-          <span
-            className="grid size-[30px] flex-none place-items-center rounded-[10px] bg-white/[.18] text-[12px] font-semibold"
-            aria-hidden
-          >
-            {initials(clientName)}
-          </span>
+          <LogoMark size={30} className="rounded-[10px]" />
           <span className="truncate text-[15.5px] font-semibold">{clientName}</span>
           <span className="ml-auto hidden whitespace-nowrap min-[720px]:inline">{user.name}</span>
           <ThemeToggle

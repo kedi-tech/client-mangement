@@ -56,6 +56,55 @@ export async function revokeSessionsFor(userId: string): Promise<void> {
     where: { id: userId },
     data: { sessionsValidFrom: new Date() },
   });
+  forgetUser(userId);
+}
+
+/*
+ * Short-lived cache of the account row behind a session.
+ *
+ * Every page used to start with a database read to re-check the signed-in
+ * account, and with Neon ~200ms away that was a fixed 200ms on every click
+ * before the page's own queries could begin. The row is now reused for a few
+ * seconds. Anything that changes an account's access — password change or
+ * reset, role change, removal, portal revoke — calls `forgetUser()`, so those
+ * still take effect on the very next request in this process; another server
+ * process would pick them up within USER_CACHE_MS at most.
+ */
+const USER_CACHE_MS = 15_000;
+
+type CachedAccount = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  clientId: string | null;
+  sessionsValidFrom: Date;
+};
+
+const accountCache = new Map<string, { account: CachedAccount | null; expires: number }>();
+
+/** Drop the cached account row so the next request reads it fresh. */
+export function forgetUser(userId: string): void {
+  accountCache.delete(userId);
+}
+
+async function loadAccount(userId: string): Promise<CachedAccount | null> {
+  const hit = accountCache.get(userId);
+  if (hit && hit.expires > Date.now()) return hit.account;
+
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      clientId: true,
+      sessionsValidFrom: true,
+    },
+  });
+  accountCache.set(userId, { account, expires: Date.now() + USER_CACHE_MS });
+  return account;
 }
 
 /**
@@ -72,18 +121,9 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!payload) return null;
 
   // The token is signed, but the account may have been deleted or had its role
-  // changed since it was issued, so the database is the authority.
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      clientId: true,
-      sessionsValidFrom: true,
-    },
-  });
+  // changed since it was issued, so the database is the authority (read
+  // through the short cache above).
+  const user = await loadAccount(payload.userId);
   if (!user) return null;
 
   // Reject tokens minted before the account's sessions were last revoked.

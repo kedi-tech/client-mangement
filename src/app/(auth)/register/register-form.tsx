@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { PasswordInput } from "@/components/password-input";
+import { Button, Field, FormError, Input, controlClass } from "@/components/ui";
 import { registerAction } from "@/server/actions/auth";
 import type { FormState } from "@/lib/validation";
 
@@ -43,10 +44,10 @@ export function RegisterForm() {
         htmlFor="password"
         errors={state.fieldErrors?.password}
       >
-        <Input
+        <PasswordInput
+          className={controlClass()}
           id="password"
           name="password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
@@ -59,10 +60,10 @@ export function RegisterForm() {
         htmlFor="confirmPassword"
         errors={state.fieldErrors?.confirmPassword}
       >
-        <Input
+        <PasswordInput
+          className={controlClass()}
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           required
         />

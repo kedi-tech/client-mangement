@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { PasswordInput } from "@/components/password-input";
+import { Button, Field, FormError, Input, controlClass } from "@/components/ui";
 import { loginAction } from "@/server/actions/auth";
 import type { FormState } from "@/lib/validation";
 
@@ -30,19 +31,16 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          defaultValue="admin@example.com"
-          placeholder="you@company.com"
         />
       </Field>
 
       <Field label="Password" htmlFor="password" errors={state.fieldErrors?.password}>
-        <Input
+        <PasswordInput
+          className={controlClass()}
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
-          defaultValue="password123"
         />
       </Field>
 

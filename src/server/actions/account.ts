@@ -10,6 +10,7 @@ import {
 } from "@/lib/rate-limit";
 import {
   createSession,
+  forgetUser,
   getCurrentUser,
   hashPassword,
   verifyPassword,
@@ -71,6 +72,8 @@ export async function changePasswordAction(
       sessionsValidFrom: new Date(),
     },
   });
+
+  forgetUser(user.id);
 
   // ...which would sign this device out too, since the cookie in hand predates
   // the bump. Issue a fresh one so the person who just changed their password

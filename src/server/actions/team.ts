@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { STAFF_ROLES, canManageRole, isAdminRole } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { hashPassword, requireAdmin, revokeSessionsFor } from "@/lib/session";
+import { forgetUser, hashPassword, requireAdmin, revokeSessionsFor } from "@/lib/session";
 import { toFieldErrors, type FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
 
@@ -175,6 +175,8 @@ export async function resetTeamPasswordAction(
     },
   });
 
+  forgetUser(target.id);
+
   await logActivity({
     type: "TEAM_PASSWORD_RESET",
     message: `Password reset for ${target.email}`,
@@ -199,6 +201,7 @@ export async function removeTeamMemberAction(formData: FormData): Promise<void> 
   if (isAdminRole(target.role) && (await adminCount()) <= 1) return;
 
   await prisma.user.delete({ where: { id: target.id } });
+  forgetUser(target.id);
 
   await logActivity({
     type: "TEAM_MEMBER_REMOVED",

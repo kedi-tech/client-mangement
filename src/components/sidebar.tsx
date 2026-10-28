@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
+import { LogoLockup } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { logoutAction } from "@/server/actions/auth";
 
@@ -22,13 +23,8 @@ const NAV = [
 const ADMIN_NAV = [{ href: "/team", label: "Team" }];
 const SUPER_ADMIN_NAV = [{ href: "/oversight", label: "Oversight" }];
 
-function Brand({ className }: { className?: string }) {
-  return (
-    <span className={cn("flex items-center gap-2 text-[15px] font-semibold text-white", className)}>
-      <span className="size-[18px] rounded-[4px] bg-[#3b5bdb]" aria-hidden />
-      KediClient
-    </span>
-  );
+function Brand() {
+  return <LogoLockup className="text-white" />;
 }
 
 function NavLinks({
@@ -126,7 +122,9 @@ export function AppShell({
           >
             Menu
           </button>
-          <span className="font-semibold min-[900px]:hidden">KediClient</span>
+          <span className="min-[900px]:hidden">
+            <LogoLockup className="text-tx" />
+          </span>
           <Link
             href="/search"
             className="hidden max-w-[360px] flex-1 rounded-[4px] border border-ln bg-hov px-2.5 py-1.5 text-fa hover:text-mu min-[720px]:block"

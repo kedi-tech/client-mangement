@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
+import { PasswordInput } from "@/components/password-input";
 import { portalButtonClass } from "@/components/portal-ui";
 import type { FormState } from "@/lib/validation";
 import { changePasswordAction } from "@/server/actions/account";
@@ -36,10 +37,9 @@ function PasswordField({
   return (
     <label htmlFor={id} className="flex flex-col gap-1.5 text-[13px] font-medium">
       {label}
-      <input
+      <PasswordInput
         id={id}
         name={name}
-        type="password"
         autoComplete={autoComplete}
         placeholder={placeholder}
         required

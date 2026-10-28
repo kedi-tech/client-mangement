@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@/lib/db";
-import { hashPassword, requireUser } from "@/lib/session";
+import { forgetUser, hashPassword, requireUser } from "@/lib/session";
 import { toFieldErrors, type FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
 import { ownedClient, ownedPortalUser } from "@/server/scope";
@@ -95,6 +95,8 @@ export async function resetPortalPasswordAction(
     },
   });
 
+  forgetUser(portalUser.id);
+
   await logActivity({
     type: "PORTAL_PASSWORD_RESET",
     message: `Portal password reset for ${portalUser.email}`,
@@ -117,6 +119,7 @@ export async function revokePortalUserAction(formData: FormData): Promise<void> 
   if (!portalUser) return;
 
   await prisma.user.delete({ where: { id: portalUser.id } });
+  forgetUser(portalUser.id);
 
   await logActivity({
     type: "PORTAL_ACCESS_REVOKED",
