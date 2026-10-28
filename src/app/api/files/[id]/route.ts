@@ -27,12 +27,17 @@ export async function GET(
   const attachment = await prisma.attachment.findUnique({ where: { id } });
   if (!attachment) return new Response("Not found", { status: 404 });
 
-  // Portal users reach only their own client's files; staff only files of
-  // clients they own.
+  // Anyone with portal access reaches their own client's files; staff also
+  // reach files of clients they own.
   const allowed =
-    user.role === "CLIENT"
-      ? attachment.clientId === user.clientId
-      : Boolean(await prisma.client.findFirst({ where: { id: attachment.clientId, ownerId: user.id }, select: { id: true } }));
+    attachment.clientId === user.clientId ||
+    (user.role !== "CLIENT" &&
+      Boolean(
+        await prisma.client.findFirst({
+          where: { id: attachment.clientId, ownerId: user.id },
+          select: { id: true },
+        }),
+      ));
   if (!allowed) {
     return new Response("Not found", { status: 404 });
   }

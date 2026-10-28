@@ -81,11 +81,15 @@ export function ownedTask(user: Staff, id: string) {
   return prisma.task.findFirst({ where: { AND: [{ id }, taskScope(user)] } });
 }
 
-/** A portal login belonging to one of the user's clients. */
-export function ownedPortalUser(user: Staff, id: string) {
+/**
+ * An account with portal access to one of the user's clients. By default only
+ * plain CLIENT logins; pass `anyRole` to include a staff member who is also
+ * that client (e.g. to remove their portal access).
+ */
+export function ownedPortalUser(user: Staff, id: string, { anyRole = false } = {}) {
   if (!id) return Promise.resolve(null);
   return prisma.user.findFirst({
-    where: { id, role: "CLIENT", portalClient: { ownerId: user.id } },
-    select: { id: true, email: true, clientId: true, name: true },
+    where: { id, ...(anyRole ? {} : { role: "CLIENT" }), portalClient: { ownerId: user.id } },
+    select: { id: true, email: true, clientId: true, name: true, role: true },
   });
 }

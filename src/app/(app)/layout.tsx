@@ -15,6 +15,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       isAdmin={isAdminRole(user.role)}
       isSuperAdmin={isSuperAdmin(user.role)}
       theme={theme}
+      hasPortal={Boolean(user.clientId)}
     >
       {children}
     </AppShell>

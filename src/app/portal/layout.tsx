@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { LogoMark } from "@/components/logo";
@@ -28,6 +29,14 @@ export default async function PortalLayout({ children }: { children: ReactNode }
           <LogoMark size={30} className="rounded-[10px]" />
           <span className="truncate text-[15.5px] font-semibold">{clientName}</span>
           <span className="ml-auto hidden whitespace-nowrap min-[720px]:inline">{user.name}</span>
+          {user.role !== "CLIENT" ? (
+            <Link
+              href="/dashboard"
+              className="rounded-[12px] bg-white/[.16] px-3 py-1.5 text-[12.5px] whitespace-nowrap text-white hover:text-white"
+            >
+              Workspace
+            </Link>
+          ) : null}
           <ThemeToggle
             initial={theme}
             labels={{ toDark: "Dark", toLight: "Light" }}

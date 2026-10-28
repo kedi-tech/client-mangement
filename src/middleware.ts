@@ -91,7 +91,8 @@ export async function middleware(request: NextRequest) {
     const shared = pathname.startsWith("/api/");
 
     if (portal && !inPortal && !shared) return redirectTo("/portal");
-    if (!portal && inPortal) return redirectTo("/dashboard");
+    // Staff stay out of the portal unless they are also one of our clients.
+    if (!portal && inPortal && !session.clientId) return redirectTo("/dashboard");
   }
 
   return proceed();

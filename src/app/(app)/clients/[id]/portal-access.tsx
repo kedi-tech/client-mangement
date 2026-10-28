@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { ConfirmForm } from "@/components/confirm-form";
-import { Button, CardHeader, Field, FormError, FormNotice, Input } from "@/components/ui";
+import { Button, CardHeader, Field, FormError, FormNotice, Input, Pill } from "@/components/ui";
 import { generatePassword } from "@/lib/generate-password";
 import type { FormState } from "@/lib/validation";
 import {
@@ -17,6 +17,8 @@ export type PortalLogin = {
   id: string;
   name: string;
   email: string;
+  /** Also on our team (an admin who is also this client). */
+  isMember: boolean;
   /** Pre-formatted "Last signed in …" / "Has not signed in yet". */
   lastSeen: string;
 };
@@ -200,24 +202,37 @@ export function PortalAccessPanel({
       ) : (
         logins.map((login) => (
           <div key={login.id} className="flex flex-col gap-1.5 border-b border-l2 px-3.5 py-2.5 last:border-b-0">
-            <div className="text-[13px] font-medium">{login.name}</div>
+            <div className="flex items-center gap-1.5 text-[13px] font-medium">
+              {login.name}
+              {login.isMember ? (
+                <Pill accent className="px-[5px] text-[10.5px] font-medium">
+                  Team member
+                </Pill>
+              ) : null}
+            </div>
             <div className="text-[12px] break-all text-mu">{login.email}</div>
             <div className="text-[11.5px] text-fa">{login.lastSeen}</div>
             <div className="flex items-center gap-3">
-              <Button
-                variant="link"
-                onClick={() => {
-                  setResetFor((current) => (current === login.id ? null : login.id));
-                  setInviting(false);
-                  setFlash("");
-                }}
-              >
-                Reset password
-              </Button>
+              {login.isMember ? null : (
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setResetFor((current) => (current === login.id ? null : login.id));
+                    setInviting(false);
+                    setFlash("");
+                  }}
+                >
+                  Reset password
+                </Button>
+              )}
               <ConfirmForm
                 action={revokePortalUserAction}
                 hidden={{ userId: login.id }}
-                confirmMessage={`Revoke portal access for ${login.email}? They will no longer be able to sign in.`}
+                confirmMessage={
+                  login.isMember
+                    ? `Remove ${login.email}'s access to this client's portal? Their team account stays.`
+                    : `Revoke portal access for ${login.email}? They will no longer be able to sign in.`
+                }
                 variant="subtle"
               >
                 Revoke

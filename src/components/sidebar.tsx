@@ -85,6 +85,7 @@ export function AppShell({
   isAdmin = false,
   isSuperAdmin = false,
   theme,
+  hasPortal = false,
   children,
 }: {
   userName: string;
@@ -92,6 +93,8 @@ export function AppShell({
   isAdmin?: boolean;
   isSuperAdmin?: boolean;
   theme: "light" | "dark";
+  /** This staff member is also one of our clients and can open their portal. */
+  hasPortal?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -131,9 +134,20 @@ export function AppShell({
           >
             Search everything
           </Link>
+          {hasPortal ? (
+            <Link
+              href="/portal"
+              className="ml-auto rounded-[4px] border border-ln px-[9px] py-1 text-[12px] whitespace-nowrap text-mu hover:text-tx"
+            >
+              Client portal
+            </Link>
+          ) : null}
           <ThemeToggle
             initial={theme}
-            className="ml-auto rounded-[4px] border border-ln bg-transparent px-[9px] py-1 text-[12px] text-mu"
+            className={cn(
+              "rounded-[4px] border border-ln bg-transparent px-[9px] py-1 text-[12px] text-mu",
+              hasPortal ? "ml-0" : "ml-auto",
+            )}
           />
           <span className="hidden min-[720px]:inline">{userName}</span>
           <form action={logoutAction}>

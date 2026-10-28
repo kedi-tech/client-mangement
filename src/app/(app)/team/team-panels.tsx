@@ -114,7 +114,7 @@ function AddForm({ roles, onDone }: { roles: string[]; onDone: (flash: Flash) =>
         htmlFor="teamRole"
         errors={errors.role}
         size="sm"
-        hint="Admins can add and remove members. Members have full access to client data but cannot change accounts."
+        hint="Admins can add and remove members, and each admin also becomes one of your clients with portal access. Members manage their own clients but cannot change accounts."
       >
         <Select id="teamRole" name="role" size="sm" defaultValue={roles[roles.length - 1]}>
           {roles.map((role) => (

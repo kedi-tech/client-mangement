@@ -110,15 +110,23 @@ export async function resetPortalPasswordAction(
   return { ok: true };
 }
 
-/** Revoking deletes the login; the client's data is untouched. */
+/**
+ * Revoking a portal login deletes it; the client's data is untouched. For a
+ * team member who is also this client, only the portal link is removed — their
+ * staff account is managed from /team.
+ */
 export async function revokePortalUserAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const userId = String(formData.get("userId") ?? "");
 
-  const portalUser = await ownedPortalUser(user, userId);
+  const portalUser = await ownedPortalUser(user, userId, { anyRole: true });
   if (!portalUser) return;
 
-  await prisma.user.delete({ where: { id: portalUser.id } });
+  if (portalUser.role === "CLIENT") {
+    await prisma.user.delete({ where: { id: portalUser.id } });
+  } else {
+    await prisma.user.update({ where: { id: portalUser.id }, data: { clientId: null } });
+  }
   forgetUser(portalUser.id);
 
   await logActivity({
@@ -132,3 +140,4 @@ export async function revokePortalUserAction(formData: FormData): Promise<void> 
 
   if (portalUser.clientId) revalidatePath(`/clients/${portalUser.clientId}`);
 }
+

@@ -39,6 +39,59 @@ const OUT_OF_RANGE: FormState = {
   error: "You do not have permission to change that account.",
 };
 
+/**
+ * Every admin is also one of the workspace owner's clients. When an account
+ * becomes ADMIN — added that way, or promoted — and is not linked to a client
+ * yet, a client record is created for them, owned by whoever made them admin,
+ * with them as the primary contact. Their account is linked to it, so they can
+ * also open that client's portal alongside the admin app.
+ */
+async function makeAdminAClient(
+  actorId: string,
+  account: { id: string; name: string; email: string; clientId: string | null },
+): Promise<void> {
+  if (account.clientId) return;
+
+  const [firstName, ...rest] = account.name.trim().split(/\s+/);
+  const client = await prisma.client.create({
+    data: {
+      name: account.name,
+      email: account.email,
+      status: "ACTIVE",
+      ownerId: actorId,
+      contacts: {
+        create: {
+          firstName: firstName || account.name,
+          lastName: rest.join(" ") || "-",
+          email: account.email,
+          isPrimary: true,
+        },
+      },
+    },
+  });
+  await prisma.user.update({ where: { id: account.id }, data: { clientId: client.id } });
+  forgetUser(account.id);
+
+  await logActivity({
+    type: "CLIENT_CREATED",
+    message: `${client.name} was added as a client (new admin)`,
+    actorId,
+    clientId: client.id,
+    entityType: "Client",
+    entityId: client.id,
+  });
+  await logActivity({
+    type: "PORTAL_ACCESS_GRANTED",
+    message: `Portal access granted to ${account.email} for ${client.name}`,
+    actorId,
+    clientId: client.id,
+    entityType: "User",
+    entityId: account.id,
+  });
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
+}
+
 /** Look up a staff account by id. Portal logins are managed from the client page. */
 async function findStaff(id: string) {
   return prisma.user.findFirst({
@@ -86,6 +139,8 @@ export async function createTeamMemberAction(
     entityId: created.id,
   });
 
+  if (created.role === "ADMIN") await makeAdminAClient(admin.id, created);
+
   revalidatePath("/team");
   return { ok: true };
 }
@@ -121,10 +176,11 @@ export async function updateTeamRoleAction(
     return { error: "This is the only administrator. Promote someone else first." };
   }
 
-  await prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: target.id },
     data: { role: parsed.data.role },
   });
+  if (updated.role === "ADMIN") await makeAdminAClient(admin.id, updated);
   // The role is carried in the session token, so old cookies must stop working
   // or a demoted admin would keep their old permissions until the JWT expired.
   await revokeSessionsFor(target.id);

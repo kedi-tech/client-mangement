@@ -60,6 +60,11 @@ super admin** — roles only decide who can manage accounts.
 - The super admin's **Oversight** page still shows what each person did, but
   client work appears as generic text ("Created an invoice"), with no client
   names or links.
+- **Every admin is also your client.** Adding an admin (or promoting someone
+  to admin) creates a client record for them, owned by whoever made them admin,
+  with them as primary contact, and links their account to it. They work in
+  the admin app and can also open that client's portal ("Client portal" /
+  "Workspace" links switch between the two).
 - Existing data: `npm run owners:backfill` previews, and
   `npm run owners:backfill -- --apply` assigns each client to whoever created it
   (from the activity log), falling back to the super admin.

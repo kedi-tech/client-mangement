@@ -122,14 +122,13 @@ export async function deleteFileAction(formData: FormData): Promise<void> {
   });
   if (!attachment) return;
 
-  // A portal user may withdraw only their own uploads; staff only files of
-  // clients they own.
-  if (user.role === "CLIENT") {
-    const ownFile =
-      attachment.clientId === user.clientId && attachment.uploadedBy === "CLIENT";
-    if (!ownFile) return;
-  } else if (!(await ownedClient(user, attachment.clientId))) {
-    return;
+  // Portal side: anyone with portal access may withdraw their client's own
+  // uploads. Staff side: files of clients the user owns.
+  const ownPortalUpload =
+    attachment.uploadedBy === "CLIENT" && user.clientId !== null && attachment.clientId === user.clientId;
+  if (!ownPortalUpload) {
+    if (user.role === "CLIENT") return;
+    if (!(await ownedClient(user, attachment.clientId))) return;
   }
 
   await prisma.attachment.delete({ where: { id: attachment.id } });

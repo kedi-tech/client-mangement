@@ -72,7 +72,7 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
       },
       portalUsers: {
         orderBy: { createdAt: "asc" },
-        select: { id: true, name: true, email: true, lastLoginAt: true, createdAt: true },
+        select: { id: true, name: true, email: true, role: true, lastLoginAt: true, createdAt: true },
       },
       attachments: {
         orderBy: { createdAt: "desc" },
@@ -311,6 +311,7 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
                 id: login.id,
                 name: login.name,
                 email: login.email,
+                isMember: login.role !== "CLIENT",
                 lastSeen: login.lastLoginAt
                   ? `Last signed in ${formatDateTime(login.lastLoginAt)}`
                   : "Has not signed in yet",

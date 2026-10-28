@@ -169,6 +169,15 @@ export async function requireSuperAdmin(): Promise<CurrentUser> {
 export type PortalUser = CurrentUser & { clientId: string };
 
 /**
+ * Whether this account may use the client portal: every CLIENT login, plus a
+ * staff member who is also one of our clients (a portal login that was turned
+ * into a member keeps its link to its company).
+ */
+export function hasPortalAccess(user: { clientId: string | null }): boolean {
+  return Boolean(user.clientId);
+}
+
+/**
  * Guard for the client portal. Returns a user whose `clientId` is guaranteed —
  * every portal query must be scoped by it so one client can never read another's
  * records.
@@ -176,6 +185,6 @@ export type PortalUser = CurrentUser & { clientId: string };
 export async function requirePortalUser(): Promise<PortalUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (!isPortalRole(user.role) || !user.clientId) redirect("/dashboard");
+  if (!hasPortalAccess(user)) redirect(isPortalRole(user.role) ? "/login" : "/dashboard");
   return user as PortalUser;
 }
