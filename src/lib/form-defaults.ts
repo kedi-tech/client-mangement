@@ -19,7 +19,6 @@ export type ClientFormValues = {
   postalCode: string;
   country: string;
   notes: string;
-  ownerId: string;
 };
 
 export const emptyClient: ClientFormValues = {
@@ -36,7 +35,6 @@ export const emptyClient: ClientFormValues = {
   postalCode: "",
   country: "",
   notes: "",
-  ownerId: "",
 };
 
 export type ProjectFormValues = {

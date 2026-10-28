@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState } from "react";
 
 /**
@@ -11,10 +12,17 @@ export function SearchInput({
   placeholder = "Search…",
   paramName = "q",
   basePath,
+  autoFocus,
+  large = false,
+  className,
 }: {
   placeholder?: string;
   paramName?: string;
   basePath?: string;
+  autoFocus?: boolean;
+  /** The big box on the Search page. */
+  large?: boolean;
+  className?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -45,27 +53,18 @@ export function SearchInput({
   }, [value, paramName, basePath, router, searchParams]);
 
   return (
-    <div className="relative">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
-        aria-hidden
-      >
-        <circle cx="11" cy="11" r="7" />
-        <path d="M20 20l-3.5-3.5" />
-      </svg>
-      <input
-        type="search"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        className="block w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-      />
-    </div>
+    <input
+      type="search"
+      value={value}
+      onChange={(event) => setValue(event.target.value)}
+      placeholder={placeholder}
+      aria-label={placeholder}
+      autoFocus={autoFocus}
+      className={cn(
+        "min-w-0 border border-inpb bg-inp text-tx",
+        large ? "rounded-[6px] px-3 py-2.5 text-[15px]" : "rounded-[4px] px-2.5 py-[7px] text-[13px]",
+        className ?? "flex-[1_1_260px]",
+      )}
+    />
   );
 }

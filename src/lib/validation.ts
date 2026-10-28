@@ -85,7 +85,6 @@ export const clientSchema = z.object({
   postalCode: optionalText,
   country: optionalText,
   notes: optionalText,
-  ownerId: optionalText,
 });
 
 export const contactSchema = z.object({

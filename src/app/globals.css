@@ -1,48 +1,258 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+/* Dark mode is a class on <html>, set from the theme cookie (see layout.tsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. The admin app (direction 1b) and the client portal (1f) share
+ * names but not values: the portal re-declares its own under `.portal`. Every
+ * component reads the tokens through the utilities below (`bg-pn`, `text-mu`,
+ * `border-ln`…), so switching theme is only a matter of swapping variables.
+ */
+@theme inline {
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+
+  --color-bg: var(--bg);
+  --color-pn: var(--pn);
+  --color-ln: var(--ln);
+  --color-l2: var(--l2);
+  --color-tx: var(--tx);
+  --color-mu: var(--mu);
+  --color-fa: var(--fa);
+  --color-inp: var(--inp);
+  --color-inpb: var(--inpb);
+  --color-chk: var(--chk);
+  --color-hov: var(--hov);
+  --color-rail: var(--rail);
+  --color-raila: var(--raila);
+  --color-railtx: var(--railtx);
+  --color-ac: var(--ac);
+  --color-ach: var(--ach);
+  --color-acs: var(--acs);
+  --color-red: var(--red);
+  --color-redbg: var(--redbg);
+  --color-grn: var(--grn);
+  --color-bar: var(--bar);
+  --color-barc: var(--barc);
+  --color-grid: var(--grid);
+
+  /* Portal-only surfaces. */
+  --color-card: var(--card);
+  --color-band: var(--band);
+  --color-track: var(--track);
+  --color-fill: var(--fill);
+  --color-chip: var(--chip);
+
+  --shadow-soft: var(--shadow);
 }
 
 :root {
-  --surface: #f6f7f9;
-  --panel: #ffffff;
-  --ink: #0f172a;
-  --muted: #64748b;
-  --line: #e2e8f0;
+  --bg: #f2f3f5;
+  --pn: #fff;
+  --ln: #e1e4e9;
+  --l2: #eef0f3;
+  --tx: #15181d;
+  --mu: #5d6470;
+  --fa: #8a919c;
+  --inp: #fff;
+  --inpb: #d3d7de;
+  --chk: #a9afb9;
+  --hov: #f7f8fa;
+  --rail: #15181d;
+  --raila: #262b33;
+  --railtx: #c9ced6;
+  --ac: #3b5bdb;
+  --ach: #2c46b0;
+  --acs: #e8ecfc;
+  --red: #c0392b;
+  --redbg: #fff6f6;
+  --grn: #1f7a46;
+  --bar: #3b5bdb;
+  --barc: #b9c5f2;
+  --grid: #eef0f3;
+  --shadow: 0 12px 32px rgba(15, 20, 30, 0.12);
+
+  --amber-f: #8a5a0b;
+  --amber-d: #d99a1e;
+  --amber-b: #fbefd5;
+  --emerald-f: #1f6a3f;
+  --emerald-d: #2f9e5f;
+  --emerald-b: #dff3e6;
+  --slate-f: #4c5562;
+  --slate-d: #a3aab5;
+  --slate-b: #eceef1;
+  --sky-f: #1f4f8f;
+  --sky-d: #3b82d6;
+  --sky-b: #ddebfb;
+  --orange-f: #9a4515;
+  --orange-d: #e07a33;
+  --orange-b: #fde6d6;
+  --indigo-f: #3a3f9e;
+  --indigo-d: #5b61d6;
+  --indigo-b: #e4e5fb;
+  --rose-f: #a12a3a;
+  --rose-d: #d9475a;
+  --rose-b: #fbe1e3;
+  --violet-f: #5d2f9c;
+  --violet-d: #8b5cd6;
+  --violet-b: #eee3fb;
+
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #0b1120;
-    --panel: #111827;
-    --ink: #e2e8f0;
-    --muted: #94a3b8;
-    --line: #1f2937;
+:root.dark {
+  --bg: #0e1013;
+  --pn: #16191e;
+  --ln: #272c34;
+  --l2: #1f232a;
+  --tx: #e7e9ed;
+  --mu: #a0a7b2;
+  --fa: #747c88;
+  --inp: #111317;
+  --inpb: #323843;
+  --chk: #5b6370;
+  --hov: #1b1f25;
+  --rail: #0a0c0f;
+  --raila: #1f232a;
+  --railtx: #aab1bc;
+  --ac: #6d86ea;
+  --ach: #8fa2f0;
+  --acs: #1c2440;
+  --red: #f0868f;
+  --redbg: #221416;
+  --grn: #7fd3a2;
+  --bar: #6d86ea;
+  --barc: #34406e;
+  --grid: #1f232a;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  --amber-f: #f0c46a;
+  --amber-d: #b98420;
+  --amber-b: #3a2c10;
+  --emerald-f: #7fd3a2;
+  --emerald-d: #2f9e5f;
+  --emerald-b: #12301f;
+  --slate-f: #b3bac5;
+  --slate-d: #5e6673;
+  --slate-b: #252a31;
+  --sky-f: #8fbcf2;
+  --sky-d: #3b82d6;
+  --sky-b: #132a45;
+  --orange-f: #f3a774;
+  --orange-d: #c2662a;
+  --orange-b: #3a2214;
+  --indigo-f: #a9acf3;
+  --indigo-d: #5b61d6;
+  --indigo-b: #22244a;
+  --rose-f: #f19aa6;
+  --rose-d: #d9475a;
+  --rose-b: #3d1a20;
+  --violet-f: #c6a6f2;
+  --violet-d: #8b5cd6;
+  --violet-b: #2c1f45;
+
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------- client portal (1f) */
+
+.portal {
+  --bg: #f1f3f9;
+  --card: #fff;
+  --tx: #1d2233;
+  --mu: #535a70;
+  --fa: #8b91a6;
+  --ln: #eceef5;
+  --band: #3b5bdb;
+  --ac: #3b5bdb;
+  --ach: #2c46b0;
+  --acs: #e8ecfc;
+  --track: #eef0f8;
+  --fill: #8ea2f0;
+  --inp: #fff;
+  --inpb: #d8dcea;
+  --shadow: 0 8px 24px rgba(30, 40, 90, 0.08);
+  --red: #b4283a;
+  --grn: #1f7a46;
+  --chip: #f1f3f9;
+  --rose-f: #9c2534;
+}
+
+:root.dark .portal {
+  --bg: #0f1220;
+  --card: #181c2c;
+  --tx: #e6e8f0;
+  --mu: #a3a9bd;
+  --fa: #7a8098;
+  --ln: #252a3c;
+  --band: #2a3f9e;
+  --ac: #8fa2f0;
+  --ach: #adbcf5;
+  --acs: #222c55;
+  --track: #252a3c;
+  --fill: #6d86ea;
+  --inp: #12152a;
+  --inpb: #2f3550;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --red: #f19aa6;
+  --grn: #7fd3a2;
+  --chip: #21263a;
+  --rose-f: #f19aa6;
+}
+
+/* ------------------------------------------------------------------- base */
+
+/*
+ * Inside `@layer base` so Tailwind utilities (text-white, text-tx…) can
+ * override these defaults; unlayered rules would beat every utility.
+ */
+@layer base {
+
+  html,
+  body {
+    min-height: 100%;
   }
-}
 
-html,
-body {
-  height: 100%;
-}
+  body {
+    margin: 0;
+    background-color: var(--bg);
+    color: var(--tx);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
 
-body {
-  background-color: var(--surface);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-}
+  a {
+    color: var(--ac);
+    text-decoration: none;
+  }
 
-/* Consistent focus ring across every interactive element. */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid #4f46e5;
-  outline-offset: 2px;
-  border-radius: 0.375rem;
-}
+  a:hover {
+    color: var(--ach);
+  }
 
-::selection {
-  background-color: #c7d2fe;
-  color: #1e1b4b;
+  button {
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--fa);
+  }
+
+  /* Consistent focus ring across every interactive element. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
+  }
+
+  :where(input, select, textarea):focus {
+    border-color: var(--ac);
+    outline: none;
+  }
 }

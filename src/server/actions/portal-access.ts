@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { hashPassword, requireUser } from "@/lib/session";
 import { toFieldErrors, type FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
+import { ownedClient, ownedPortalUser } from "@/server/scope";
 
 const inviteSchema = z.object({
   clientId: z.string().min(1),
@@ -33,10 +34,7 @@ export async function createPortalUserAction(
   });
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
-  const client = await prisma.client.findUnique({
-    where: { id: parsed.data.clientId },
-    select: { id: true, name: true },
-  });
+  const client = await ownedClient(user, parsed.data.clientId);
   if (!client) return { error: "That client no longer exists." };
 
   const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
@@ -84,10 +82,7 @@ export async function resetPortalPasswordAction(
   });
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
-  const portalUser = await prisma.user.findFirst({
-    where: { id: parsed.data.userId, role: "CLIENT" },
-    select: { id: true, email: true, clientId: true },
-  });
+  const portalUser = await ownedPortalUser(user, parsed.data.userId);
   if (!portalUser) return { error: "That portal account no longer exists." };
 
   await prisma.user.update({
@@ -118,10 +113,7 @@ export async function revokePortalUserAction(formData: FormData): Promise<void> 
   const user = await requireUser();
   const userId = String(formData.get("userId") ?? "");
 
-  const portalUser = await prisma.user.findFirst({
-    where: { id: userId, role: "CLIENT" },
-    select: { id: true, email: true, clientId: true },
-  });
+  const portalUser = await ownedPortalUser(user, userId);
   if (!portalUser) return;
 
   await prisma.user.delete({ where: { id: portalUser.id } });

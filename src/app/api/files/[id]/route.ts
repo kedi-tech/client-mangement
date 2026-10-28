@@ -11,8 +11,8 @@ import { isInlineSafe } from "@/lib/upload-rules";
 /**
  * Authorised file download.
  *
- * Uploads are never exposed as static assets: staff may fetch any file, and a
- * portal user may fetch only files belonging to their own client. Everything
+ * Uploads are never exposed as static assets: staff may fetch files of clients
+ * they own, and a portal user only files belonging to their own client. Everything
  * else gets a 404 rather than a 403, so the endpoint reveals nothing about which
  * ids exist.
  */
@@ -27,7 +27,13 @@ export async function GET(
   const attachment = await prisma.attachment.findUnique({ where: { id } });
   if (!attachment) return new Response("Not found", { status: 404 });
 
-  if (user.role === "CLIENT" && attachment.clientId !== user.clientId) {
+  // Portal users reach only their own client's files; staff only files of
+  // clients they own.
+  const allowed =
+    user.role === "CLIENT"
+      ? attachment.clientId === user.clientId
+      : Boolean(await prisma.client.findFirst({ where: { id: attachment.clientId, ownerId: user.id }, select: { id: true } }));
+  if (!allowed) {
     return new Response("Not found", { status: 404 });
   }
 

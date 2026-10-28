@@ -88,49 +88,41 @@ export function label(value: string): string {
     .join(" ");
 }
 
-/** Tailwind classes for the status pill of each domain value. */
-export const STATUS_TONES: Record<string, string> = {
-  // Client
-  LEAD: "bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/30",
-  ACTIVE:
-    "bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/30",
-  INACTIVE:
-    "bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-400/30",
-  ARCHIVED:
-    "bg-slate-100 text-slate-500 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-400/30",
-  // Project
-  PLANNING:
-    "bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/30",
-  ON_HOLD:
-    "bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-400/30",
-  COMPLETED:
-    "bg-indigo-50 text-indigo-700 ring-indigo-600/20 dark:bg-indigo-500/10 dark:text-indigo-300 dark:ring-indigo-400/30",
-  CANCELLED:
-    "bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/30",
-  // Task
-  TODO: "bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-400/30",
-  IN_PROGRESS:
-    "bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/30",
-  DONE: "bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/30",
-  // Invoice
-  DRAFT:
-    "bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-400/30",
-  SENT: "bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/30",
-  PAID: "bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/30",
-  OVERDUE:
-    "bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/30",
-  VOID: "bg-slate-100 text-slate-500 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-400/30",
-  // Roles
-  SUPER_ADMIN:
-    "bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/30",
-  MEMBER:
-    "bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/30",
-  // Priority
-  LOW: "bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-400/30",
-  MEDIUM:
-    "bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/30",
-  HIGH: "bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/30",
+/**
+ * Colour family for the status pill of each domain value. Each tone maps to the
+ * `--{tone}-f` (text), `--{tone}-d` (border/dot) and `--{tone}-b` (fill) tokens
+ * in globals.css, so pills follow the theme automatically.
+ */
+export type Tone = "amber" | "emerald" | "slate" | "sky" | "orange" | "indigo" | "rose" | "violet";
+
+export const STATUS_TONES: Record<string, Tone> = {
+  LEAD: "amber",
+  MEDIUM: "amber",
+  ACTIVE: "emerald",
+  DONE: "emerald",
+  PAID: "emerald",
+  INACTIVE: "slate",
+  ARCHIVED: "slate",
+  TODO: "slate",
+  DRAFT: "slate",
+  VOID: "slate",
+  LOW: "slate",
+  ADMIN: "slate",
+  PLANNING: "sky",
+  IN_PROGRESS: "sky",
+  SENT: "sky",
+  MEMBER: "sky",
+  ON_HOLD: "orange",
+  COMPLETED: "indigo",
+  CANCELLED: "rose",
+  OVERDUE: "rose",
+  HIGH: "rose",
+  SUPER_ADMIN: "violet",
 };
+
+export function toneFor(value: string): Tone {
+  return STATUS_TONES[value] ?? "slate";
+}
 
 /* -------------------------------------------------------------- oversight */
 
@@ -182,6 +174,38 @@ export type ActivityCategory = keyof typeof ACTIVITY_CATEGORIES;
 
 export const ACTIVITY_CATEGORY_KEYS = Object.keys(ACTIVITY_CATEGORIES) as ActivityCategory[];
 
+/**
+ * What Oversight shows instead of the logged message for anything touching a
+ * client. Staff only ever see their own clients, the super admin included, so
+ * the oversight feed says *what kind* of thing happened and never to whom.
+ * Types not listed (team administration) keep their original message.
+ */
+export const OVERSIGHT_GENERIC_MESSAGES: Record<string, string> = {
+  CLIENT_CREATED: "Added a client",
+  CLIENT_UPDATED: "Updated a client's details",
+  CLIENT_STATUS_CHANGED: "Changed a client's status",
+  CLIENT_DELETED: "Deleted a client",
+  CONTACT_ADDED: "Added a contact",
+  NOTE_ADDED: "Added a note",
+  PROJECT_CREATED: "Started a project",
+  PROJECT_STATUS_CHANGED: "Changed a project's status",
+  PROJECT_DELETED: "Deleted a project",
+  TASK_CREATED: "Created a task",
+  TASK_COMPLETED: "Completed a task",
+  INVOICE_CREATED: "Created an invoice",
+  INVOICE_STATUS_CHANGED: "Changed an invoice's status",
+  INVOICE_DELETED: "Deleted an invoice",
+  FILE_SHARED: "Shared a file with a client",
+  FILE_RECEIVED: "Received a file from a client",
+  PORTAL_ACCESS_GRANTED: "Gave a client portal access",
+  PORTAL_ACCESS_REVOKED: "Revoked a client's portal access",
+  PORTAL_PASSWORD_RESET: "Reset a client's portal password",
+};
+
+export function oversightMessage(entry: { type: string; message: string; clientId: string | null }): string {
+  return OVERSIGHT_GENERIC_MESSAGES[entry.type] ?? (entry.clientId ? "Worked on a client" : entry.message);
+}
+
 /** Which bucket an activity type falls in; unknown types read as client work. */
 export function activityCategory(type: string): ActivityCategory {
   for (const key of ACTIVITY_CATEGORY_KEYS) {
@@ -190,13 +214,10 @@ export function activityCategory(type: string): ActivityCategory {
   return "WORK";
 }
 
-/** Tones for the category pill, reusing the palette above. */
-export const ACTIVITY_CATEGORY_TONES: Record<ActivityCategory, string> = {
-  ACCESS:
-    "bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/30",
-  DELETION:
-    "bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-400/30",
-  FILES:
-    "bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/30",
-  WORK: "bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-400/30",
+/** Tones for the category pill and activity dots, reusing the palette above. */
+export const ACTIVITY_CATEGORY_TONES: Record<ActivityCategory, Tone> = {
+  ACCESS: "violet",
+  DELETION: "rose",
+  FILES: "sky",
+  WORK: "slate",
 };

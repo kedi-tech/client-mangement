@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Badge, Card, PageHeader, Table, Td, Th } from "@/components/ui";
+import { BandBadge, PortalCard, PortalDetail, PortalHero, PortalMain } from "@/components/portal-ui";
+import { label } from "@/lib/constants";
 import { formatDate, formatMoney } from "@/lib/format";
 import { lineTotalCents } from "@/lib/invoice";
 import { requirePortalUser } from "@/lib/session";
 import { getPortalInvoice } from "@/server/queries";
 
 type Params = Promise<{ id: string }>;
+
+const LINE_COLS = "minmax(0,1fr) 44px 104px 104px";
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const user = await requirePortalUser();
@@ -24,129 +27,106 @@ export default async function PortalInvoicePage({ params }: { params: Params }) 
   const invoice = await getPortalInvoice(user.clientId, id);
   if (!invoice) notFound();
 
-  const billTo = [
-    invoice.client.company ?? invoice.client.name,
+  const billName = invoice.client.company ?? invoice.client.name;
+  const billAddress = [
     invoice.client.addressLine,
     [invoice.client.city, invoice.client.state].filter(Boolean).join(", "),
     [invoice.client.postalCode, invoice.client.country].filter(Boolean).join(" "),
     invoice.client.email,
-  ].filter((line) => line && line.trim() !== "");
+  ]
+    .filter((line) => line && line.trim() !== "")
+    .join("\n");
 
   const paid = invoice.effectiveStatus === "PAID";
 
   return (
     <>
-      <PageHeader
+      <PortalHero
         title={invoice.number}
-        description={`Issued ${formatDate(invoice.issueDate)} · due ${formatDate(invoice.dueDate)}`}
-        breadcrumb={
-          <Link href="/portal/invoices" className="hover:text-indigo-600 hover:underline">
-            ← Invoices
-          </Link>
-        }
-        actions={<Badge value={invoice.effectiveStatus} className="self-center" />}
+        sub={`Issued ${formatDate(invoice.issueDate)} · due ${formatDate(invoice.dueDate)}`}
+        crumb={{ href: "/portal/invoices", label: "Invoices" }}
+        action={<BandBadge value={invoice.effectiveStatus} />}
       />
-
-      <Card className="mx-auto max-w-3xl">
-        <div className="flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 px-6 py-6 dark:border-slate-800">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Billed to
-            </p>
-            <div className="mt-1 space-y-0.5 text-sm text-slate-700 dark:text-slate-300">
-              {billTo.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
+      <PortalMain>
+        <div className="grid grid-cols-1 items-start gap-4 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">
+          <PortalCard raised className="flex flex-col gap-6 p-[18px] min-[720px]:p-7">
+            <div className="flex flex-wrap justify-between gap-5">
+              <div>
+                <div className="mb-1.5 text-[12.5px] text-fa">Billed to</div>
+                <div className="text-[15px] font-medium">{billName}</div>
+                <div className="text-[13.5px] leading-normal whitespace-pre-line text-mu">{billAddress}</div>
+              </div>
+              <div className="text-right">
+                <div className="mb-1.5 text-[12.5px] text-fa">{paid ? "Amount paid" : "Amount due"}</div>
+                <div className="text-[30px] font-semibold">{formatMoney(invoice.totals.totalCents)}</div>
+                {paid && invoice.paidAt ? (
+                  <div className="mt-0.5 text-[13px] text-grn">Received {formatDate(invoice.paidAt)}</div>
+                ) : null}
+              </div>
             </div>
-            {invoice.project ? (
-              <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                Project:{" "}
-                <Link
-                  href={`/portal/projects/${invoice.project.id}`}
-                  className="text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  {invoice.project.name}
+
+            <div className="overflow-x-auto">
+              <div className="min-w-[400px]">
+                <div className="grid gap-2.5 pb-2 text-[12px] text-fa" style={{ gridTemplateColumns: LINE_COLS }}>
+                  <span>Description</span>
+                  <span className="text-right">Qty</span>
+                  <span className="text-right">Unit price</span>
+                  <span className="text-right">Amount</span>
+                </div>
+                {invoice.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid gap-2.5 border-t border-ln py-3 text-[14px]"
+                    style={{ gridTemplateColumns: LINE_COLS }}
+                  >
+                    <span>{item.description}</span>
+                    <span className="text-right">{item.quantity}</span>
+                    <span className="text-right">{formatMoney(item.unitPriceCents)}</span>
+                    <span className="text-right">{formatMoney(lineTotalCents(item))}</span>
+                  </div>
+                ))}
+                <div className="grid grid-cols-[minmax(0,1fr)_130px] justify-items-end gap-x-2.5 gap-y-2 border-t border-ln pt-3.5 text-[14px]">
+                  <span className="text-mu">Subtotal</span>
+                  <span>{formatMoney(invoice.totals.subtotalCents)}</span>
+                  <span className="text-mu">Tax ({invoice.taxRate}%)</span>
+                  <span>{formatMoney(invoice.totals.taxCents)}</span>
+                  <span className="font-semibold">Total</span>
+                  <span className="font-semibold">{formatMoney(invoice.totals.totalCents)}</span>
+                </div>
+              </div>
+            </div>
+
+            {invoice.notes ? (
+              <div className="rounded-[14px] bg-chip px-4 py-3.5 text-[13.5px] leading-normal whitespace-pre-line text-mu">
+                {invoice.notes}
+              </div>
+            ) : null}
+          </PortalCard>
+
+          <div className="flex flex-col gap-4">
+            <PortalCard>
+              <PortalDetail term="Status" border="bottom">
+                {label(invoice.effectiveStatus)}
+              </PortalDetail>
+              <PortalDetail term="Issued" border="bottom">
+                {formatDate(invoice.issueDate)}
+              </PortalDetail>
+              <PortalDetail term="Due" border="bottom">
+                {formatDate(invoice.dueDate)}
+              </PortalDetail>
+              {invoice.project ? (
+                <Link href={`/portal/projects/${invoice.project.id}`} className="mt-3 block text-[13.5px]">
+                  View {invoice.project.name} →
                 </Link>
-              </p>
-            ) : null}
-          </div>
-          <div className="text-right">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {paid ? "Amount paid" : "Amount due"}
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-              {formatMoney(invoice.totals.totalCents)}
-            </p>
-            {paid && invoice.paidAt ? (
-              <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
-                Received {formatDate(invoice.paidAt)}
-              </p>
-            ) : null}
+              ) : null}
+            </PortalCard>
+            <div className="rounded-[20px] bg-acs px-5 py-[18px] text-[13.5px] leading-[1.55]">
+              Need a change to this invoice, or a copy for your finance team? Reply to your account manager and
+              we&rsquo;ll sort it out.
+            </div>
           </div>
         </div>
-
-        <Table>
-          <thead>
-            <tr>
-              <Th>Description</Th>
-              <Th className="text-right">Qty</Th>
-              <Th className="text-right">Unit price</Th>
-              <Th className="text-right">Amount</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items.map((item) => (
-              <tr key={item.id}>
-                <Td className="text-slate-900 dark:text-slate-100">{item.description}</Td>
-                <Td className="text-right tabular-nums">{item.quantity}</Td>
-                <Td className="text-right tabular-nums">{formatMoney(item.unitPriceCents)}</Td>
-                <Td className="text-right font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatMoney(lineTotalCents(item))}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-
-        <div className="px-6 py-5">
-          <dl className="ml-auto max-w-xs space-y-1.5 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-slate-500 dark:text-slate-400">Subtotal</dt>
-              <dd className="tabular-nums text-slate-900 dark:text-slate-100">
-                {formatMoney(invoice.totals.subtotalCents)}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500 dark:text-slate-400">Tax ({invoice.taxRate}%)</dt>
-              <dd className="tabular-nums text-slate-900 dark:text-slate-100">
-                {formatMoney(invoice.totals.taxCents)}
-              </dd>
-            </div>
-            <div className="flex justify-between border-t border-slate-200 pt-1.5 text-base font-semibold dark:border-slate-800">
-              <dt className="text-slate-900 dark:text-slate-100">Total</dt>
-              <dd className="tabular-nums text-slate-900 dark:text-slate-100">
-                {formatMoney(invoice.totals.totalCents)}
-              </dd>
-            </div>
-          </dl>
-        </div>
-
-        {invoice.notes ? (
-          <div className="border-t border-slate-200 px-6 py-5 dark:border-slate-800">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Notes
-            </p>
-            <p className="mt-1 whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">
-              {invoice.notes}
-            </p>
-          </div>
-        ) : null}
-      </Card>
-
-      <p className="mx-auto mt-4 max-w-3xl text-xs text-slate-500 dark:text-slate-400">
-        Need a change to this invoice, or a copy for your finance team? Reply to your account
-        manager and we&rsquo;ll sort it out.
-      </p>
+      </PortalMain>
     </>
   );
 }

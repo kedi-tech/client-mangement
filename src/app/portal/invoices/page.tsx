@@ -1,21 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import {
-  Badge,
-  Card,
-  EmptyState,
-  PageHeader,
-  Table,
-  Td,
-  Th,
-} from "@/components/ui";
-import { formatDate, formatMoney } from "@/lib/format";
-import { isOutstanding } from "@/lib/invoice";
+import { PortalCard, PortalHero, PortalMain, PortalPill } from "@/components/portal-ui";
+import { formatDate, formatMoney, plural } from "@/lib/format";
 import { requirePortalUser } from "@/lib/session";
 import { getPortalOverview } from "@/server/queries";
 
 export const metadata: Metadata = { title: "Invoices" };
+
+const COLS = "110px minmax(140px,1fr) 100px 120px 120px 120px";
 
 export default async function PortalInvoicesPage() {
   const user = await requirePortalUser();
@@ -23,76 +16,62 @@ export default async function PortalInvoicesPage() {
 
   return (
     <>
-      <PageHeader
+      <PortalHero
         title="Invoices"
-        description={
+        sub={
           totals.outstandingCents > 0
             ? `${formatMoney(totals.outstandingCents)} outstanding`
             : "Everything is settled"
         }
       />
-
-      <Card>
+      <PortalMain>
         {invoices.length === 0 ? (
-          <EmptyState
-            title="No invoices yet"
-            description="Issued invoices will appear here as soon as they are sent."
-          />
+          <PortalCard raised className="px-[22px] py-10 text-center text-[14px] text-mu">
+            No invoices yet.
+          </PortalCard>
         ) : (
-          <>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Invoice</Th>
-                  <Th>Project</Th>
-                  <Th>Status</Th>
-                  <Th>Issued</Th>
-                  <Th>Due</Th>
-                  <Th className="text-right">Amount</Th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="overflow-hidden rounded-[20px] bg-card shadow-soft">
+            <div className="overflow-x-auto">
+              <div className="min-w-[640px]">
+                <div
+                  className="grid gap-3 px-[22px] pt-4 pb-2.5 text-[12px] text-fa"
+                  style={{ gridTemplateColumns: COLS }}
+                >
+                  <span>Invoice</span>
+                  <span>Project</span>
+                  <span>Status</span>
+                  <span>Issued</span>
+                  <span>Due</span>
+                  <span className="text-right">Amount</span>
+                </div>
                 {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                    <Td>
-                      <Link
-                        href={`/portal/invoices/${invoice.id}`}
-                        className="font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
-                      >
-                        {invoice.number}
-                      </Link>
-                    </Td>
-                    <Td>{invoice.project?.name ?? "—"}</Td>
-                    <Td>
-                      <Badge value={invoice.effectiveStatus} />
-                    </Td>
-                    <Td className="whitespace-nowrap text-xs">{formatDate(invoice.issueDate)}</Td>
-                    <Td className="whitespace-nowrap text-xs">{formatDate(invoice.dueDate)}</Td>
-                    <Td className="text-right font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                      {formatMoney(invoice.totals.totalCents)}
-                    </Td>
-                  </tr>
+                  <Link
+                    key={invoice.id}
+                    href={`/portal/invoices/${invoice.id}`}
+                    className="grid items-center gap-3 border-t border-ln px-[22px] py-3 text-[14px] text-tx hover:bg-chip hover:text-tx"
+                    style={{ gridTemplateColumns: COLS }}
+                  >
+                    <span className="font-medium">{invoice.number}</span>
+                    <span className="truncate text-mu">{invoice.project?.name ?? "—"}</span>
+                    <span>
+                      <PortalPill value={invoice.effectiveStatus} small />
+                    </span>
+                    <span className="text-[13px] text-mu">{formatDate(invoice.issueDate)}</span>
+                    <span className="text-[13px] text-mu">{formatDate(invoice.dueDate)}</span>
+                    <span className="text-right">{formatMoney(invoice.totals.totalCents)}</span>
+                  </Link>
                 ))}
-              </tbody>
-            </Table>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 text-xs dark:border-slate-800">
-              <span className="text-slate-500 dark:text-slate-400">
-                {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
-              </span>
-              <span className="text-slate-700 dark:text-slate-200">
-                Outstanding:{" "}
-                <span className="font-semibold tabular-nums">
-                  {formatMoney(
-                    invoices
-                      .filter((invoice) => isOutstanding(invoice.effectiveStatus))
-                      .reduce((sum, invoice) => sum + invoice.totals.totalCents, 0),
-                  )}
-                </span>
+              </div>
+            </div>
+            <div className="flex justify-between border-t border-ln px-[22px] py-3.5 text-[13.5px] text-mu">
+              <span>{plural(invoices.length, "invoice")}</span>
+              <span>
+                Outstanding <strong className="font-semibold text-tx">{formatMoney(totals.outstandingCents)}</strong>
               </span>
             </div>
-          </>
+          </div>
         )}
-      </Card>
+      </PortalMain>
     </>
   );
 }

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { projectSchema, toFieldErrors, type FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
+import { ownedClient, ownedProject } from "@/server/scope";
 
 function readProjectForm(formData: FormData) {
   return projectSchema.safeParse({
@@ -39,7 +40,7 @@ export async function createProjectAction(
   const orderError = validateDateOrder(parsed.data.startDate, parsed.data.endDate);
   if (orderError) return orderError;
 
-  const client = await prisma.client.findUnique({ where: { id: parsed.data.clientId } });
+  const client = await ownedClient(user, parsed.data.clientId);
   if (!client) return { error: "That client no longer exists." };
 
   const { budget, ...rest } = parsed.data;
@@ -74,12 +75,15 @@ export async function updateProjectAction(
   const orderError = validateDateOrder(parsed.data.startDate, parsed.data.endDate);
   if (orderError) return orderError;
 
-  const existing = await prisma.project.findUnique({ where: { id: projectId } });
+  const existing = await ownedProject(user, projectId);
   if (!existing) return { error: "That project no longer exists." };
+  if (!(await ownedClient(user, parsed.data.clientId))) {
+    return { fieldErrors: { clientId: ["Choose one of your clients."] } };
+  }
 
   const { budget, ...rest } = parsed.data;
   const project = await prisma.project.update({
-    where: { id: projectId },
+    where: { id: existing.id },
     data: { ...rest, budgetCents: budget },
   });
 
@@ -104,10 +108,10 @@ export async function updateProjectAction(
 export async function deleteProjectAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const projectId = String(formData.get("projectId") ?? "");
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  const project = await ownedProject(user, projectId);
   if (!project) redirect("/projects");
 
-  await prisma.project.delete({ where: { id: projectId } });
+  await prisma.project.delete({ where: { id: project.id } });
 
   await logActivity({
     type: "PROJECT_DELETED",

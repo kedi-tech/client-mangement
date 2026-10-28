@@ -1,33 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ConfirmForm } from "@/components/confirm-form";
-import { FilterSelect, Pagination } from "@/components/filters";
+import { RowActions } from "@/components/row-actions";
+import { FilterBar, FilterSelect, Pagination } from "@/components/filters";
 import { SearchInput } from "@/components/search-input";
 import {
-  Avatar,
   Card,
-  EmptyState,
+  EmptyBox,
+  GridHead,
+  GridRow,
+  GridTable,
   LinkButton,
   PageHeader,
-  Table,
-  Td,
-  Th,
+  Pill,
 } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { like } from "@/lib/search";
-import { initials } from "@/lib/format";
 import { requireUser } from "@/lib/session";
+import { clientScope, viaClient } from "@/server/scope";
 import { deleteContactAction } from "@/server/actions/contacts";
 
 export const metadata: Metadata = { title: "Contacts" };
 
 const PAGE_SIZE = 20;
+const COLS = "minmax(200px,1.6fr) minmax(150px,1fr) minmax(180px,1.2fr) 130px 130px";
 
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 export default async function ContactsPage({ searchParams }: { searchParams: SearchParams }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
 
   const q = params.q?.trim() ?? "";
@@ -35,6 +36,7 @@ export default async function ContactsPage({ searchParams }: { searchParams: Sea
   const page = Math.max(1, Number(params.page ?? "1") || 1);
 
   const where = {
+    ...viaClient(user),
     ...(clientId ? { clientId } : {}),
     ...(q
       ? {
@@ -58,16 +60,17 @@ export default async function ContactsPage({ searchParams }: { searchParams: Sea
       take: PAGE_SIZE,
       include: { client: { select: { id: true, name: true } } },
     }),
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const filtered = Boolean(q || clientId);
 
   return (
     <>
       <PageHeader
         title="Contacts"
-        description="Every person across your client accounts."
+        description="People at every client, sorted by last name."
         actions={
           <LinkButton href="/clients" variant="secondary">
             Add via a client
@@ -75,105 +78,75 @@ export default async function ContactsPage({ searchParams }: { searchParams: Sea
         }
       />
 
-      <Card>
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-          <div className="min-w-56 flex-1">
-            <SearchInput placeholder="Search name, email, title, client…" />
-          </div>
-          <FilterSelect
-            name="clientId"
-            label="Client"
-            allLabel="All clients"
-            options={clients.map((client) => ({ value: client.id, label: client.name }))}
-          />
-        </div>
+      <FilterBar>
+        <SearchInput placeholder="Search name, email, title, client" />
+        <FilterSelect
+          name="clientId"
+          label="Client"
+          allLabel="All clients"
+          options={clients.map((client) => ({ value: client.id, label: client.name }))}
+        />
+      </FilterBar>
 
-        {contacts.length === 0 ? (
-          <EmptyState
-            title="No contacts found"
-            description="Contacts are added from a client's detail page."
-            action={<LinkButton href="/clients">Browse clients</LinkButton>}
-          />
-        ) : (
-          <>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Name</Th>
-                  <Th>Client</Th>
-                  <Th>Email</Th>
-                  <Th>Phone</Th>
-                  <Th className="text-right">Actions</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {contacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                    <Td>
-                      <div className="flex items-center gap-3">
-                        <Avatar text={initials(`${contact.firstName} ${contact.lastName}`)} />
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-slate-100">
-                            {contact.firstName} {contact.lastName}
-                            {contact.isPrimary ? (
-                              <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
-                                Primary
-                              </span>
-                            ) : null}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {contact.title ?? "—"}
-                          </p>
-                        </div>
-                      </div>
-                    </Td>
-                    <Td>
-                      <Link
-                        href={`/clients/${contact.client.id}`}
-                        className="hover:text-indigo-600 hover:underline dark:hover:text-indigo-400"
-                      >
-                        {contact.client.name}
-                      </Link>
-                    </Td>
-                    <Td>
-                      {contact.email ? (
-                        <a
-                          href={`mailto:${contact.email}`}
-                          className="text-indigo-600 hover:underline dark:text-indigo-400"
-                        >
-                          {contact.email}
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </Td>
-                    <Td>{contact.phone ?? "—"}</Td>
-                    <Td>
-                      <div className="flex items-center justify-end gap-1">
-                        <Link
-                          href={`/contacts/${contact.id}/edit`}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
-                        >
-                          Edit
-                        </Link>
-                        <ConfirmForm
-                          action={deleteContactAction}
-                          hidden={{ contactId: contact.id }}
-                          confirmMessage={`Delete ${contact.firstName} ${contact.lastName}?`}
-                          variant="subtle"
-                        >
-                          Delete
-                        </ConfirmForm>
-                      </div>
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-            <Pagination page={page} pageCount={pageCount} total={total} searchParams={params} />
-          </>
-        )}
-      </Card>
+      {contacts.length === 0 ? (
+        <EmptyBox
+          title={filtered ? "No contacts match those filters" : "No contacts yet"}
+          description={
+            filtered ? "Try clearing the search or filters." : "Contacts are added from a client's page."
+          }
+        />
+      ) : (
+        <>
+          <Card>
+            <GridTable minWidth={780}>
+              <GridHead cols={COLS}>
+                <span>Name</span>
+                <span>Client</span>
+                <span>Email</span>
+                <span>Phone</span>
+                <span className="text-right">Actions</span>
+              </GridHead>
+              {contacts.map((contact) => (
+                <GridRow key={contact.id} cols={COLS}>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      {contact.firstName} {contact.lastName}
+                      {contact.isPrimary ? (
+                        <Pill accent className="px-[5px] text-[10.5px] font-medium">
+                          Primary
+                        </Pill>
+                      ) : null}
+                    </span>
+                    <span className="block text-[11.5px] text-fa">{contact.title ?? ""}</span>
+                  </span>
+                  <Link href={`/clients/${contact.client.id}`} className="truncate">
+                    {contact.client.name}
+                  </Link>
+                  <span className="truncate text-mu">
+                    {contact.email ? (
+                      <a href={`mailto:${contact.email}`} className="text-mu hover:text-ac">
+                        {contact.email}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </span>
+                  <span className="text-mu">{contact.phone ?? "—"}</span>
+                  <RowActions
+                    editHref={`/contacts/${contact.id}/edit`}
+                    remove={{
+                      action: deleteContactAction,
+                      hidden: { contactId: contact.id },
+                      confirmMessage: `Delete ${contact.firstName} ${contact.lastName}?`,
+                    }}
+                  />
+                </GridRow>
+              ))}
+            </GridTable>
+          </Card>
+          <Pagination page={page} pageCount={pageCount} total={total} noun="contact" searchParams={params} />
+        </>
+      )}
     </>
   );
 }

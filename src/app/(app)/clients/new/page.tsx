@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { PageHeader } from "@/components/ui";
-import { STAFF_ONLY } from "@/lib/constants";
-import { prisma } from "@/lib/db";
+import { BackLink, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/session";
 import { emptyClient } from "@/lib/form-defaults";
 import { createClientAction } from "@/server/actions/clients";
@@ -12,31 +9,22 @@ import { ClientForm } from "../client-form";
 export const metadata: Metadata = { title: "New client" };
 
 export default async function NewClientPage() {
-  const user = await requireUser();
-  const owners = await prisma.user.findMany({
-    where: STAFF_ONLY,
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  await requireUser();
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <PageHeader
         title="New client"
-        description="Add a company to your workspace."
         breadcrumb={
-          <Link href="/clients" className="hover:text-indigo-600 hover:underline">
-            ← Clients
-          </Link>
+          <BackLink href={"/clients"}>Clients</BackLink>
         }
       />
       <ClientForm
         action={createClientAction}
-        values={{ ...emptyClient, ownerId: user.id }}
-        owners={owners}
+        values={emptyClient}
         submitLabel="Create client"
         cancelHref="/clients"
       />
-    </div>
+    </>
   );
 }

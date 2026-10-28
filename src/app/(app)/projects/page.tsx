@@ -1,32 +1,37 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { FilterSelect, Pagination } from "@/components/filters";
+import { FilterBar, FilterSelect, Pagination } from "@/components/filters";
+import { RowActions } from "@/components/row-actions";
 import { SearchInput } from "@/components/search-input";
 import {
   Badge,
   Card,
-  EmptyState,
+  EmptyBox,
+  GridHead,
+  GridRow,
+  GridTable,
   LinkButton,
   PageHeader,
-  Table,
-  Td,
-  Th,
+  Stack,
 } from "@/components/ui";
 import { PROJECT_STATUSES, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { like } from "@/lib/search";
 import { formatDate, formatMoney } from "@/lib/format";
+import { like } from "@/lib/search";
 import { requireUser } from "@/lib/session";
+import { deleteProjectAction } from "@/server/actions/projects";
+import { clientScope, viaClient } from "@/server/scope";
 
 export const metadata: Metadata = { title: "Projects" };
 
 const PAGE_SIZE = 15;
+const COLS = "minmax(220px,2fr) minmax(140px,1fr) 100px 100px 60px 180px 190px";
 
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 export default async function ProjectsPage({ searchParams }: { searchParams: SearchParams }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
 
   const q = params.q?.trim() ?? "";
@@ -35,15 +40,12 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
   const page = Math.max(1, Number(params.page ?? "1") || 1);
 
   const where = {
+    ...viaClient(user),
     ...(status ? { status } : {}),
     ...(clientId ? { clientId } : {}),
     ...(q
       ? {
-          OR: [
-            { name: like(q) },
-            { description: like(q) },
-            { client: { name: like(q) } },
-          ],
+          OR: [{ name: like(q) }, { description: like(q) }, { client: { name: like(q) } }],
         }
       : {}),
   };
@@ -60,99 +62,101 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
         _count: { select: { tasks: true } },
       },
     }),
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const filtered = Boolean(q || status || clientId);
 
   return (
     <>
       <PageHeader
         title="Projects"
-        description="Engagements in flight, their budgets and timelines."
+        description="Every piece of work across your clients."
         actions={<LinkButton href="/projects/new">New project</LinkButton>}
       />
 
-      <Card>
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-          <div className="min-w-56 flex-1">
-            <SearchInput placeholder="Search projects…" />
-          </div>
-          <FilterSelect
-            name="status"
-            label="Status"
-            allLabel="Any status"
-            options={PROJECT_STATUSES.map((value) => ({ value, label: label(value) }))}
-          />
-          <FilterSelect
-            name="clientId"
-            label="Client"
-            allLabel="All clients"
-            options={clients.map((client) => ({ value: client.id, label: client.name }))}
-          />
-        </div>
+      <FilterBar>
+        <SearchInput placeholder="Search name, description, client" />
+        <FilterSelect
+          name="status"
+          label="Status"
+          allLabel="Any status"
+          options={PROJECT_STATUSES.map((value) => ({ value, label: label(value) }))}
+        />
+        <FilterSelect
+          name="clientId"
+          label="Client"
+          allLabel="All clients"
+          options={clients.map((client) => ({ value: client.id, label: client.name }))}
+        />
+      </FilterBar>
 
-        {projects.length === 0 ? (
-          <EmptyState
-            title="No projects found"
-            description="Projects group the work you do for a client."
-            action={<LinkButton href="/projects/new">New project</LinkButton>}
+      {projects.length === 0 ? (
+        filtered ? (
+          <EmptyBox
+            title="No projects match those filters"
+            action={
+              <LinkButton href="/projects" variant="secondary">
+                Clear filters
+              </LinkButton>
+            }
           />
         ) : (
-          <>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Project</Th>
-                  <Th>Client</Th>
-                  <Th>Status</Th>
-                  <Th className="text-right">Budget</Th>
-                  <Th className="text-right">Tasks</Th>
-                  <Th>Timeline</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                    <Td>
-                      <Link
-                        href={`/projects/${project.id}`}
-                        className="font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
-                      >
-                        {project.name}
-                      </Link>
-                      {project.description ? (
-                        <p className="max-w-xs truncate text-xs text-slate-500 dark:text-slate-400">
-                          {project.description}
-                        </p>
-                      ) : null}
-                    </Td>
-                    <Td>
-                      <Link
-                        href={`/clients/${project.client.id}`}
-                        className="hover:text-indigo-600 hover:underline dark:hover:text-indigo-400"
-                      >
-                        {project.client.name}
-                      </Link>
-                    </Td>
-                    <Td>
-                      <Badge value={project.status} />
-                    </Td>
-                    <Td className="text-right tabular-nums">{formatMoney(project.budgetCents)}</Td>
-                    <Td className="text-right tabular-nums">{project._count.tasks}</Td>
-                    <Td className="whitespace-nowrap text-xs">
-                      {project.startDate ? formatDate(project.startDate) : "—"}
-                      {" → "}
-                      {project.endDate ? formatDate(project.endDate) : "open"}
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-            <Pagination page={page} pageCount={pageCount} total={total} searchParams={params} />
-          </>
-        )}
-      </Card>
+          <EmptyBox
+            title="No projects yet"
+            action={
+              <LinkButton href="/projects/new" variant="secondary">
+                New project
+              </LinkButton>
+            }
+          />
+        )
+      ) : (
+        <>
+          <Card>
+            <GridTable minWidth={1020}>
+              <GridHead cols={COLS}>
+                <span>Project</span>
+                <span>Client</span>
+                <span>Status</span>
+                <span className="text-right">Budget</span>
+                <span className="text-right">Tasks</span>
+                <span>Timeline</span>
+                <span className="text-right">Actions</span>
+              </GridHead>
+              {projects.map((project) => (
+                <GridRow key={project.id} cols={COLS}>
+                  <Stack primary={<Link href={`/projects/${project.id}`}>{project.name}</Link>} secondary={project.description ?? ""} />
+                  <span className="truncate text-mu">{project.client.name}</span>
+                  <span>
+                    <Badge value={project.status} />
+                  </span>
+                  <span className="text-right font-mono text-[12.5px]">{formatMoney(project.budgetCents)}</span>
+                  <span className="text-right font-mono text-[12.5px]">{project._count.tasks}</span>
+                  <span className="text-[12px] text-mu">
+                    {project.startDate || project.endDate
+                      ? `${project.startDate ? formatDate(project.startDate) : "—"} → ${
+                          project.endDate ? formatDate(project.endDate) : "open"
+                        }`
+                      : "—"}
+                  </span>
+                  <RowActions
+                    viewHref={`/projects/${project.id}`}
+                    editHref={`/projects/${project.id}/edit`}
+                    remove={{
+                      action: deleteProjectAction,
+                      hidden: { projectId: project.id },
+                      confirmMessage: `Delete ${project.name}? Its tasks will be removed too.`,
+                    }}
+                  />
+                </GridRow>
+              ))}
+            </GridTable>
+          </Card>
+          <Pagination page={page} pageCount={pageCount} total={total} noun="project" searchParams={params} />
+        </>
+      )}
     </>
   );
 }

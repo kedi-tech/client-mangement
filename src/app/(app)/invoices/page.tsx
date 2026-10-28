@@ -1,32 +1,37 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { FilterSelect } from "@/components/filters";
+import { FilterBar, FilterSelect } from "@/components/filters";
+import { RowActions } from "@/components/row-actions";
 import { SearchInput } from "@/components/search-input";
 import {
   Badge,
   Card,
-  EmptyState,
+  EmptyBox,
+  GridHead,
+  GridRow,
+  GridTable,
   LinkButton,
   PageHeader,
-  Table,
-  Td,
-  Th,
 } from "@/components/ui";
 import { INVOICE_STATUSES, label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { like } from "@/lib/search";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDate, formatMoney, plural } from "@/lib/format";
 import { isOutstanding } from "@/lib/invoice";
+import { like } from "@/lib/search";
 import { requireUser } from "@/lib/session";
+import { deleteInvoiceAction } from "@/server/actions/invoices";
+import { clientScope, viaClient } from "@/server/scope";
 import { invoicesWithTotals } from "@/server/queries";
 
 export const metadata: Metadata = { title: "Invoices" };
 
+const COLS = "minmax(180px,1.4fr) minmax(150px,1fr) 90px 110px 110px 120px 190px";
+
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 export default async function InvoicesPage({ searchParams }: { searchParams: SearchParams }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
 
   const q = params.q?.trim() ?? "";
@@ -35,12 +40,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
 
   const [allInvoices, clients] = await Promise.all([
     invoicesWithTotals({
+      ...viaClient(user),
       ...(clientId ? { clientId } : {}),
-      ...(q
-        ? { OR: [{ number: like(q) }, { client: { name: like(q) } }] }
-        : {}),
+      ...(q ? { OR: [{ number: like(q) }, { client: { name: like(q) } }] } : {}),
     }),
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   // Status is filtered after the fact because "overdue" is derived from the due
@@ -55,6 +59,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
   const paidCents = invoices
     .filter((invoice) => invoice.effectiveStatus === "PAID")
     .reduce((sum, invoice) => sum + invoice.totals.totalCents, 0);
+  const filtered = Boolean(q || status || clientId);
 
   return (
     <>
@@ -64,86 +69,88 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
         actions={<LinkButton href="/invoices/new">New invoice</LinkButton>}
       />
 
-      <Card>
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-          <div className="min-w-56 flex-1">
-            <SearchInput placeholder="Search by number or client…" />
-          </div>
-          <FilterSelect
-            name="status"
-            label="Status"
-            allLabel="Any status"
-            options={INVOICE_STATUSES.map((value) => ({ value, label: label(value) }))}
-          />
-          <FilterSelect
-            name="clientId"
-            label="Client"
-            allLabel="All clients"
-            options={clients.map((client) => ({ value: client.id, label: client.name }))}
-          />
-        </div>
+      <FilterBar>
+        <SearchInput placeholder="Search invoice number or client" className="flex-[1_1_240px]" />
+        <FilterSelect
+          name="status"
+          label="Status"
+          allLabel="Any status"
+          options={INVOICE_STATUSES.map((value) => ({ value, label: label(value) }))}
+        />
+        <FilterSelect
+          name="clientId"
+          label="Client"
+          allLabel="All clients"
+          options={clients.map((client) => ({ value: client.id, label: client.name }))}
+        />
+      </FilterBar>
 
-        {invoices.length === 0 ? (
-          <EmptyState
-            title="No invoices found"
-            description="Bill a client for completed work to see it here."
-            action={<LinkButton href="/invoices/new">New invoice</LinkButton>}
+      {invoices.length === 0 ? (
+        filtered ? (
+          <EmptyBox
+            title="No invoices match those filters"
+            action={
+              <LinkButton href="/invoices" variant="secondary">
+                Clear filters
+              </LinkButton>
+            }
           />
         ) : (
-          <>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Invoice</Th>
-                  <Th>Client</Th>
-                  <Th>Status</Th>
-                  <Th>Issued</Th>
-                  <Th>Due</Th>
-                  <Th className="text-right">Total</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                    <Td>
-                      <Link
-                        href={`/invoices/${invoice.id}`}
-                        className="font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
-                      >
-                        {invoice.number}
-                      </Link>
-                      {invoice.project ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {invoice.project.name}
-                        </p>
-                      ) : null}
-                    </Td>
-                    <Td>
-                      <Link
-                        href={`/clients/${invoice.client.id}`}
-                        className="hover:text-indigo-600 hover:underline dark:hover:text-indigo-400"
-                      >
-                        {invoice.client.name}
-                      </Link>
-                    </Td>
-                    <Td>
-                      <Badge value={invoice.effectiveStatus} />
-                    </Td>
-                    <Td className="whitespace-nowrap text-xs">{formatDate(invoice.issueDate)}</Td>
-                    <Td className="whitespace-nowrap text-xs">{formatDate(invoice.dueDate)}</Td>
-                    <Td className="text-right font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                      {formatMoney(invoice.totals.totalCents)}
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-            <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-              {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
-            </div>
-          </>
-        )}
-      </Card>
+          <EmptyBox
+            title="No invoices yet"
+            action={
+              <LinkButton href="/invoices/new" variant="secondary">
+                New invoice
+              </LinkButton>
+            }
+          />
+        )
+      ) : (
+        <>
+          <Card>
+            <GridTable minWidth={960}>
+              <GridHead cols={COLS}>
+                <span>Invoice</span>
+                <span>Client</span>
+                <span>Status</span>
+                <span>Issued</span>
+                <span>Due</span>
+                <span className="text-right">Total</span>
+                <span className="text-right">Actions</span>
+              </GridHead>
+              {invoices.map((invoice) => (
+                <GridRow key={invoice.id} cols={COLS}>
+                  <span className="min-w-0">
+                    <Link href={`/invoices/${invoice.id}`} className="block font-mono text-[12.5px]">
+                      {invoice.number}
+                    </Link>
+                    <span className="block truncate text-[11.5px] text-fa">{invoice.project?.name ?? ""}</span>
+                  </span>
+                  <span className="truncate text-mu">{invoice.client.name}</span>
+                  <span>
+                    <Badge value={invoice.effectiveStatus} />
+                  </span>
+                  <span className="text-[12.5px] text-mu">{formatDate(invoice.issueDate)}</span>
+                  <span className="text-[12.5px] text-mu">{formatDate(invoice.dueDate)}</span>
+                  <span className="text-right font-mono text-[12.5px]">
+                    {formatMoney(invoice.totals.totalCents)}
+                  </span>
+                  <RowActions
+                    viewHref={`/invoices/${invoice.id}`}
+                    editHref={`/invoices/${invoice.id}/edit`}
+                    remove={{
+                      action: deleteInvoiceAction,
+                      hidden: { invoiceId: invoice.id },
+                      confirmMessage: `Delete invoice ${invoice.number}? This cannot be undone.`,
+                    }}
+                  />
+                </GridRow>
+              ))}
+            </GridTable>
+          </Card>
+          <div className="text-[12.5px] text-mu">{plural(invoices.length, "invoice")}</div>
+        </>
+      )}
     </>
   );
 }

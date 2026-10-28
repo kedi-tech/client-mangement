@@ -1,71 +1,61 @@
-import Image from "next/image";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { PortalNav } from "@/components/portal-nav";
-import { Avatar } from "@/components/ui";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { prisma } from "@/lib/db";
 import { initials } from "@/lib/format";
 import { requirePortalUser } from "@/lib/session";
+import { readTheme } from "@/lib/theme";
 import { logoutAction } from "@/server/actions/auth";
 
+/**
+ * Client portal shell (design 1f). The layout opens the blue band with the
+ * account bar and tabs; each page continues the band with <PortalHero> and then
+ * lays its cards over it with <PortalMain>.
+ */
 export default async function PortalLayout({ children }: { children: ReactNode }) {
-  const user = await requirePortalUser();
+  const [user, theme] = await Promise.all([requirePortalUser(), readTheme()]);
   const client = await prisma.client.findUnique({
     where: { id: user.clientId },
     select: { name: true, owner: { select: { name: true, email: true } } },
   });
+  const clientName = client?.name ?? "Client portal";
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <Link href="/portal" className="flex items-center gap-2">
-            <Image
-            src="/logo-mark.png"
-            alt=""
-            width={32}
-            height={32}
-            priority
-            unoptimized
-            className="size-8 shrink-0 rounded-lg bg-white ring-1 ring-slate-200 dark:ring-slate-700"
+    <div className="portal flex min-h-screen flex-col bg-bg text-tx">
+      <div className="bg-band pt-4 text-white min-[720px]:pt-[22px]">
+        <div className="mx-auto box-border flex max-w-[1080px] items-center gap-3 px-4 text-[13.5px] min-[720px]:px-8">
+          <span
+            className="grid size-[30px] flex-none place-items-center rounded-[10px] bg-white/[.18] text-[12px] font-semibold"
+            aria-hidden
+          >
+            {initials(clientName)}
+          </span>
+          <span className="truncate text-[15.5px] font-semibold">{clientName}</span>
+          <span className="ml-auto hidden whitespace-nowrap min-[720px]:inline">{user.name}</span>
+          <ThemeToggle
+            initial={theme}
+            labels={{ toDark: "Dark", toLight: "Light" }}
+            className="ml-auto rounded-[12px] border-0 bg-white/[.12] px-3 py-1.5 text-[12.5px] text-white min-[720px]:ml-0"
           />
-            <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-              {client?.name ?? "Client portal"}
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Avatar text={initials(user.name)} />
-              <span className="hidden text-sm font-medium text-slate-700 sm:block dark:text-slate-200">
-                {user.name}
-              </span>
-            </div>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="rounded-[12px] border-0 bg-white/[.16] px-3 py-1.5 text-[12.5px] whitespace-nowrap text-white"
+            >
+              Sign out
+            </button>
+          </form>
         </div>
+        <PortalNav />
+      </div>
 
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <PortalNav />
-        </div>
-      </header>
+      {children}
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</main>
-
-      <footer className="mx-auto max-w-5xl px-4 pb-10 sm:px-6">
-        <p className="border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-          {client?.owner
-            ? `Questions? Your account manager is ${client.owner.name} (${client.owner.email}).`
-            : "Questions? Reply to your latest email from us and we'll pick it up."}
-        </p>
+      <footer className="px-6 pt-[18px] pb-7 text-center text-[13px] text-mu">
+        {client?.owner
+          ? `Questions? Your account manager is ${client.owner.name} (${client.owner.email}).`
+          : "Questions? Reply to your latest email from us and we'll pick it up."}
       </footer>
     </div>
   );

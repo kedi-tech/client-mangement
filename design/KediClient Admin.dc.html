@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><title>KediClient</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"><script src="kedi-data.js"></script><style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--tx);
+--bg:#f2f3f5;--pn:#fff;--ln:#e1e4e9;--l2:#eef0f3;--tx:#15181d;--mu:#5d6470;--fa:#8a919c;--inp:#fff;--inpb:#d3d7de;--chk:#a9afb9;--hov:#f7f8fa;--rail:#15181d;--raila:#262b33;--railtx:#c9ced6;--ac:#3b5bdb;--ach:#2c46b0;--acs:#e8ecfc;--red:#c0392b;--redbg:#fff6f6;--grn:#1f7a46;--bar:#3b5bdb;--barc:#b9c5f2;--grid:#eef0f3;--shadow:0 12px 32px rgba(15,20,30,.12);
+--amber-f:#8a5a0b;--amber-d:#d99a1e;--amber-b:#fbefd5;--emerald-f:#1f6a3f;--emerald-d:#2f9e5f;--emerald-b:#dff3e6;--slate-f:#4c5562;--slate-d:#a3aab5;--slate-b:#eceef1;--sky-f:#1f4f8f;--sky-d:#3b82d6;--sky-b:#ddebfb;--orange-f:#9a4515;--orange-d:#e07a33;--orange-b:#fde6d6;--indigo-f:#3a3f9e;--indigo-d:#5b61d6;--indigo-b:#e4e5fb;--rose-f:#a12a3a;--rose-d:#d9475a;--rose-b:#fbe1e3;--violet-f:#5d2f9c;--violet-d:#8b5cd6;--violet-b:#eee3fb}
+body.dark{--bg:#0e1013;--pn:#16191e;--ln:#272c34;--l2:#1f232a;--tx:#e7e9ed;--mu:#a0a7b2;--fa:#747c88;--inp:#111317;--inpb:#323843;--chk:#5b6370;--hov:#1b1f25;--rail:#0a0c0f;--raila:#1f232a;--railtx:#aab1bc;--ac:#6d86ea;--ach:#8fa2f0;--acs:#1c2440;--red:#f0868f;--redbg:#221416;--grn:#7fd3a2;--bar:#6d86ea;--barc:#34406e;--grid:#1f232a;--shadow:0 12px 32px rgba(0,0,0,.5);
+--amber-f:#f0c46a;--amber-d:#b98420;--amber-b:#3a2c10;--emerald-f:#7fd3a2;--emerald-d:#2f9e5f;--emerald-b:#12301f;--slate-f:#b3bac5;--slate-d:#5e6673;--slate-b:#252a31;--sky-f:#8fbcf2;--sky-d:#3b82d6;--sky-b:#132a45;--orange-f:#f3a774;--orange-d:#c2662a;--orange-b:#3a2214;--indigo-f:#a9acf3;--indigo-d:#5b61d6;--indigo-b:#22244a;--rose-f:#f19aa6;--rose-d:#d9475a;--rose-b:#3d1a20;--violet-f:#c6a6f2;--violet-d:#8b5cd6;--violet-b:#2c1f45}
+a{color:var(--ac);text-decoration:none}button{white-space:nowrap}a:hover{color:var(--ach)}
+input,select,textarea,button{font:inherit;color:inherit}input::placeholder,textarea::placeholder{color:var(--fa)}
+</style></helmet>
+
+<sc-if value="{{ is.login }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;background:var(--bg)">
+<div style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px"><span style="width:20px;height:20px;border-radius:5px;background:var(--ac)"></span>KediClient</div>
+<form onSubmit="{{ login.submit }}" style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:24px;display:flex;flex-direction:column;gap:14px" noValidate="{{ true }}">
+<div><h1 style="margin:0;font-size:20px;font-weight:600">Sign in</h1><div style="font-size:13px;color:var(--mu);margin-top:4px">Staff and clients use the same sign-in.</div></div>
+<sc-if value="{{ login.hasErr }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 12px;border-radius:4px;background:var(--rose-b);color:var(--rose-f);font-size:13px">{{ login.err }}</div></sc-if>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Email<input name="email" type="email" defaultValue="{{ login.email }}" style="padding:8px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:14px;font-weight:400"><span style="font-size:12px;color:var(--red);font-weight:400">{{ login.eEmail }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Password<input name="password" type="password" defaultValue="demo-password" style="padding:8px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:14px;font-weight:400"><span style="font-size:12px;color:var(--red);font-weight:400">{{ login.ePw }}</span></label>
+<button type="submit" style="padding:9px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer">Sign in</button>
+</form>
+<div style="font-size:12.5px;color:var(--mu);text-align:center">Trouble signing in? Ask your administrator to reset your password.</div>
+<div style="font-size:11.5px;color:var(--fa);text-align:center;line-height:1.6">Prototype: maya@kedi.studio opens the admin app, dana@northwind.co opens the client portal. Any other email shows the error.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.register }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box">
+<div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px"><span style="width:20px;height:20px;border-radius:5px;background:var(--ac)"></span>KediClient</div>
+<form onSubmit="{{ register.submit }}" style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:24px;display:flex;flex-direction:column;gap:14px" noValidate="{{ true }}">
+<div><h1 style="margin:0;font-size:20px;font-weight:600">Set up your workspace</h1><div style="font-size:13px;color:var(--mu);margin-top:4px">The first account created becomes the workspace admin.</div></div>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Name<input name="name" style="padding:8px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:14px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ register.eName }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Email<input name="email" type="email" style="padding:8px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:14px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ register.eEmail }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Password<input name="password" type="password" placeholder="At least 8 characters" style="padding:8px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:14px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ register.ePw }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Confirm password<input name="confirm" type="password" style="padding:8px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:14px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ register.eConfirm }}</span></label>
+<button type="submit" style="padding:9px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer">Create admin account</button>
+</form>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.registerClosed }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box">
+<div style="width:100%;max-width:400px;background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:24px;display:flex;flex-direction:column;gap:12px">
+<h1 style="margin:0;font-size:20px;font-weight:600">Sign-up is closed</h1>
+<p style="margin:0;font-size:13.5px;line-height:1.55;color:var(--mu)">This workspace already has an administrator. Ask them to add you as a teammate.</p>
+<a href="#login" onClick="{{ goLogin }}" style="font-size:13.5px">← Back to sign in</a>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:{{ L.shell }};min-height:100vh">
+<sc-if value="{{ L.rail }}" hint-placeholder-val="{{ true }}">
+<aside style="position:sticky;top:0;height:100vh;box-sizing:border-box;background:var(--rail);color:var(--railtx);padding:16px 12px;display:flex;flex-direction:column;gap:20px">
+<a href="#dashboard" onClick="{{ goHome }}" style="display:flex;align-items:center;gap:8px;padding:4px 6px;color:#fff;font-weight:600;font-size:15px"><span style="width:18px;height:18px;border-radius:4px;background:#3b5bdb"></span>KediClient</a>
+<nav style="display:flex;flex-direction:column;gap:1px">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="8"><a href="{{ n.href }}" onClick="{{ n.go }}" style="display:block;padding:6px 8px;border-radius:4px;font-size:13px;color:{{ n.fg }};background:{{ n.bg }};font-weight:{{ n.fw }}">{{ n.label }}</a></sc-for>
+</nav>
+<div style="margin-top:auto;font-size:11.5px;line-height:1.5;color:#8a919c;padding:10px 8px 0;border-top:1px solid #262b33"><div style="color:#e6e9ee">{{ me.name }}</div>{{ me.email }}</div>
+</aside>
+</sc-if>
+<div style="min-width:0;display:flex;flex-direction:column">
+<header style="position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;height:48px;padding:0 {{ L.hpad }};background:var(--pn);border-bottom:1px solid var(--ln);font-size:13px">
+<sc-if value="{{ L.drawerMode }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openDrawer }}" style="padding:5px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--pn);cursor:pointer;font-size:12.5px">Menu</button><span style="font-weight:600">KediClient</span></sc-if>
+<a href="#search" onClick="{{ goSearch }}" style="flex:1;max-width:{{ L.searchW }};padding:6px 10px;border:1px solid var(--ln);border-radius:4px;color:var(--fa);background:var(--hov)">Search everything</a>
+<button onClick="{{ toggleTheme }}" style="margin-left:auto;padding:4px 9px;border:1px solid var(--ln);border-radius:4px;background:transparent;cursor:pointer;font-size:12px;color:var(--mu)">{{ themeLabel }}</button>
+<sc-if value="{{ L.showName }}" hint-placeholder-val="{{ true }}"><span>{{ me.name }}</span></sc-if>
+<a href="#login" onClick="{{ signOut }}" style="color:var(--mu)">Sign out</a>
+</header>
+<main style="padding:{{ L.pad }};display:flex;flex-direction:column;gap:16px;width:100%;max-width:1400px;box-sizing:border-box">
+
+<sc-if value="{{ is.dashboard }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between"><h1 style="margin:0;font-size:20px;font-weight:600">{{ dash.title }}</h1><div style="display:flex;gap:8px;font-size:13px"><a href="#client-new" onClick="{{ goNewClient }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;color:var(--tx)">New client</a><a href="#invoice-new" onClick="{{ goNewInvoice }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px">New invoice</a></div></div>
+<div style="display:grid;grid-template-columns:{{ L.g4 }};background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow:hidden">
+<sc-for list="{{ dash.stats }}" as="s" hint-placeholder-count="4"><a href="{{ s.href }}" onClick="{{ s.go }}" style="padding:14px 16px;border-right:1px solid var(--l2);border-bottom:1px solid var(--l2);margin:0 -1px -1px 0;display:flex;flex-direction:column;gap:4px;background:{{ s.bg }};color:var(--tx)"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)">{{ s.label }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:500;color:{{ s.vc }}">{{ s.value }}</span><span style="font-size:12px;color:{{ s.sc }}">{{ s.sub }}</span></a></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.g2 }};gap:16px">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">Revenue</span><a href="#reports" onClick="{{ goReports }}">Reports</a></div>
+<div style="padding:16px 14px 12px"><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end;height:132px;background:repeating-linear-gradient(transparent 0 32px,var(--grid) 32px 33px)"><sc-for list="{{ dash.rev }}" as="r" hint-placeholder-count="6"><div title="{{ r.full }}" style="height:{{ r.h }};background:{{ r.c }};border-radius:2px 2px 0 0"></div></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding-top:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mu);text-align:center"><sc-for list="{{ dash.rev }}" as="r" hint-placeholder-count="6"><span>{{ r.m }} {{ r.short }}</span></sc-for></div>
+<div style="font-size:11.5px;color:var(--fa);margin-top:8px">{{ dash.revCaption }}</div></div>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;min-width:0">
+<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">Invoices needing attention</span><a href="#invoices" onClick="{{ goInvoices }}">All invoices</a></div>
+<sc-for list="{{ dash.inv }}" as="i" hint-placeholder-count="5"><a href="{{ i.href }}" onClick="{{ i.open }}" style="display:grid;grid-template-columns:82px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:12.5px;color:var(--tx)"><span style="font-family:'IBM Plex Mono',monospace">{{ i.no }}</span><span style="min-width:0"><span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.client }}</span><span style="display:block;color:var(--fa);font-size:11.5px">Due {{ i.due }}</span></span><span style="font-family:'IBM Plex Mono',monospace;text-align:right">{{ i.total }}</span><span style="justify-self:end;padding:1px 6px;border:1px solid {{ i.st.d }};color:{{ i.st.f }};border-radius:3px;font-size:11px;white-space:nowrap">{{ i.st.label }}</span></a></sc-for>
+<sc-if value="{{ dash.noInv }}" hint-placeholder-val="{{ false }}"><div style="padding:28px 14px;text-align:center;font-size:13px;color:var(--mu)">Nothing outstanding</div></sc-if>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.g3 }};gap:16px">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;min-width:0">
+<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">Tasks</span><span style="color:{{ dash.tasksSubC }}">{{ dash.tasksSub }}</span></div>
+<sc-for list="{{ dash.tasks }}" as="t" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:12.5px"><button onClick="{{ t.toggle }}" title="Mark complete" style="width:14px;height:14px;padding:0;border:1.5px solid {{ t.chkBd }};background:{{ t.chkBg }};border-radius:3px;cursor:pointer;color:#fff;font-size:10px;line-height:1">{{ t.chk }}</button><div style="min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:{{ t.titleDeco }};color:{{ t.titleC }}">{{ t.title }}</div><div style="color:var(--fa);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.meta }}</div></div><div style="display:flex;gap:8px;align-items:center"><span style="font-size:10.5px;font-weight:600;letter-spacing:.04em;color:{{ t.pr.f }}">{{ t.prUp }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:{{ t.dueC }};white-space:nowrap">{{ t.dueShort }}</span></div></div></sc-for>
+<sc-if value="{{ dash.noTasks }}" hint-placeholder-val="{{ false }}"><div style="padding:28px 14px;text-align:center;font-size:13px;color:var(--mu)">No open tasks</div></sc-if>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;min-width:0">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Recent activity</div>
+<sc-for list="{{ dash.act }}" as="a" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:6px minmax(0,1fr);gap:10px;padding:8px 14px;border-bottom:1px solid var(--l2)"><span style="width:6px;height:6px;border-radius:1px;background:{{ a.dot }};margin-top:6px"></span><div><a href="{{ a.href }}" onClick="{{ a.open }}" style="font-size:12.5px;line-height:1.4;color:{{ a.c }}">{{ a.msg }}</a><div style="font-size:11px;color:var(--fa);margin-top:2px">{{ a.meta }}</div></div></div></sc-for>
+<sc-if value="{{ dash.noAct }}" hint-placeholder-val="{{ false }}"><div style="padding:28px 14px;text-align:center;font-size:13px;color:var(--mu)">Nothing has happened yet</div></sc-if>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;min-width:0">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Newest clients</div>
+<sc-for list="{{ dash.clients }}" as="c" hint-placeholder-count="5"><a href="{{ c.href }}" onClick="{{ c.open }}" style="padding:8px 14px;border-bottom:1px solid var(--l2);display:flex;justify-content:space-between;gap:8px;color:var(--tx)"><span style="min-width:0"><span style="display:block;font-size:12.5px">{{ c.name }}</span><span style="display:block;font-size:11px;color:var(--fa)">{{ c.counts }}</span></span><span style="align-self:center;padding:1px 6px;border:1px solid {{ c.st.d }};color:{{ c.st.f }};border-radius:3px;font-size:11px">{{ c.st.label }}</span></a></sc-for>
+<sc-if value="{{ dash.noClients }}" hint-placeholder-val="{{ false }}"><div style="padding:24px 14px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center"><span style="font-size:13px;color:var(--mu)">No clients yet</span><a href="#client-new" onClick="{{ goNewClient }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px;font-size:12.5px">Add your first client</a></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.clients }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between"><div><h1 style="margin:0;font-size:20px;font-weight:600">Clients</h1><div style="font-size:13px;color:var(--mu);margin-top:2px">Everyone you work with, from first lead to archive.</div></div><a href="#client-new" onClick="{{ goNewClient }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px;font-size:13px">New client</a></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<input value="{{ cl.q }}" onChange="{{ cl.onQ }}" placeholder="Search name, company, email, industry, city" style="flex:1 1 260px;padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px">
+<select value="{{ cl.status }}" data-v="{{ cl.status }}" onChange="{{ cl.onStatus }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.clientStatusAny }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<select value="{{ cl.owner }}" data-v="{{ cl.owner }}" onChange="{{ cl.onOwner }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.ownerAny }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<select value="{{ cl.sort }}" data-v="{{ cl.sort }}" onChange="{{ cl.onSort }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="new">Newest</option><option value="name">Name A–Z</option><option value="status">Status</option></select>
+</div>
+<sc-if value="{{ cl.has }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow-x:auto">
+<div style="min-width:760px">
+<div style="display:grid;grid-template-columns:minmax(220px,2fr) 100px 140px 80px 120px 110px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Client</span><span>Status</span><span>Owner</span><span style="text-align:right">Projects</span><span style="text-align:right">Outstanding</span><span>Added</span></div>
+<sc-for list="{{ cl.rows }}" as="r" hint-placeholder-count="8"><a href="{{ r.href }}" onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(220px,2fr) 100px 140px 80px 120px 110px;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2);font-size:13px;color:var(--tx)"><span style="min-width:0"><span style="display:block;font-weight:500">{{ r.name }}</span><span style="display:block;font-size:11.5px;color:var(--fa)">{{ r.sub }}</span></span><span><span style="padding:1px 6px;border:1px solid {{ r.st.d }};color:{{ r.st.f }};border-radius:3px;font-size:11px">{{ r.st.label }}</span></span><span style="color:{{ r.ownerC }}">{{ r.owner }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ r.projects }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ r.out }}</span><span style="color:var(--mu);font-size:12.5px">{{ r.added }}</span></a></sc-for>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--mu)"><span>{{ cl.pager.label }}</span><sc-if value="{{ cl.pager.multi }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px"><button onClick="{{ cl.pager.prev }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ cl.pager.prevOp }}">Previous</button><button onClick="{{ cl.pager.next }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ cl.pager.nextOp }}">Next</button></div></sc-if></div>
+</sc-if>
+<sc-if value="{{ cl.emptyFiltered }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:40px 16px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center"><span style="font-size:14px;font-weight:500">No clients match those filters</span><button onClick="{{ cl.clear }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:13px">Clear filters</button></div></sc-if>
+<sc-if value="{{ cl.emptyNone }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:48px 16px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center"><span style="font-size:14px;font-weight:500">Add your first client</span><span style="font-size:13px;color:var(--mu);max-width:380px">Clients hold their contacts, projects, invoices and files in one place.</span><a href="#client-new" onClick="{{ goNewClient }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px;font-size:13px">New client</a></div></sc-if>
+</sc-if>
+
+<sc-if value="{{ is.client }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between">
+<div style="min-width:0;flex:1 1 320px"><a href="#clients" onClick="{{ goClients }}" style="font-size:12.5px">← Clients</a><div style="display:flex;align-items:center;gap:10px;margin-top:4px"><h1 style="margin:0;font-size:20px;font-weight:600">{{ cd.name }}</h1><span style="padding:1px 6px;border:1px solid {{ cd.st.d }};color:{{ cd.st.f }};border-radius:3px;font-size:11px">{{ cd.st.label }}</span></div><div style="font-size:13px;color:var(--mu);margin-top:2px">{{ cd.sub }}</div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;flex-shrink:0"><a href="#project-new" onClick="{{ cd.newProject }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;color:var(--tx)">New project</a><a href="#invoice-new" onClick="{{ cd.newInvoice }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;color:var(--tx)">New invoice</a><a href="#client-edit" onClick="{{ cd.edit }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px">Edit</a></div>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.cards3 }};gap:12px">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:12px 14px"><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)">Billed to date</div><div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500;margin-top:4px">{{ cd.billed }}</div></div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:12px 14px"><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)">Collected</div><div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500;margin-top:4px;color:var(--grn)">{{ cd.paid }}</div></div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:12px 14px"><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)">Outstanding</div><div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500;margin-top:4px;color:{{ cd.outC }}">{{ cd.out }}</div></div>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.side }};gap:16px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span><span style="font-weight:600">Contacts</span><span style="color:var(--fa)"> · {{ cd.contactsSub }}</span></span><button onClick="{{ cd.toggleAddContact }}" style="padding:3px 9px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Add contact</button></div>
+<sc-if value="{{ ui.addContact }}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{ cd.addContact }}" style="padding:12px 14px;border-bottom:1px solid var(--l2);background:var(--hov);display:grid;grid-template-columns:{{ L.form }};gap:10px" noValidate="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">First name *<input name="first" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="color:var(--red);font-weight:400">{{ err.first }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Last name *<input name="last" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="color:var(--red);font-weight:400">{{ err.last }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Title<input name="title" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Email<input name="email" type="email" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="color:var(--red);font-weight:400">{{ err.email }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Phone<input name="phone" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"></label>
+<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;align-self:end;padding-bottom:6px"><input type="checkbox" name="primary">Primary contact</label>
+<div style="display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12.5px">Save contact</button><button type="button" onClick="{{ cd.toggleAddContact }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12.5px">Cancel</button></div>
+</form>
+</sc-if>
+<sc-for list="{{ cd.contacts }}" as="k" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2)"><span style="width:30px;height:30px;border-radius:50%;background:var(--acs);color:var(--ac);display:grid;place-items:center;font-size:11px;font-weight:600">{{ k.ini }}</span><div style="min-width:0"><div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500">{{ k.name }}<sc-if value="{{ k.primary }}" hint-placeholder-val="{{ false }}"><span style="padding:0 5px;border-radius:3px;background:var(--acs);color:var(--ac);font-size:10.5px;font-weight:500">Primary</span></sc-if></div><div style="font-size:12px;color:var(--fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.sub }}</div></div><div style="display:flex;gap:10px;font-size:12px"><a href="{{ k.href }}" onClick="{{ k.edit }}">Edit</a><button onClick="{{ k.del }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px">Delete</button></div></div></sc-for>
+<sc-if value="{{ cd.noContacts }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 14px;font-size:13px;color:var(--mu)">No contacts yet.</div></sc-if>
+</div>
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Projects</div>
+<sc-for list="{{ cd.projects }}" as="p" hint-placeholder-count="2"><a href="{{ p.href }}" onClick="{{ p.open }}" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--l2);color:var(--tx)"><span style="min-width:0"><span style="display:block;font-size:13px;font-weight:500">{{ p.name }}</span><span style="display:block;font-size:12px;color:var(--fa)">{{ p.sub }}</span></span><span style="padding:1px 6px;border:1px solid {{ p.st.d }};color:{{ p.st.f }};border-radius:3px;font-size:11px;white-space:nowrap">{{ p.st.label }}</span></a></sc-for>
+<sc-if value="{{ cd.noProjects }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 14px;font-size:13px;color:var(--mu)">No projects yet.</div></sc-if>
+</div>
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Invoices</div>
+<sc-for list="{{ cd.invoices }}" as="i" hint-placeholder-count="3"><a href="{{ i.href }}" onClick="{{ i.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2);color:var(--tx)"><span style="min-width:0"><span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ i.no }}</span><span style="display:block;font-size:12px;color:var(--fa)">Issued {{ i.issue }} · due {{ i.due }}</span></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ i.total }}</span><span style="padding:1px 6px;border:1px solid {{ i.st.d }};color:{{ i.st.f }};border-radius:3px;font-size:11px">{{ i.st.label }}</span></a></sc-for>
+<sc-if value="{{ cd.noInvoices }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 14px;font-size:13px;color:var(--mu)">No invoices yet.</div></sc-if>
+</div>
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">Files</span><span style="color:var(--fa)"> · {{ cd.filesSub }}</span></div>
+<sc-for list="{{ cd.files }}" as="f" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2)"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><a href="#" onClick="{{ f.dl }}" style="font-size:13px;font-weight:500">{{ f.name }}</a><span style="padding:0 6px;border-radius:3px;font-size:11px;background:{{ f.pillBg }};color:{{ f.pillFg }}">{{ f.origin }}</span></div><sc-if value="{{ f.hasNote }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--mu);margin-top:2px">{{ f.note }}</div></sc-if><div style="font-size:11.5px;color:var(--fa);margin-top:2px">{{ f.meta }}</div></div><div style="display:flex;gap:10px;font-size:12px"><a href="#" onClick="{{ f.dl }}">Download</a><button onClick="{{ f.del }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px">Delete</button></div></div></sc-for>
+<form onSubmit="{{ cd.upload }}" style="padding:12px 14px;display:grid;grid-template-columns:{{ L.form }};gap:10px;background:var(--hov)" noValidate="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">File<input type="file" name="file" onChange="{{ pickFile }}" style="font-size:12.5px"><span style="font-weight:400;color:{{ ui.pickC }}">{{ ui.pick }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Project (optional)<select name="project" style="padding:6px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">No project</option><sc-for list="{{ cd.projectOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;grid-column:1/-1">Message (optional)<input name="note" maxLength="500" placeholder="What is this file for?" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"></label>
+<div><button type="submit" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12.5px">Share with client</button></div>
+</form>
+</div>
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">Open tasks</span><a href="#tasks" onClick="{{ cd.allTasks }}">All tasks</a></div>
+<sc-for list="{{ cd.tasks }}" as="t" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:12.5px"><button onClick="{{ t.toggle }}" style="width:14px;height:14px;padding:0;border:1.5px solid {{ t.chkBd }};background:{{ t.chkBg }};border-radius:3px;cursor:pointer;color:#fff;font-size:10px;line-height:1">{{ t.chk }}</button><div style="min-width:0"><div style="text-decoration:{{ t.titleDeco }};color:{{ t.titleC }}">{{ t.title }}</div><div style="color:var(--fa);font-size:11.5px">{{ t.project }} · {{ t.assignee }}</div></div><div style="display:flex;gap:8px;align-items:center"><span style="padding:1px 6px;border:1px solid {{ t.st.d }};color:{{ t.st.f }};border-radius:3px;font-size:11px;white-space:nowrap">{{ t.st.label }}</span><span style="font-size:12px;color:{{ t.dueC }};white-space:nowrap">{{ t.due }}</span></div></div></sc-for>
+<sc-if value="{{ cd.noTasks }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 14px;font-size:13px;color:var(--mu)">No open tasks.</div></sc-if>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Details</div>
+<div style="padding:6px 14px 12px;display:flex;flex-direction:column">
+<sc-for list="{{ cd.details }}" as="d" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--l2)"><span style="color:var(--mu)">{{ d.k }}</span><span style="white-space:pre-line;word-break:break-word">{{ d.v }}</span></div></sc-for>
+<sc-if value="{{ cd.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="margin-top:10px;padding:10px;border-radius:4px;background:var(--hov);font-size:12.5px;line-height:1.5"><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:4px">Internal notes</div>{{ cd.notesText }}</div></sc-if>
+<button onClick="{{ cd.delete }}" style="margin-top:12px;align-self:flex-start;padding:5px 10px;border:1px solid var(--rose-d);color:var(--red);background:transparent;border-radius:4px;cursor:pointer;font-size:12px">Delete client</button>
+</div>
+</div>
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span><span style="font-weight:600">Portal access</span><span style="color:var(--fa)"> · {{ cd.portalSub }}</span></span><button onClick="{{ cd.toggleInvite }}" style="padding:3px 9px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Invite to portal</button></div>
+<sc-if value="{{ ui.invite }}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{ cd.invite }}" style="padding:12px 14px;border-bottom:1px solid var(--l2);background:var(--hov);display:flex;flex-direction:column;gap:10px" noValidate="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Name<input name="name" defaultValue="{{ cd.inviteName }}" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="color:var(--red);font-weight:400">{{ err.name }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Email<input name="email" defaultValue="{{ cd.inviteEmail }}" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="color:var(--red);font-weight:400">{{ err.email }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Password<div style="display:flex;gap:6px"><input name="password" value="{{ ui.pw }}" onChange="{{ setPw }}" style="flex:1;min-width:0;padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-family:'IBM Plex Mono',monospace;font-size:12.5px"><button type="button" onClick="{{ regenPw }}" style="padding:5px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Generate</button></div><span style="color:var(--red);font-weight:400">{{ err.password }}</span></label>
+<div style="display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12.5px">Create login</button><button type="button" onClick="{{ cd.toggleInvite }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12.5px">Cancel</button></div>
+</form>
+</sc-if>
+<sc-if value="{{ cd.noPortal }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 14px;font-size:12.5px;line-height:1.5;color:var(--mu)">Invite this client to sign in at /login and see their projects, invoices and files.</div></sc-if>
+<sc-for list="{{ cd.portal }}" as="u" hint-placeholder-count="1"><div style="padding:10px 14px;border-bottom:1px solid var(--l2);display:flex;flex-direction:column;gap:6px"><div style="font-size:13px;font-weight:500">{{ u.name }}</div><div style="font-size:12px;color:var(--mu)">{{ u.email }}</div><div style="font-size:11.5px;color:var(--fa)">{{ u.last }}</div><div style="display:flex;gap:12px;font-size:12px"><button onClick="{{ u.reset }}" style="padding:0;border:0;background:none;color:var(--ac);cursor:pointer;font-size:12px">Reset password</button><button onClick="{{ u.revoke }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px">Revoke</button></div>
+<sc-if value="{{ u.resetting }}" hint-placeholder-val="{{ false }}"><form onSubmit="{{ u.saveReset }}" style="display:flex;flex-direction:column;gap:6px;padding:10px;background:var(--hov);border-radius:4px"><div style="display:flex;gap:6px"><input name="password" value="{{ ui.pw }}" onChange="{{ setPw }}" style="flex:1;min-width:0;padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-family:'IBM Plex Mono',monospace;font-size:12.5px"><button type="button" onClick="{{ regenPw }}" style="padding:5px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Generate</button></div><span style="font-size:11.5px;color:var(--mu)">Saving signs them out on every device.</span><div><button type="submit" style="padding:5px 10px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px">Set password</button></div></form></sc-if>
+</div></sc-for>
+<sc-if value="{{ ui.flashHas }}" hint-placeholder-val="{{ false }}"><div style="padding:8px 14px;font-size:12px;color:var(--grn)">{{ ui.flash }}</div></sc-if>
+</div>
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Notes</div>
+<form onSubmit="{{ cd.addNote }}" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--l2)" noValidate="{{ true }}"><textarea name="body" rows="3" maxLength="5000" placeholder="What came out of the last conversation?" style="padding:7px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px;resize:vertical"></textarea><span style="font-size:12px;color:var(--red)">{{ err.body }}</span><div><button type="submit" style="padding:5px 10px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px">Add note</button></div></form>
+<sc-for list="{{ cd.notes }}" as="n" hint-placeholder-count="2"><div style="padding:10px 14px;border-bottom:1px solid var(--l2)"><div style="font-size:13px;line-height:1.5;white-space:pre-line">{{ n.body }}</div><div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11.5px;color:var(--fa)"><span>{{ n.meta }}</span><button onClick="{{ n.del }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:11.5px">Delete</button></div></div></sc-for>
+</div>
+
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Timeline</div>
+<sc-for list="{{ cd.timeline }}" as="a" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:6px minmax(0,1fr);gap:10px;padding:8px 14px;border-bottom:1px solid var(--l2)"><span style="width:6px;height:6px;border-radius:1px;background:{{ a.dot }};margin-top:6px"></span><div><div style="font-size:12.5px;line-height:1.4">{{ a.msg }}</div><div style="font-size:11px;color:var(--fa);margin-top:2px">{{ a.meta }}</div></div></div></sc-for>
+<sc-if value="{{ cd.noTimeline }}" hint-placeholder-val="{{ false }}"><div style="padding:14px;font-size:12.5px;color:var(--mu)">No activity yet.</div></sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.clientForm }}" hint-placeholder-val="{{ false }}">
+<div><a href="{{ cf.backHref }}" onClick="{{ cf.back }}" style="font-size:12.5px">← {{ cf.backLabel }}</a><h1 style="margin:4px 0 0;font-size:20px;font-weight:600">{{ cf.title }}</h1></div>
+<form key="{{ cf.key }}" onSubmit="{{ cf.save }}" noValidate="{{ true }}" style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:18px;display:grid;grid-template-columns:{{ L.form }};gap:14px;max-width:860px">
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Name *<input name="name" defaultValue="{{ cf.v.name }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.name }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Company<input name="company" defaultValue="{{ cf.v.company }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Industry<input name="industry" defaultValue="{{ cf.v.industry }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Email<input name="email" defaultValue="{{ cf.v.email }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.email }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Phone<input name="phone" defaultValue="{{ cf.v.phone }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Website<input name="website" defaultValue="{{ cf.v.website }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Status<select name="status" defaultValue="{{ cf.v.status }}" data-dv="{{ cf.v.status }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="LEAD">Lead</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option><option value="ARCHIVED">Archived</option></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Owner<select name="owner" defaultValue="{{ cf.v.owner }}" data-dv="{{ cf.v.owner }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="">Unassigned</option><sc-for list="{{ opt.staff }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Address line<input name="addressLine" defaultValue="{{ cf.v.addressLine }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">City<input name="city" defaultValue="{{ cf.v.city }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">State<input name="state" defaultValue="{{ cf.v.state }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Postal code<input name="postalCode" defaultValue="{{ cf.v.postalCode }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Country<input name="country" defaultValue="{{ cf.v.country }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Internal notes<textarea name="notes" rows="3" defaultValue="{{ cf.v.notes }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px;resize:vertical"></textarea></label>
+<div style="grid-column:1/-1;display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:7px 14px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px">{{ cf.submit }}</button><a href="{{ cf.backHref }}" onClick="{{ cf.back }}" style="white-space:nowrap;padding:7px 14px;border:1px solid var(--inpb);border-radius:4px;color:var(--tx);font-size:13px">Cancel</a></div>
+</form>
+</sc-if>
+
+<sc-if value="{{ is.contacts }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between"><div><h1 style="margin:0;font-size:20px;font-weight:600">Contacts</h1><div style="font-size:13px;color:var(--mu);margin-top:2px">People at every client, sorted by last name.</div></div><a href="#clients" onClick="{{ goClients }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;color:var(--tx);font-size:13px">Add via a client</a></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><input value="{{ ct.q }}" onChange="{{ ct.onQ }}" placeholder="Search name, email, title, client" style="flex:1 1 260px;padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><select value="{{ ct.client }}" data-v="{{ ct.client }}" onChange="{{ ct.onClient }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.clientsAny }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<sc-if value="{{ ct.has }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow-x:auto"><div style="min-width:780px">
+<div style="display:grid;grid-template-columns:minmax(200px,1.6fr) minmax(150px,1fr) minmax(180px,1.2fr) 130px 90px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Name</span><span>Client</span><span>Email</span><span>Phone</span><span></span></div>
+<sc-for list="{{ ct.rows }}" as="r" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(200px,1.6fr) minmax(150px,1fr) minmax(180px,1.2fr) 130px 90px;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="min-width:0"><span style="display:flex;align-items:center;gap:6px;font-weight:500">{{ r.name }}<sc-if value="{{ r.primary }}" hint-placeholder-val="{{ false }}"><span style="padding:0 5px;border-radius:3px;background:var(--acs);color:var(--ac);font-size:10.5px;font-weight:500">Primary</span></sc-if></span><span style="display:block;font-size:11.5px;color:var(--fa)">{{ r.title }}</span></span><a href="{{ r.clientHref }}" onClick="{{ r.openClient }}">{{ r.client }}</a><span style="overflow:hidden;text-overflow:ellipsis;color:var(--mu)">{{ r.email }}</span><span style="color:var(--mu)">{{ r.phone }}</span><span style="display:flex;gap:10px;font-size:12px;justify-content:flex-end"><a href="{{ r.href }}" onClick="{{ r.edit }}">Edit</a><button onClick="{{ r.del }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px">Delete</button></span></div></sc-for>
+</div></div>
+<div style="font-size:12.5px;color:var(--mu);display:flex;justify-content:space-between"><span>{{ ct.pager.label }}</span><sc-if value="{{ ct.pager.multi }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px"><button onClick="{{ ct.pager.prev }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ ct.pager.prevOp }}">Previous</button><button onClick="{{ ct.pager.next }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ ct.pager.nextOp }}">Next</button></div></sc-if></div>
+</sc-if>
+<sc-if value="{{ ct.empty }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:44px 16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center"><span style="font-size:14px;font-weight:500">{{ ct.emptyTitle }}</span><span style="font-size:13px;color:var(--mu)">{{ ct.emptyText }}</span></div></sc-if>
+</sc-if>
+
+<sc-if value="{{ is.contactEdit }}" hint-placeholder-val="{{ false }}">
+<div><a href="{{ ce.backHref }}" onClick="{{ ce.back }}" style="font-size:12.5px">← {{ ce.backLabel }}</a><h1 style="margin:4px 0 0;font-size:20px;font-weight:600">Edit contact</h1></div>
+<form key="{{ ce.key }}" onSubmit="{{ ce.save }}" noValidate="{{ true }}" style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:18px;display:grid;grid-template-columns:{{ L.form }};gap:14px;max-width:760px">
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Client *<select name="client" defaultValue="{{ ce.v.client }}" data-dv="{{ ce.v.client }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><sc-for list="{{ opt.clients }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">First name *<input name="first" defaultValue="{{ ce.v.first }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.first }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Last name *<input name="last" defaultValue="{{ ce.v.last }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.last }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Title<input name="title" defaultValue="{{ ce.v.title }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Email<input name="email" defaultValue="{{ ce.v.email }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.email }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Phone<input name="phone" defaultValue="{{ ce.v.phone }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;align-self:end;padding-bottom:8px"><input type="checkbox" name="primary" defaultChecked="{{ ce.v.primary }}">Primary contact for this client</label>
+<div style="grid-column:1/-1;display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:7px 14px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px">Save contact</button><a href="{{ ce.backHref }}" onClick="{{ ce.back }}" style="white-space:nowrap;padding:7px 14px;border:1px solid var(--inpb);border-radius:4px;color:var(--tx);font-size:13px">Cancel</a></div>
+</form>
+</sc-if>
+
+<sc-if value="{{ is.projects }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between"><div><h1 style="margin:0;font-size:20px;font-weight:600">Projects</h1><div style="font-size:13px;color:var(--mu);margin-top:2px">Every piece of work across your clients.</div></div><a href="#project-new" onClick="{{ pl.newProject }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px;font-size:13px">New project</a></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><input value="{{ pl.q }}" onChange="{{ pl.onQ }}" placeholder="Search name, description, client" style="flex:1 1 260px;padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><select value="{{ pl.status }}" data-v="{{ pl.status }}" onChange="{{ pl.onStatus }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ pl.statusOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select><select value="{{ pl.client }}" data-v="{{ pl.client }}" onChange="{{ pl.onClient }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.clientsAny }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<sc-if value="{{ pl.has }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow-x:auto"><div style="min-width:820px">
+<div style="display:grid;grid-template-columns:minmax(220px,2fr) minmax(140px,1fr) 100px 100px 60px 180px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Project</span><span>Client</span><span>Status</span><span style="text-align:right">Budget</span><span style="text-align:right">Tasks</span><span>Timeline</span></div>
+<sc-for list="{{ pl.rows }}" as="r" hint-placeholder-count="8"><a href="{{ r.href }}" onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(220px,2fr) minmax(140px,1fr) 100px 100px 60px 180px;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2);font-size:13px;color:var(--tx)"><span style="min-width:0"><span style="display:block;font-weight:500">{{ r.name }}</span><span style="display:block;font-size:11.5px;color:var(--fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.desc }}</span></span><span style="color:var(--mu)">{{ r.client }}</span><span><span style="padding:1px 6px;border:1px solid {{ r.st.d }};color:{{ r.st.f }};border-radius:3px;font-size:11px;white-space:nowrap">{{ r.st.label }}</span></span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ r.budget }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ r.tasks }}</span><span style="font-size:12px;color:var(--mu)">{{ r.timeline }}</span></a></sc-for>
+</div></div>
+<div style="font-size:12.5px;color:var(--mu);display:flex;justify-content:space-between"><span>{{ pl.pager.label }}</span><sc-if value="{{ pl.pager.multi }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px"><button onClick="{{ pl.pager.prev }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ pl.pager.prevOp }}">Previous</button><button onClick="{{ pl.pager.next }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ pl.pager.nextOp }}">Next</button></div></sc-if></div>
+</sc-if>
+<sc-if value="{{ pl.empty }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:44px 16px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center"><span style="font-size:14px;font-weight:500">{{ pl.emptyTitle }}</span><button onClick="{{ pl.emptyAct }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:13px">{{ pl.emptyBtn }}</button></div></sc-if>
+</sc-if>
+
+<sc-if value="{{ is.project }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between">
+<div style="min-width:0;flex:1 1 320px"><div style="font-size:12.5px"><a href="#projects" onClick="{{ goProjects }}">Projects</a><span style="color:var(--fa)"> / </span><a href="{{ pd.clientHref }}" onClick="{{ pd.openClient }}">{{ pd.client }}</a></div><h1 style="margin:4px 0 0;font-size:20px;font-weight:600">{{ pd.name }}</h1><div style="font-size:13px;color:var(--mu);margin-top:2px;max-width:640px">{{ pd.desc }}</div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;flex-shrink:0"><sc-if value="{{ pd.hasLive }}" hint-placeholder-val="{{ false }}"><a href="{{ pd.live }}" target="_blank" rel="noopener" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;color:var(--tx)">Visit project ↗</a></sc-if><a href="#invoice-new" onClick="{{ pd.newInvoice }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;color:var(--tx)">New invoice</a><a href="#project-edit" onClick="{{ pd.edit }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px">Edit</a></div>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.side }};gap:16px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="white-space:nowrap"><span style="font-weight:600">Tasks</span><span style="color:var(--fa)"> · {{ pd.doneOf }}</span></span><a href="#tasks" onClick="{{ pd.manage }}">Manage tasks</a></div>
+<sc-if value="{{ pd.hasTasks }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 14px;border-bottom:1px solid var(--l2);display:flex;align-items:center;gap:12px"><div style="flex:1;height:6px;border-radius:3px;background:var(--l2)"><div style="height:6px;border-radius:3px;width:{{ pd.pct }};background:var(--ac)"></div></div><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mu);white-space:nowrap">{{ pd.pctLabel }}</span></div></sc-if>
+<sc-for list="{{ pd.tasks }}" as="t" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:12.5px"><button onClick="{{ t.toggle }}" style="width:14px;height:14px;padding:0;border:1.5px solid {{ t.chkBd }};background:{{ t.chkBg }};border-radius:3px;cursor:pointer;color:#fff;font-size:10px;line-height:1">{{ t.chk }}</button><div style="min-width:0"><div style="text-decoration:{{ t.titleDeco }};color:{{ t.titleC }}">{{ t.title }}</div><div style="color:var(--fa);font-size:11.5px">{{ t.assignee }}</div></div><div style="display:flex;gap:8px;align-items:center"><span style="padding:1px 6px;border:1px solid {{ t.st.d }};color:{{ t.st.f }};border-radius:3px;font-size:11px;white-space:nowrap">{{ t.st.label }}</span><span style="font-size:12px;color:{{ t.dueC }};white-space:nowrap;min-width:{{ L.dueW }};text-align:right">{{ t.due }}</span></div></div></sc-for>
+<sc-if value="{{ pd.noTasks }}" hint-placeholder-val="{{ false }}"><div style="padding:22px 14px;font-size:13px;color:var(--mu)">Break the project down so the next step is always visible.</div></sc-if>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Invoices</div>
+<sc-for list="{{ pd.invoices }}" as="i" hint-placeholder-count="2"><a href="{{ i.href }}" onClick="{{ i.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2);color:var(--tx)"><span><span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ i.no }}</span><span style="display:block;font-size:12px;color:var(--fa)">Due {{ i.due }}</span></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ i.total }}</span><span style="padding:1px 6px;border:1px solid {{ i.st.d }};color:{{ i.st.f }};border-radius:3px;font-size:11px">{{ i.st.label }}</span></a></sc-for>
+<sc-if value="{{ pd.noInvoices }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 14px;font-size:13px;color:var(--mu)">No invoices for this project yet.</div></sc-if>
+</div>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Details</div>
+<div style="padding:6px 14px 14px;display:flex;flex-direction:column">
+<sc-for list="{{ pd.details }}" as="d" hint-placeholder-count="7"><div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--l2)"><span style="color:var(--mu)">{{ d.k }}</span><span style="word-break:break-word;color:{{ d.c }}">{{ d.v }}</span></div></sc-for>
+<sc-if value="{{ pd.hasBudget }}" hint-placeholder-val="{{ false }}"><div style="margin-top:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mu)">Budget used</span><span style="font-family:'IBM Plex Mono',monospace;color:{{ pd.budgetC }}">{{ pd.budgetPct }}</span></div><div style="height:6px;border-radius:3px;background:var(--l2)"><div style="height:6px;border-radius:3px;width:{{ pd.budgetW }};background:{{ pd.budgetC }}"></div></div></div></sc-if>
+<button onClick="{{ pd.delete }}" style="margin-top:14px;align-self:flex-start;padding:5px 10px;border:1px solid var(--rose-d);color:var(--red);background:transparent;border-radius:4px;cursor:pointer;font-size:12px">Delete project</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.projectForm }}" hint-placeholder-val="{{ false }}">
+<div><a href="{{ pf.backHref }}" onClick="{{ pf.back }}" style="font-size:12.5px">← {{ pf.backLabel }}</a><h1 style="margin:4px 0 0;font-size:20px;font-weight:600">{{ pf.title }}</h1></div>
+<sc-if value="{{ pf.noClients }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:44px 16px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;max-width:760px"><span style="font-size:14px;font-weight:500">Add a client first</span><span style="font-size:13px;color:var(--mu)">Every project belongs to a client.</span><a href="#client-new" onClick="{{ goNewClient }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px;font-size:13px">New client</a></div></sc-if>
+<sc-if value="{{ pf.hasClients }}" hint-placeholder-val="{{ false }}">
+<form key="{{ pf.key }}" onSubmit="{{ pf.save }}" noValidate="{{ true }}" style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:18px;display:grid;grid-template-columns:{{ L.form }};gap:14px;max-width:860px">
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Client *<select name="client" defaultValue="{{ pf.v.client }}" data-dv="{{ pf.v.client }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><sc-for list="{{ opt.clients }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Status<select name="status" defaultValue="{{ pf.v.status }}" data-dv="{{ pf.v.status }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="PLANNING">Planning</option><option value="ACTIVE">Active</option><option value="ON_HOLD">On Hold</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Name *<input name="name" defaultValue="{{ pf.v.name }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.name }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Budget<input name="budget" defaultValue="{{ pf.v.budget }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px;font-family:'IBM Plex Mono',monospace"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.budget }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Project link<input name="live" defaultValue="{{ pf.v.live }}" placeholder="https://" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--mu);font-weight:400">Shown to the client in their portal as "Visit project"</span><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.live }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Start date<input type="date" name="start" defaultValue="{{ pf.v.start }}" style="padding:6px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">End date<input type="date" name="end" defaultValue="{{ pf.v.end }}" style="padding:6px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.end }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Description<textarea name="description" rows="3" defaultValue="{{ pf.v.description }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px;resize:vertical"></textarea></label>
+<div style="grid-column:1/-1;display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:7px 14px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px">{{ pf.submit }}</button><a href="{{ pf.backHref }}" onClick="{{ pf.back }}" style="white-space:nowrap;padding:7px 14px;border:1px solid var(--inpb);border-radius:4px;color:var(--tx);font-size:13px">Cancel</a></div>
+</form>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ is.tasks }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between"><div><h1 style="margin:0;font-size:20px;font-weight:600">Tasks</h1><div style="font-size:13px;color:{{ tk.subC }};margin-top:2px">{{ tk.sub }}</div></div><button onClick="{{ tk.toggleNew }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px">New task</button></div>
+<sc-if value="{{ ui.newTask }}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{ tk.create }}" noValidate="{{ true }}" style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:16px;display:grid;grid-template-columns:{{ L.form3 }};gap:12px">
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;grid-column:1/-1">Title *<input name="title" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="color:var(--red);font-weight:400">{{ err.title }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Status<select name="status" defaultValue="TODO" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="TODO">Todo</option><option value="IN_PROGRESS">In Progress</option><option value="DONE">Done</option></select></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Priority<select name="priority" defaultValue="MEDIUM" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Due date<input type="date" name="due" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Client<select name="client" value="{{ tk.fc }}" data-v="{{ tk.fc }}" onChange="{{ tk.onFc }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">No client</option><sc-for list="{{ opt.clients }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Project<select name="project" defaultValue="{{ tk.fp }}" data-dv="{{ tk.fp }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">No project</option><sc-for list="{{ tk.projOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select><span style="color:var(--mu);font-weight:400">Picking a project sets the client automatically.</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Assignee<select name="assignee" defaultValue="{{ tk.fa }}" data-dv="{{ tk.fa }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">Unassigned</option><sc-for list="{{ opt.staff }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;grid-column:1/-1">Description<textarea name="description" rows="2" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px;resize:vertical"></textarea></label>
+<div style="grid-column:1/-1;display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12.5px">Create task</button><button type="button" onClick="{{ tk.toggleNew }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12.5px">Cancel</button></div>
+</form>
+</sc-if>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<input value="{{ tk.q }}" onChange="{{ tk.onQ }}" placeholder="Search title or description" style="flex:1 1 220px;padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px">
+<select value="{{ tk.status }}" data-v="{{ tk.status }}" onChange="{{ tk.onStatus }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">Any status</option><option value="TODO">Todo</option><option value="IN_PROGRESS">In Progress</option><option value="DONE">Done</option></select>
+<select value="{{ tk.priority }}" data-v="{{ tk.priority }}" onChange="{{ tk.onPriority }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">Any priority</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select>
+<select value="{{ tk.client }}" data-v="{{ tk.client }}" onChange="{{ tk.onClient }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.clientsAny }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<select value="{{ tk.assignee }}" data-v="{{ tk.assignee }}" onChange="{{ tk.onAssignee }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">Anyone</option><sc-for list="{{ opt.staff }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+</div>
+<sc-if value="{{ tk.hasProjectFilter }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mu)">Showing tasks for <strong style="color:var(--tx);font-weight:500">{{ tk.projectName }}</strong><button onClick="{{ tk.clearProject }}" style="padding:1px 8px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Clear</button></div></sc-if>
+<sc-for list="{{ tk.sections }}" as="sec" hint-placeholder-count="2">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">{{ sec.title }}</span><span style="color:var(--fa)"> · {{ sec.count }}</span></div>
+<sc-for list="{{ sec.rows }}" as="t" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 14px;border-bottom:1px solid var(--l2)"><button onClick="{{ t.toggle }}" style="width:14px;height:14px;margin-top:2px;padding:0;border:1.5px solid {{ t.chkBd }};background:{{ t.chkBg }};border-radius:3px;cursor:pointer;color:#fff;font-size:10px;line-height:1">{{ t.chk }}</button>
+<div style="min-width:0;display:flex;flex-direction:column;gap:3px"><div style="font-size:13.5px;text-decoration:{{ t.titleDeco }};color:{{ t.titleC }}">{{ t.title }}</div><sc-if value="{{ t.hasDesc }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--mu)">{{ t.desc }}</div></sc-if>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--fa)"><sc-if value="{{ t.hasClient }}" hint-placeholder-val="{{ false }}"><a href="#" onClick="{{ t.openClient }}">{{ t.client }}</a></sc-if><sc-if value="{{ t.hasProject }}" hint-placeholder-val="{{ false }}"><a href="#" onClick="{{ t.openProject }}" style="color:var(--mu)">{{ t.project }}</a></sc-if><span style="padding:0 6px;border:1px solid {{ t.pr.d }};color:{{ t.pr.f }};border-radius:3px;font-size:11px">{{ t.pr.label }}</span><span style="color:{{ t.dueC }}">{{ t.due }}</span><span>{{ t.assignee }}</span></div></div>
+<div style="display:flex;gap:10px;font-size:12px"><a href="{{ t.href }}" onClick="{{ t.edit }}">Edit</a><button onClick="{{ t.del }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px">Delete</button></div></div></sc-for>
+<sc-if value="{{ sec.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:20px 14px;font-size:13px;color:var(--mu)">{{ sec.emptyText }}</div></sc-if>
+</div>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{ is.taskEdit }}" hint-placeholder-val="{{ false }}">
+<div><a href="#tasks" onClick="{{ goTasks }}" style="font-size:12.5px">← Tasks</a><h1 style="margin:4px 0 0;font-size:20px;font-weight:600">Edit task</h1></div>
+<form key="{{ te.key }}" onSubmit="{{ te.save }}" noValidate="{{ true }}" style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:18px;display:grid;grid-template-columns:{{ L.form3 }};gap:14px;max-width:860px">
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Title *<input name="title" defaultValue="{{ te.v.title }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.title }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Status<select name="status" defaultValue="{{ te.v.status }}" data-dv="{{ te.v.status }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="TODO">Todo</option><option value="IN_PROGRESS">In Progress</option><option value="DONE">Done</option></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Priority<select name="priority" defaultValue="{{ te.v.priority }}" data-dv="{{ te.v.priority }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Due date<input type="date" name="due" defaultValue="{{ te.v.due }}" style="padding:6px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Client<select name="client" value="{{ te.fc }}" data-v="{{ te.fc }}" onChange="{{ te.onFc }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="">No client</option><sc-for list="{{ opt.clients }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Project<select name="project" defaultValue="{{ te.v.project }}" data-dv="{{ te.v.project }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="">No project</option><sc-for list="{{ te.projOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select><span style="font-size:12px;color:var(--mu);font-weight:400">Picking a project sets the client automatically.</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Assignee<select name="assignee" defaultValue="{{ te.v.assignee }}" data-dv="{{ te.v.assignee }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px"><option value="">Unassigned</option><sc-for list="{{ opt.staff }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:1/-1">Description<textarea name="description" rows="3" defaultValue="{{ te.v.description }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13.5px;resize:vertical"></textarea></label>
+<div style="grid-column:1/-1;display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:7px 14px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px">Save task</button><a href="#tasks" onClick="{{ goTasks }}" style="white-space:nowrap;padding:7px 14px;border:1px solid var(--inpb);border-radius:4px;color:var(--tx);font-size:13px">Cancel</a></div>
+</form>
+</sc-if>
+
+<sc-if value="{{ is.invoices }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between"><div><h1 style="margin:0;font-size:20px;font-weight:600">Invoices</h1><div style="font-size:13px;color:var(--mu);margin-top:2px">{{ il.sub }}</div></div><a href="#invoice-new" onClick="{{ goNewInvoice }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px;font-size:13px">New invoice</a></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><input value="{{ il.q }}" onChange="{{ il.onQ }}" placeholder="Search invoice number or client" style="flex:1 1 240px;padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><select value="{{ il.status }}" data-v="{{ il.status }}" onChange="{{ il.onStatus }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">Any status</option><option value="DRAFT">Draft</option><option value="SENT">Sent</option><option value="PAID">Paid</option><option value="OVERDUE">Overdue</option><option value="VOID">Void</option></select><select value="{{ il.client }}" data-v="{{ il.client }}" onChange="{{ il.onClient }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.clientsAny }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<sc-if value="{{ il.has }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow-x:auto"><div style="min-width:760px">
+<div style="display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(150px,1fr) 90px 110px 110px 120px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Invoice</span><span>Client</span><span>Status</span><span>Issued</span><span>Due</span><span style="text-align:right">Total</span></div>
+<sc-for list="{{ il.rows }}" as="r" hint-placeholder-count="10"><a href="{{ r.href }}" onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(150px,1fr) 90px 110px 110px 120px;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2);font-size:13px;color:var(--tx)"><span style="min-width:0"><span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ r.no }}</span><span style="display:block;font-size:11.5px;color:var(--fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.project }}</span></span><span style="color:var(--mu)">{{ r.client }}</span><span><span style="padding:1px 6px;border:1px solid {{ r.st.d }};color:{{ r.st.f }};border-radius:3px;font-size:11px">{{ r.st.label }}</span></span><span style="font-size:12.5px;color:var(--mu)">{{ r.issue }}</span><span style="font-size:12.5px;color:var(--mu)">{{ r.due }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ r.total }}</span></a></sc-for>
+</div></div>
+<div style="font-size:12.5px;color:var(--mu)">{{ il.count }}</div>
+</sc-if>
+<sc-if value="{{ il.empty }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:44px 16px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center"><span style="font-size:14px;font-weight:500">{{ il.emptyTitle }}</span><button onClick="{{ il.emptyAct }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:13px">{{ il.emptyBtn }}</button></div></sc-if>
+</sc-if>
+
+<sc-if value="{{ is.invoiceForm }}" hint-placeholder-val="{{ false }}">
+<div><a href="{{ ivf.backHref }}" onClick="{{ ivf.back }}" style="font-size:12.5px">← {{ ivf.backLabel }}</a><h1 style="margin:4px 0 0;font-size:20px;font-weight:600">{{ ivf.title }}</h1></div>
+<sc-if value="{{ ivf.noClients }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:44px 16px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;max-width:760px"><span style="font-size:14px;font-weight:500">Add a client first</span><span style="font-size:13px;color:var(--mu)">Invoices are billed to a client.</span><a href="#client-new" onClick="{{ goNewClient }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px;font-size:13px">New client</a></div></sc-if>
+<sc-if value="{{ ivf.hasClients }}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{ ivf.save }}" noValidate="{{ true }}" style="display:flex;flex-direction:column;gap:16px;max-width:980px">
+<sc-if value="{{ ivf.hasFormErr }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 12px;border-radius:4px;background:var(--rose-b);color:var(--rose-f);font-size:13px">{{ err.form }}</div></sc-if>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:16px;display:grid;grid-template-columns:{{ L.form3 }};gap:12px">
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Client *<select value="{{ ivf.d.client }}" data-v="{{ ivf.d.client }}" onChange="{{ ivf.on.client }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.clients }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Project<select value="{{ ivf.d.project }}" data-v="{{ ivf.d.project }}" onChange="{{ ivf.on.project }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">No project</option><sc-for list="{{ ivf.projOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Number *<input value="{{ ivf.d.no }}" onChange="{{ ivf.on.no }}" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px;font-family:'IBM Plex Mono',monospace"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.no }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Status<select value="{{ ivf.d.status }}" data-v="{{ ivf.d.status }}" onChange="{{ ivf.on.status }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="DRAFT">Draft</option><option value="SENT">Sent</option><option value="PAID">Paid</option><option value="OVERDUE">Overdue</option><option value="VOID">Void</option></select></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Issue date<input type="date" value="{{ ivf.d.issue }}" onChange="{{ ivf.on.issue }}" style="padding:6px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Due date<input type="date" value="{{ ivf.d.due }}" onChange="{{ ivf.on.due }}" style="padding:6px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="font-size:12px;color:var(--mu);font-weight:400">Net-30 by default</span><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.due }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500">Tax rate %<input value="{{ ivf.d.tax }}" onChange="{{ ivf.on.tax }}" inputMode="decimal" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px;font-family:'IBM Plex Mono',monospace"><span style="font-size:12px;color:var(--red);font-weight:400">{{ err.tax }}</span></label>
+<label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;grid-column:span 2">Notes<input value="{{ ivf.d.notes }}" onChange="{{ ivf.on.notes }}" placeholder="Printed on the invoice" style="padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"></label>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow-x:auto">
+<div style="min-width:640px">
+<div style="display:grid;grid-template-columns:minmax(200px,1fr) 80px 120px 120px 70px;gap:10px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Description</span><span>Qty</span><span>Unit price</span><span style="text-align:right">Amount</span><span></span></div>
+<sc-for list="{{ ivf.lines }}" as="l" hint-placeholder-count="1"><div style="display:grid;grid-template-columns:minmax(200px,1fr) 80px 120px 120px 70px;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2)"><input value="{{ l.d }}" onChange="{{ l.onD }}" placeholder="What was delivered" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><input value="{{ l.q }}" onChange="{{ l.onQ }}" placeholder="1" inputMode="decimal" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px;font-family:'IBM Plex Mono',monospace;width:100%;box-sizing:border-box"><input value="{{ l.p }}" onChange="{{ l.onP }}" placeholder="0.00" inputMode="decimal" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px;font-family:'IBM Plex Mono',monospace;width:100%;box-sizing:border-box"><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px">{{ l.amount }}</span><button type="button" onClick="{{ l.remove }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px;justify-self:end">Remove</button></div></sc-for>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;padding:12px 14px">
+<div style="display:flex;flex-direction:column;gap:6px"><button type="button" onClick="{{ ivf.addLine }}" style="align-self:flex-start;padding:5px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12.5px">Add line</button><span style="font-size:12px;color:var(--red)">{{ err.lines }}</span></div>
+<div style="display:grid;grid-template-columns:auto 130px;gap:6px 18px;font-size:13px"><span style="color:var(--mu)">Subtotal</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ ivf.sub }}</span><span style="color:var(--mu)">Tax ({{ ivf.taxLabel }}%)</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ ivf.tax }}</span><span style="font-weight:600;padding-top:6px;border-top:1px solid var(--ln)">Total</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;padding-top:6px;border-top:1px solid var(--ln)">{{ ivf.total }}</span></div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:7px 14px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px">{{ ivf.submit }}</button><a href="{{ ivf.backHref }}" onClick="{{ ivf.back }}" style="white-space:nowrap;padding:7px 14px;border:1px solid var(--inpb);border-radius:4px;color:var(--tx);font-size:13px">Cancel</a></div>
+</form>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ is.invoice }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between">
+<div><div style="font-size:12.5px"><a href="#invoices" onClick="{{ goInvoices }}">Invoices</a><span style="color:var(--fa)"> / </span><a href="{{ iv.clientHref }}" onClick="{{ iv.openClient }}">{{ iv.client }}</a></div><h1 style="margin:4px 0 0;font-size:20px;font-weight:600;font-family:'IBM Plex Mono',monospace;font-weight:500">{{ iv.no }}</h1><div style="font-size:13px;color:var(--mu);margin-top:2px">Issued {{ iv.issue }} · due {{ iv.due }}</div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;flex-shrink:0"><sc-if value="{{ iv.canSend }}" hint-placeholder-val="{{ false }}"><button onClick="{{ iv.markSent }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer">Mark sent</button></sc-if><sc-if value="{{ iv.canPay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ iv.markPaid }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--emerald-d);color:var(--emerald-f);background:var(--emerald-b);border-radius:4px;cursor:pointer">Mark paid</button></sc-if><a href="#invoice-edit" onClick="{{ iv.edit }}" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border-radius:4px">Edit</a></div>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.side }};gap:16px;align-items:start">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:{{ L.docPad }};display:flex;flex-direction:column;gap:24px;min-width:0">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px">
+<div><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:6px">Bill to</div><div style="font-size:14px;font-weight:500">{{ iv.billName }}</div><div style="font-size:13px;color:var(--mu);white-space:pre-line;line-height:1.5">{{ iv.billAddr }}</div></div>
+<div style="text-align:right"><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:6px">Amount due</div><div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500">{{ iv.amountDue }}</div><sc-if value="{{ iv.isPaid }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--grn);margin-top:2px">Paid {{ iv.paidAt }}</div></sc-if></div>
+</div>
+<div style="overflow-x:auto"><div style="min-width:480px">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 120px 120px;gap:10px;padding:8px 0;border-bottom:1px solid var(--tx);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:right">Unit price</span><span style="text-align:right">Amount</span></div>
+<sc-for list="{{ iv.lines }}" as="l" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 120px 120px;gap:10px;padding:10px 0;border-bottom:1px solid var(--l2);font-size:13px"><span>{{ l.d }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ l.q }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ l.p }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ l.amount }}</span></div></sc-for>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:6px 10px;padding-top:12px;font-size:13px;justify-items:end"><span style="color:var(--mu)">Subtotal</span><span style="font-family:'IBM Plex Mono',monospace">{{ iv.sub }}</span><span style="color:var(--mu)">Tax ({{ iv.taxRate }}%)</span><span style="font-family:'IBM Plex Mono',monospace">{{ iv.tax }}</span><span style="font-weight:600">Total</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ iv.total }}</span></div>
+</div></div>
+<sc-if value="{{ iv.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;line-height:1.5;color:var(--mu);border-top:1px solid var(--l2);padding-top:14px"><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Notes</div>{{ iv.notes }}</div></sc-if>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);display:flex;justify-content:space-between;align-items:center;font-size:13px"><span style="font-weight:600">Status</span><span style="padding:1px 6px;border:1px solid {{ iv.st.d }};color:{{ iv.st.f }};border-radius:3px;font-size:11px">{{ iv.st.label }}</span></div>
+<div style="padding:6px 14px 14px;display:flex;flex-direction:column">
+<sc-for list="{{ iv.details }}" as="d" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:80px minmax(0,1fr);gap:10px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--l2)"><span style="color:var(--mu)">{{ d.k }}</span><span>{{ d.v }}</span></div></sc-for>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"><sc-if value="{{ iv.canVoid }}" hint-placeholder-val="{{ false }}"><button onClick="{{ iv.void }}" style="padding:5px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Void invoice</button></sc-if><sc-if value="{{ iv.canReopen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ iv.reopen }}" style="padding:5px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Reopen as draft</button></sc-if><button onClick="{{ iv.delete }}" style="padding:5px 10px;border:1px solid var(--rose-d);color:var(--red);background:transparent;border-radius:4px;cursor:pointer;font-size:12px">Delete</button></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.files }}" hint-placeholder-val="{{ false }}">
+<div><h1 style="margin:0;font-size:20px;font-weight:600">Files</h1><div style="font-size:13px;color:var(--mu);margin-top:2px">{{ fl.sub }}</div></div>
+<div style="display:grid;grid-template-columns:{{ L.side }};gap:16px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+<div style="display:flex;flex-wrap:wrap;gap:8px"><input value="{{ fl.q }}" onChange="{{ fl.onQ }}" placeholder="Search filename, message, client" style="flex:1 1 220px;padding:7px 10px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><select value="{{ fl.dir }}" data-v="{{ fl.dir }}" onChange="{{ fl.onDir }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">Both ways</option><option value="CLIENT">Received from clients</option><option value="STAFF">Shared by your team</option></select><select value="{{ fl.client }}" data-v="{{ fl.client }}" onChange="{{ fl.onClient }}" style="padding:7px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ opt.clientsAny }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></div>
+<sc-for list="{{ fl.groups }}" as="g" hint-placeholder-count="3"><div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><a href="{{ g.href }}" onClick="{{ g.open }}" style="font-weight:600;color:var(--tx)">{{ g.name }}</a><span style="color:var(--fa)">{{ g.count }}</span></div>
+<sc-for list="{{ g.files }}" as="f" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2)"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><a href="#" onClick="{{ f.dl }}" style="font-size:13px;font-weight:500">{{ f.name }}</a><span style="padding:0 6px;border-radius:3px;font-size:11px;background:{{ f.pillBg }};color:{{ f.pillFg }}">{{ f.origin }}</span></div><sc-if value="{{ f.hasNote }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--mu);margin-top:2px">{{ f.note }}</div></sc-if><div style="font-size:11.5px;color:var(--fa);margin-top:2px">{{ f.meta }}</div></div><div style="display:flex;gap:10px;font-size:12px"><a href="#" onClick="{{ f.dl }}">Download</a><button onClick="{{ f.del }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px">Delete</button></div></div></sc-for>
+</div></sc-for>
+<sc-if value="{{ fl.empty }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:40px 16px;text-align:center;font-size:13px;color:var(--mu)">{{ fl.emptyText }}</div></sc-if>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Share a file with a client</div>
+<sc-if value="{{ fl.noClients }}" hint-placeholder-val="{{ false }}"><div style="padding:14px;font-size:13px;color:var(--mu)">Add a client first, then share files with them here.</div></sc-if>
+<sc-if value="{{ fl.hasClients }}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{ fl.upload }}" noValidate="{{ true }}" style="padding:14px;display:flex;flex-direction:column;gap:10px">
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Client *<select value="{{ fl.uc }}" data-v="{{ fl.uc }}" onChange="{{ fl.onUc }}" style="padding:6px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">Choose a client</option><sc-for list="{{ opt.clients }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select><span style="color:var(--red);font-weight:400">{{ err.client }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Project (optional)<select name="project" style="padding:6px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><option value="">No project</option><sc-for list="{{ fl.projOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">File<input type="file" name="file" onChange="{{ pickFile }}" style="font-size:12.5px"><span style="font-weight:400;color:{{ ui.pickC }}">{{ ui.pick }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Message (optional)<textarea name="note" rows="2" maxLength="500" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px;resize:vertical"></textarea></label>
+<div style="font-size:11.5px;color:var(--fa)">Up to 25 MB. Documents, spreadsheets, presentations, PDFs, images, text, CSV, JSON and ZIP.</div>
+<div><button type="submit" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12.5px">Share with client</button></div>
+</form>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.reports }}" hint-placeholder-val="{{ false }}">
+<div><h1 style="margin:0;font-size:20px;font-weight:600">Reports</h1><div style="font-size:13px;color:var(--mu);margin-top:2px">Money, pipeline and delivery across every client.</div></div>
+<div style="display:grid;grid-template-columns:{{ L.g4 }};background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow:hidden">
+<sc-for list="{{ rp.totals }}" as="s" hint-placeholder-count="4"><div style="padding:14px 16px;border-right:1px solid var(--l2);border-bottom:1px solid var(--l2);margin:0 -1px -1px 0;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)">{{ s.label }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;color:{{ s.c }}">{{ s.value }}</span><span style="font-size:12px;color:var(--fa)">{{ s.sub }}</span></div></sc-for>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow-x:auto">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Top clients</div>
+<div style="min-width:640px">
+<div style="display:grid;grid-template-columns:minmax(180px,1.5fr) 100px 120px 120px 120px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Client</span><span>Status</span><span style="text-align:right">Billed</span><span style="text-align:right">Collected</span><span style="text-align:right">Outstanding</span></div>
+<sc-for list="{{ rp.top }}" as="r" hint-placeholder-count="8"><a href="{{ r.href }}" onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(180px,1.5fr) 100px 120px 120px 120px;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:13px;color:var(--tx)"><span>{{ r.name }}</span><span><span style="padding:1px 6px;border:1px solid {{ r.st.d }};color:{{ r.st.f }};border-radius:3px;font-size:11px">{{ r.st.label }}</span></span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">{{ r.billed }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--grn)">{{ r.paid }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:{{ r.outC }}">{{ r.out }}</span></a></sc-for>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.g3 }};gap:16px">
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Pipeline by project status</div>
+<sc-for list="{{ rp.pipeline }}" as="p" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:12.5px"><span><span style="padding:1px 6px;border:1px solid {{ p.st.d }};color:{{ p.st.f }};border-radius:3px;font-size:11px">{{ p.st.label }}</span></span><span style="font-family:'IBM Plex Mono',monospace">{{ p.budget }}</span><span style="color:var(--fa);min-width:72px;text-align:right">{{ p.count }}</span></div></sc-for>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Delivery</div>
+<div style="padding:16px 14px;display:flex;flex-direction:column;gap:10px"><div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500">{{ rp.deliveryPct }}</div><div style="height:8px;border-radius:4px;background:var(--l2)"><div style="height:8px;border-radius:4px;width:{{ rp.deliveryPct }};background:var(--ac)"></div></div><div style="font-size:12.5px;color:var(--mu)">{{ rp.deliveryText }}</div></div>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">Revenue by industry</div>
+<sc-for list="{{ rp.industry }}" as="r" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:12.5px"><span style="min-width:0"><span style="display:block">{{ r.name }}</span><span style="display:block;font-size:11px;color:var(--fa)">{{ r.count }}</span></span><span style="font-family:'IBM Plex Mono',monospace;align-self:center">{{ r.billed }}</span></div></sc-for>
+</div>
+</div>
+<div style="font-size:12px;color:var(--fa)">Billed totals exclude draft and voided invoices. Overdue status is derived from the due date.</div>
+</sc-if>
+
+<sc-if value="{{ is.search }}" hint-placeholder-val="{{ false }}">
+<h1 style="margin:0;font-size:20px;font-weight:600">Search</h1>
+<input value="{{ sr.q }}" onChange="{{ sr.onQ }}" autoFocus="{{ true }}" placeholder="Search clients, contacts, projects, tasks and invoices" style="padding:10px 12px;border:1px solid var(--inpb);border-radius:6px;background:var(--inp);font-size:15px;max-width:720px">
+<sc-if value="{{ sr.idle }}" hint-placeholder-val="{{ false }}"><div style="padding:40px 0;font-size:13.5px;color:var(--mu)">Start typing to search everything.</div></sc-if>
+<sc-if value="{{ sr.none }}" hint-placeholder-val="{{ false }}"><div style="background:var(--pn);border:1px dashed var(--inpb);border-radius:6px;padding:40px 16px;text-align:center;font-size:13.5px;color:var(--mu);max-width:720px">Nothing matches "{{ sr.q }}".</div></sc-if>
+<div style="display:flex;flex-direction:column;gap:12px;max-width:720px">
+<sc-for list="{{ sr.groups }}" as="g" hint-placeholder-count="0"><div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px"><div style="padding:8px 14px;border-bottom:1px solid var(--l2);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)">{{ g.title }}</div>
+<sc-for list="{{ g.items }}" as="i" hint-placeholder-count="2"><a href="{{ i.href }}" onClick="{{ i.open }}" style="display:flex;justify-content:space-between;gap:12px;padding:9px 14px;border-bottom:1px solid var(--l2);color:var(--tx)"><span style="min-width:0"><span style="display:block;font-size:13px;font-weight:500">{{ i.title }}</span><span style="display:block;font-size:12px;color:var(--fa)">{{ i.sub }}</span></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--mu);align-self:center">{{ i.right }}</span></a></sc-for>
+</div></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.team }}" hint-placeholder-val="{{ false }}">
+<div><h1 style="margin:0;font-size:20px;font-weight:600">Team</h1><div style="font-size:13px;color:var(--mu);margin-top:2px;max-width:640px">You can only change accounts ranked below your own. Client portal logins are managed on each client's page.</div></div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">{{ tm.title }}</span><sc-if value="{{ tm.canAdd }}" hint-placeholder-val="{{ false }}"><button onClick="{{ tm.toggleAdd }}" style="padding:4px 10px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12.5px">Add teammate</button></sc-if></div>
+<sc-if value="{{ ui.addMember }}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{ tm.add }}" noValidate="{{ true }}" style="padding:14px;border-bottom:1px solid var(--l2);background:var(--hov);display:grid;grid-template-columns:{{ L.form }};gap:12px">
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Name<input name="name" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="color:var(--red);font-weight:400">{{ err.name }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Email<input name="email" style="padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><span style="color:var(--red);font-weight:400">{{ err.email }}</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Role<select name="role" style="padding:6px 8px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:13px"><sc-for list="{{ tm.roleOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select><span style="color:var(--mu);font-weight:400">Admins can add and remove members. Members have full access to client data but cannot change accounts.</span></label>
+<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500">Temporary password<div style="display:flex;gap:6px"><input name="password" value="{{ ui.pw }}" onChange="{{ setPw }}" style="flex:1;min-width:0;padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-family:'IBM Plex Mono',monospace;font-size:12.5px"><button type="button" onClick="{{ regenPw }}" style="padding:5px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Generate</button></div><span style="color:var(--mu);font-weight:400">Send this over a channel you trust. Setting a password signs the account out of every device.</span><span style="color:var(--red);font-weight:400">{{ err.password }}</span></label>
+<div style="grid-column:1/-1;display:flex;gap:8px"><button type="submit" style="white-space:nowrap;padding:6px 12px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12.5px">Add teammate</button><button type="button" onClick="{{ tm.toggleAdd }}" style="white-space:nowrap;padding:6px 12px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12.5px">Cancel</button></div>
+</form>
+</sc-if>
+<div style="overflow-x:auto"><div style="min-width:760px">
+<div style="display:grid;grid-template-columns:minmax(200px,1.5fr) 150px 170px 110px 170px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Name</span><span>Role</span><span>Last sign-in</span><span>Added</span><span></span></div>
+<sc-for list="{{ tm.rows }}" as="u" hint-placeholder-count="5"><div style="border-bottom:1px solid var(--l2)"><div style="display:grid;grid-template-columns:minmax(200px,1.5fr) 150px 170px 110px 170px;gap:12px;align-items:center;padding:10px 14px;font-size:13px">
+<span style="min-width:0"><span style="display:flex;align-items:center;gap:6px;font-weight:500">{{ u.name }}<sc-if value="{{ u.isMe }}" hint-placeholder-val="{{ false }}"><span style="padding:0 5px;border-radius:3px;background:var(--acs);color:var(--ac);font-size:10.5px">You</span></sc-if></span><span style="display:block;font-size:12px;color:var(--fa)">{{ u.email }}</span></span>
+<span><sc-if value="{{ u.canChange }}" hint-placeholder-val="{{ false }}"><select value="{{ u.role }}" data-v="{{ u.role }}" onChange="{{ u.onRole }}" style="padding:4px 6px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:12.5px"><sc-for list="{{ u.roleOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></sc-if><sc-if value="{{ u.locked }}" hint-placeholder-val="{{ true }}"><span style="display:flex;flex-direction:column;gap:2px;align-items:flex-start"><span style="padding:1px 6px;border:1px solid {{ u.st.d }};color:{{ u.st.f }};border-radius:3px;font-size:11px">{{ u.st.label }}</span><span style="font-size:11.5px;color:var(--fa)">{{ u.reason }}</span></span></sc-if></span>
+<span style="font-size:12.5px;color:var(--mu)">{{ u.last }}</span><span style="font-size:12.5px;color:var(--mu)">{{ u.added }}</span>
+<span style="display:flex;gap:12px;justify-content:flex-end;font-size:12px"><sc-if value="{{ u.canReset }}" hint-placeholder-val="{{ false }}"><button onClick="{{ u.reset }}" style="padding:0;border:0;background:none;color:var(--ac);cursor:pointer;font-size:12px">Reset password</button></sc-if><sc-if value="{{ u.canRemove }}" hint-placeholder-val="{{ false }}"><button onClick="{{ u.remove }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:12px">Remove</button></sc-if></span>
+</div>
+<sc-if value="{{ u.resetting }}" hint-placeholder-val="{{ false }}"><form onSubmit="{{ u.saveReset }}" style="margin:0 14px 12px;padding:10px;background:var(--hov);border-radius:4px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><input name="password" value="{{ ui.pw }}" onChange="{{ setPw }}" style="flex:1 1 220px;padding:6px 9px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-family:'IBM Plex Mono',monospace;font-size:12.5px"><button type="button" onClick="{{ regenPw }}" style="padding:5px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;font-size:12px">Generate</button><button type="submit" style="padding:5px 10px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px">Set password</button><span style="font-size:11.5px;color:var(--mu);flex-basis:100%">Signs {{ u.first }} out of every device.</span></form></sc-if>
+</div></sc-for>
+</div></div>
+<sc-if value="{{ ui.flashHas }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 14px;font-size:12.5px;color:var(--grn)">{{ ui.flash }}</div></sc-if>
+<sc-if value="{{ ui.teamErrHas }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 14px;font-size:12.5px;color:var(--red)">{{ ui.teamErr }}</div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.oversight }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between"><div><h1 style="margin:0;font-size:20px;font-weight:600">Oversight</h1><div style="font-size:13px;color:var(--mu);margin-top:2px;max-width:640px">{{ ov.desc }}</div></div>
+<div style="display:flex;border:1px solid var(--inpb);border-radius:4px;overflow:hidden;font-size:12.5px"><sc-for list="{{ ov.periods }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.go }}" style="padding:5px 11px;border:0;border-right:1px solid var(--inpb);cursor:pointer;background:{{ p.bg }};color:{{ p.fg }}">{{ p.label }}</button></sc-for></div></div>
+<div style="display:grid;grid-template-columns:{{ L.g4 }};background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow:hidden">
+<sc-for list="{{ ov.tiles }}" as="s" hint-placeholder-count="4"><div style="padding:14px 16px;border-right:1px solid var(--l2);border-bottom:1px solid var(--l2);margin:0 -1px -1px 0;display:flex;flex-direction:column;gap:4px;background:{{ s.bg }}"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)">{{ s.label }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;color:{{ s.c }}">{{ s.value }}</span></div></sc-for>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px;overflow-x:auto">
+<div style="padding:10px 14px;border-bottom:1px solid var(--l2);font-size:13px;font-weight:600">The team</div>
+<div style="min-width:680px">
+<div style="display:grid;grid-template-columns:minmax(180px,1.4fr) 110px 80px 150px 150px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)"><span>Name</span><span>Role</span><span style="text-align:right">Actions</span><span>Last action</span><span>Last sign-in</span></div>
+<sc-for list="{{ ov.team }}" as="u" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:minmax(180px,1.4fr) 110px 80px 150px 150px;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:13px"><a href="#" onClick="{{ u.filter }}">{{ u.name }}</a><span><span style="padding:1px 6px;border:1px solid {{ u.st.d }};color:{{ u.st.f }};border-radius:3px;font-size:11px;white-space:nowrap">{{ u.st.label }}</span></span><span style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ u.count }}</span><span style="font-size:12.5px;color:var(--mu)">{{ u.lastAction }}</span><span style="font-size:12.5px;color:var(--mu)">{{ u.last }}</span></div></sc-for>
+</div>
+</div>
+<div style="background:var(--pn);border:1px solid var(--ln);border-radius:6px">
+<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--l2);font-size:13px"><span style="font-weight:600">Activity</span><div style="display:flex;gap:8px"><select value="{{ ov.person }}" data-v="{{ ov.person }}" onChange="{{ ov.onPerson }}" style="padding:4px 6px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:12.5px"><option value="">Everyone</option><sc-for list="{{ ov.personOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select><select value="{{ ov.cat }}" data-v="{{ ov.cat }}" onChange="{{ ov.onCat }}" style="padding:4px 6px;border:1px solid var(--inpb);border-radius:4px;background:var(--inp);font-size:12.5px"><option value="">All categories</option><option value="work">Client work</option><option value="access">Accounts &amp; access</option><option value="files">Files</option><option value="del">Deletions</option></select></div></div>
+<sc-for list="{{ ov.feed }}" as="a" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--l2)"><div style="min-width:0"><div style="font-size:13px">{{ a.msg }}</div><div style="font-size:11.5px;color:var(--fa);margin-top:2px;display:flex;flex-wrap:wrap;gap:4px"><span>{{ a.actorName }}</span><sc-if value="{{ a.hasClient }}" hint-placeholder-val="{{ false }}"><span>·</span><a href="#" onClick="{{ a.openClient }}">{{ a.client }}</a></sc-if><span>· {{ a.when }}</span></div></div><span title="{{ a.type }}" style="padding:1px 7px;border-radius:3px;font-size:11px;white-space:nowrap;background:{{ a.catB.b }};color:{{ a.catB.f }}">{{ a.cat }}</span></div></sc-for>
+<sc-if value="{{ ov.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:28px 14px;text-align:center;font-size:13px;color:var(--mu)">Nothing logged for this filter and period.</div></sc-if>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;font-size:12.5px;color:var(--mu)"><span>{{ ov.pager.label }}</span><sc-if value="{{ ov.pager.multi }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px"><button onClick="{{ ov.pager.prev }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ ov.pager.prevOp }}">Previous</button><button onClick="{{ ov.pager.next }}" style="padding:4px 10px;border:1px solid var(--inpb);background:var(--pn);border-radius:4px;cursor:pointer;opacity:{{ ov.pager.nextOp }}">Next</button></div></sc-if></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.notFound }}" hint-placeholder-val="{{ false }}">
+<div style="padding:80px 16px;display:flex;flex-direction:column;gap:12px;align-items:flex-start;max-width:520px;margin:0 auto">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--fa)">404</span>
+<h1 style="margin:0;font-size:24px;font-weight:600">Page not found</h1>
+<p style="margin:0;font-size:14px;line-height:1.55;color:var(--mu)">The record you are looking for may have been deleted, or the link is wrong.</p>
+<a href="#dashboard" onClick="{{ goHome }}" style="white-space:nowrap;padding:7px 14px;background:var(--ac);color:#fff;border-radius:4px;font-size:13px">Back to dashboard</a>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.error }}" hint-placeholder-val="{{ false }}">
+<div style="padding:80px 16px;display:flex;flex-direction:column;gap:12px;align-items:flex-start;max-width:520px;margin:0 auto">
+<h1 style="margin:0;font-size:24px;font-weight:600">Something went wrong</h1>
+<div style="padding:10px 12px;border-radius:4px;background:var(--hov);border:1px solid var(--ln);font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--mu);width:100%;box-sizing:border-box">Can't reach database server at db.internal:5432</div>
+<button onClick="{{ goHome }}" style="white-space:nowrap;padding:7px 14px;background:var(--ac);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px">Try again</button>
+</div>
+</sc-if>
+</main>
+</div>
+</div>
+<sc-if value="{{ drawer }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(10,12,16,.45);z-index:20"></div>
+<aside style="position:fixed;top:0;left:0;bottom:0;width:260px;z-index:21;background:var(--rail);color:var(--railtx);padding:16px 12px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box;box-shadow:var(--shadow)">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px"><span style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:600;font-size:15px"><span style="width:18px;height:18px;border-radius:4px;background:#3b5bdb"></span>KediClient</span><button onClick="{{ closeDrawer }}" style="padding:3px 8px;border:1px solid #3a404a;background:transparent;color:#c9ced6;border-radius:4px;cursor:pointer;font-size:12px">Close</button></div>
+<nav style="display:flex;flex-direction:column;gap:1px"><sc-for list="{{ nav }}" as="n" hint-placeholder-count="8"><a href="{{ n.href }}" onClick="{{ n.go }}" style="display:block;padding:9px 8px;border-radius:4px;font-size:14px;color:{{ n.fg }};background:{{ n.bg }};font-weight:{{ n.fw }}">{{ n.label }}</a></sc-for></nav>
+<div style="margin-top:auto;font-size:11.5px;line-height:1.5;color:#8a919c;padding:10px 8px 0;border-top:1px solid #262b33"><div style="color:#e6e9ee">{{ me.name }}</div>{{ me.email }}</div>
+</aside>
+</sc-if>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;SUPER_ADMIN&quot;,&quot;ADMIN&quot;,&quot;MEMBER&quot;],&quot;default&quot;:&quot;SUPER_ADMIN&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;empty&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+const K=()=>window.KEDI;
+const ALLOWED=['pdf','png','jpg','jpeg','gif','webp','svg','txt','csv','md','json','zip','doc','docx','xls','xlsx','ppt','pptx'];
+const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ROUTE_NAV={client:'clients','client-new':'clients','client-edit':'clients','contact-edit':'contacts',project:'projects','project-new':'projects','project-edit':'projects','task-edit':'tasks',invoice:'invoices','invoice-new':'invoices','invoice-edit':'invoices'};
+class Component extends DCLogic {
+  state={ready:!!window.KEDI,db:window.KEDI?window.KEDI.seed():null,edb:window.KEDI?window.KEDI.emptySeed():null,route:'dashboard',id:null,w:window.innerWidth,drawer:false,f:{},ui:{},err:{},draft:null,themeO:null,roleO:null,emptyO:null};
+  componentDidMount(){
+    const boot=()=>{if(!window.KEDI)return setTimeout(boot,30);if(!this.state.db)this.setState({ready:true,db:K().seed(),edb:K().emptySeed()});this.fromHash();};
+    boot();
+    this.onR=()=>this.setState({w:window.innerWidth});window.addEventListener('resize',this.onR);
+    this.onH=()=>this.fromHash();window.addEventListener('hashchange',this.onH);
+    this.applyTheme();
+  }
+  componentWillUnmount(){window.removeEventListener('resize',this.onR);window.removeEventListener('hashchange',this.onH);document.body.classList.remove('dark');}
+  componentDidUpdate(){this.applyTheme();this.syncSelects();}
+  syncSelects(){const run=()=>{document.querySelectorAll('select[data-v]').forEach(s=>{const v=s.getAttribute('data-v')||'';if(s.value!==v&&[...s.options].some(o=>o.value===v))s.value=v;});document.querySelectorAll('select[data-dv]:not([data-synced])').forEach(s=>{const v=s.getAttribute('data-dv')||'';if([...s.options].some(o=>o.value===v)){s.value=v;s.setAttribute('data-synced','1');}});};setTimeout(run,0);setTimeout(run,80);}
+  dark(){return (this.state.themeO||this.props.theme||'light')==='dark';}
+  applyTheme(){document.body.classList.toggle('dark',this.dark());}
+  role(){return this.state.roleO||this.props.role||'SUPER_ADMIN';}
+  emptyMode(){return this.state.emptyO??!!this.props.empty;}
+  db(){return this.emptyMode()?this.state.edb:this.state.db;}
+  me(){const id={SUPER_ADMIN:'u1',ADMIN:'u2',MEMBER:'u3'}[this.role()];const us=this.db().users;const u=us.find(x=>x.id===id)||us[0];return {...u,role:this.role()};}
+  fromHash(){
+    const h=decodeURIComponent(location.hash.slice(1));if(!h)return;
+    const [p,...fl]=h.split('~');const [route,id]=(p||'').split('/');
+    const s={route:route||'dashboard',id:id||null,drawer:fl.includes('menu'),ui:{},err:{},draft:null};
+    if(fl.includes('dark'))s.themeO='dark';else if(fl.includes('light'))s.themeO='light';
+    if(fl.includes('empty'))s.emptyO=true;
+    const r={admin:'ADMIN',member:'MEMBER',super:'SUPER_ADMIN'};for(const k in r)if(fl.includes(k))s.roleO=r[k];
+    for(const x of fl){const m=x.match(/^f\.(\w+)=(.*)$/);if(m){s.f=s.f||{};s.f[m[1]]=m[2];}}
+    if(fl.includes('invite'))s.ui.invite=true,s.ui.pw=K().genPw();
+    if(fl.includes('addcontact'))s.ui.addContact=true;
+    if(fl.includes('newtask'))s.ui.newTask=true;
+    if(fl.includes('addmember'))s.ui.addMember=true,s.ui.pw=K().genPw();
+    this.setState(s);
+  }
+  go(route,id=null,extra){
+    const fl=location.hash.split('~').slice(1).filter(x=>/^(dark|light|empty|admin|member|super)$/.test(x));
+    try{history.pushState(null,'','#'+route+(id?'/'+id:'')+(fl.length?'~'+fl.join('~'):''));}catch(e){}
+    this.setState({route,id,drawer:false,ui:{},err:{},draft:null,...(extra||{})});
+    window.scrollTo(0,0);
+  }
+  lk(route,id,extra){return e=>{if(e&&e.preventDefault)e.preventDefault();this.go(route,id,extra);};}
+  mut(fn){this.setState(s=>{const k=this.emptyMode()?'edb':'db';const db={...s[k]};fn(db);return {[k]:db};});}
+  log(db,type,msg,client){db.activity=[{id:'a'+Math.random().toString(36).slice(2),type,msg,client:client||null,actor:this.me().id,at:K().NOW},...db.activity];}
+  setF(k){return e=>{const v=e&&e.target?e.target.value:e;this.setState(s=>({f:{...s.f,[k]:v,page:1}}));};}
+  tog(k,extra){return ()=>this.setState(s=>({ui:{...s.ui,[k]:!s.ui[k],...(typeof extra==='function'?extra():extra||{})},err:{}}));}
+  form(e){e.preventDefault();const fd=new FormData(e.currentTarget);const o={};for(const [k,v] of fd.entries())o[k]=typeof v==='string'?v.trim():v;return o;}
+  confirmDo(msg,fn){if(window.confirm(msg))fn();}
+  toggleTask(id){this.mut(db=>{db.tasks=db.tasks.map(t=>{if(t.id!==id)return t;if(t.status==='DONE')return {...t,status:'TODO',completedAt:null};this.log(db,'TASK_COMPLETED',`Task "${t.title}" was completed`,t.client);return {...t,status:'DONE',completedAt:K().NOW};});});}
+  pager(list,size){const n=list.length,pages=Math.max(1,Math.ceil(n/size));const page=Math.min(Math.max(1,+(this.state.f.page||1)),pages);const set=p=>()=>this.setState(s=>({f:{...s.f,page:p}}));return {rows:list.slice((page-1)*size,page*size),pager:{multi:pages>1,label:pages>1?`Page ${page} of ${pages} · ${K().plural(n,'result')}`:K().plural(n,'result'),prev:page>1?set(page-1):()=>{},next:page<pages?set(page+1):()=>{},prevOp:page>1?1:.4,nextOp:page<pages?1:.4}};}
+  validFile(file){if(!file||!file.name||file.size===0)return 'Choose a file to upload.';if(file.size>25*1048576)return 'That file is larger than 25 MB.';const ext=file.name.split('.').pop().toLowerCase();if(!ALLOWED.includes(ext))return 'That file type is not accepted. Allowed: documents, spreadsheets, presentations, PDFs, images, text, CSV, JSON and ZIP.';return null;}
+  cleanName(n){return (n.split(/[\\/]/).pop().replace(/[^\w.\- ]/g,'_').slice(0,180))||'file';}
+  addFile(e,clientId,projectId,note,by){const file=e;this.mut(db=>{const rec={id:'f'+Date.now(),client:clientId,project:projectId||null,filename:this.cleanName(file.name),mime:file.type,bytes:file.size,by,uploader:this.me().id,note:(note||'').slice(0,500)||null,at:K().NOW};db.files=[rec,...db.files];const c=db.clients.find(c=>c.id===clientId);this.log(db,'FILE_SHARED',`${this.me().name} shared ${rec.filename}`,clientId);});}
+
+  helpers(){
+    const k=K(),db=this.db();
+    const uMap=Object.fromEntries(db.users.map(u=>[u.id,u])),cMap=Object.fromEntries(db.clients.map(c=>[c.id,c])),pMap=Object.fromEntries(db.projects.map(p=>[p.id,p]));
+    const puMap=Object.fromEntries(db.portalUsers.map(u=>[u.id,u]));
+    const actor=(id,fallback)=>id==null?fallback:(uMap[id]||puMap[id])?.name||'A removed account';
+    const isOver=t=>t.status!=='DONE'&&t.due&&k.ts(t.due)<k.NOW;
+    const taskRow=t=>{const done=t.status==='DONE',over=isOver(t);const cn=t.client&&cMap[t.client]?cMap[t.client].name:'',pn=t.project&&pMap[t.project]?pMap[t.project].name:'';return {id:t.id,title:t.title,desc:t.description||'',hasDesc:!!t.description,client:cn,project:pn||'No project',hasClient:!!cn,hasProject:!!pn,meta:[cn,pn].filter(Boolean).join(' · ')||'No client',pr:k.badge(t.priority),prUp:t.priority,st:k.badge(t.status),due:t.due?(over?'Overdue · ':'Due ')+k.fd(t.due):'No due date',dueShort:t.due?k.fd(t.due).replace(/, \d{4}$/,''):'—',dueC:over?'var(--red)':'var(--mu)',assignee:t.assignee&&uMap[t.assignee]?uMap[t.assignee].name:'Unassigned',done,chkBg:done?'var(--ac)':'transparent',chkBd:done?'var(--ac)':'var(--chk)',chk:done?'✓':'',titleDeco:done?'line-through':'none',titleC:done?'var(--fa)':'var(--tx)',toggle:()=>this.toggleTask(t.id),edit:this.lk('task-edit',t.id),href:'#task-edit/'+t.id,del:()=>this.confirmDo(`Delete task "${t.title}"?`,()=>this.mut(db=>{db.tasks=db.tasks.filter(x=>x.id!==t.id);})),openClient:t.client?this.lk('client',t.client):()=>{},openProject:t.project?this.lk('project',t.project):()=>{}};};
+    const invRow=i=>{const e=k.eff(i);return {id:i.id,no:i.no,client:cMap[i.client]?.name||'',project:i.project&&pMap[i.project]?pMap[i.project].name:'',st:k.badge(e),issue:k.fd(i.issue),due:k.fd(i.due),total:k.money(k.tot(i).total),open:this.lk('invoice',i.id),href:'#invoice/'+i.id};};
+    const actRow=(a,fallback='System')=>{const c=k.cat(a.type);return {msg:a.msg,meta:[actor(a.actor,fallback),a.client&&cMap[a.client]?cMap[a.client].name:null,k.rel(a.at)].filter(Boolean).join(' · '),dot:`var(--${k.CATT[c]}-d)`,cat:k.CATL[c],catB:k.badge(c==='access'?'SUPER_ADMIN':c==='del'?'OVERDUE':c==='files'?'SENT':'DRAFT'),type:a.type,href:a.client?'#client/'+a.client:'#',open:a.client&&cMap[a.client]?this.lk('client',a.client):e=>e.preventDefault(),c:a.client&&cMap[a.client]?'var(--tx)':'var(--tx)',client:a.client&&cMap[a.client]?cMap[a.client].name:'',hasClient:!!(a.client&&cMap[a.client]),openClient:a.client?this.lk('client',a.client):()=>{},actorName:actor(a.actor,fallback),when:k.rel(a.at)};};
+    const fileRow=f=>{const staff=f.by==='STAFF';const up=actor(f.uploader,null);return {id:f.id,name:f.filename,note:f.note||'',hasNote:!!f.note,origin:staff?`Shared by ${up||'your team'}`:`Sent by ${up||'the client'}`,pillBg:staff?'var(--slate-b)':'var(--sky-b)',pillFg:staff?'var(--slate-f)':'var(--sky-f)',meta:[k.size(f.bytes),k.rel(f.at),f.project&&pMap[f.project]?pMap[f.project].name:null].filter(Boolean).join(' · '),client:cMap[f.client]?.name||'',dl:e=>{e.preventDefault();this.setState({ui:{...this.state.ui,flashHas:true,flash:`Downloading ${f.filename}…`}});},del:()=>this.confirmDo(`Delete ${f.filename}? This removes the file for everyone.`,()=>this.mut(db=>{db.files=db.files.filter(x=>x.id!==f.id);}))};};
+    return {k,db,uMap,cMap,pMap,puMap,actor,isOver,taskRow,invRow,actRow,fileRow};
+  }
+
+  common(H){
+    const {k,db}=H,me=this.me(),w=this.state.w,r=this.state.route;
+    const navKey=ROUTE_NAV[r]||r;
+    const items=[['dashboard','Dashboard'],['clients','Clients'],['contacts','Contacts'],['projects','Projects'],['tasks','Tasks'],['invoices','Invoices'],['files','Files'],['reports','Reports']];
+    if(k.RANK[me.role]>=2)items.push(['team','Team']);
+    if(me.role==='SUPER_ADMIN')items.push(['oversight','Oversight']);
+    const drawerMode=w<900;
+    const L={rail:!drawerMode,drawerMode,shell:drawerMode?'minmax(0,1fr)':'208px minmax(0,1fr)',pad:w<720?'14px':'20px 24px',hpad:w<720?'12px':'24px',showName:w>=720,searchW:w<720?'none':'360px',
+      g4:w<720?'repeat(2,minmax(0,1fr))':'repeat(4,minmax(0,1fr))',g2:w<1100?'minmax(0,1fr)':'minmax(0,1fr) minmax(0,1fr)',g3:w<1100?(w<720?'minmax(0,1fr)':'minmax(0,1fr) minmax(0,1fr)'):'minmax(0,1.2fr) minmax(0,1fr) minmax(0,.8fr)',
+      side:w<1100?'minmax(0,1fr)':'minmax(0,1fr) 340px',form:w<720?'minmax(0,1fr)':'minmax(0,1fr) minmax(0,1fr)',form3:w<720?'minmax(0,1fr)':'repeat(3,minmax(0,1fr))',m:w<720,dueW:w<720?'0':'150px',docPad:w<720?'16px':'28px',cards3:w<720?'minmax(0,1fr)':'repeat(3,minmax(0,1fr))'};
+    const authRoutes=['login','register','register-closed'];
+    const known=['dashboard','clients','client','client-new','client-edit','contacts','contact-edit','projects','project','project-new','project-edit','tasks','task-edit','invoices','invoice','invoice-new','invoice-edit','files','reports','search','team','oversight','404','error'];
+    let route=r;if(!authRoutes.includes(r)&&!known.includes(r))route='404';
+    const needs={client:'clients','client-edit':'clients',project:'projects','project-edit':'projects',invoice:'invoices','invoice-edit':'invoices','contact-edit':'contacts','task-edit':'tasks'};
+    if(needs[route]&&!db[needs[route]].some(x=>x.id===this.state.id))route='404';
+    if(route==='team'&&k.RANK[me.role]<2)route='dashboard';
+    if(route==='oversight'&&me.role!=='SUPER_ADMIN')route='dashboard';
+    const is={login:route==='login',register:route==='register',registerClosed:route==='register-closed',dashboard:route==='dashboard',clients:route==='clients',client:route==='client',clientForm:route==='client-new'||route==='client-edit',contacts:route==='contacts',contactEdit:route==='contact-edit',projects:route==='projects',project:route==='project',projectForm:route==='project-new'||route==='project-edit',tasks:route==='tasks',taskEdit:route==='task-edit',invoices:route==='invoices',invoice:route==='invoice',invoiceForm:route==='invoice-new'||route==='invoice-edit',files:route==='files',reports:route==='reports',search:route==='search',team:route==='team',oversight:route==='oversight',notFound:route==='404',error:route==='error'};
+    const staff=db.users.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const clientsAlpha=db.clients.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const ui=this.state.ui;
+    return {route,is,isApp:!authRoutes.includes(route),L,me:{...me,ini:k.ini(me.name)},drawer:this.state.drawer&&drawerMode,ui:{...ui,pickC:ui.pickErr?'var(--red)':'var(--mu)'},err:this.state.err,
+      nav:items.map(([key,label])=>{const a=navKey===key;return {label,href:'#'+key,go:this.lk(key,null,{f:{}}),bg:a?'var(--raila)':'transparent',fg:a?'#fff':'var(--railtx)',fw:a?500:400};}),
+      openDrawer:()=>this.setState({drawer:true}),closeDrawer:()=>this.setState({drawer:false}),
+      toggleTheme:()=>this.setState({themeO:this.dark()?'light':'dark'}),themeLabel:this.dark()?'Light mode':'Dark mode',
+      signOut:this.lk('login'),goLogin:this.lk('login'),goHome:this.lk('dashboard',null,{f:{}}),goSearch:this.lk('search'),goReports:this.lk('reports'),goInvoices:this.lk('invoices',null,{f:{}}),goClients:this.lk('clients'),goNewClient:this.lk('client-new'),goNewInvoice:this.lk('invoice-new'),goTasks:this.lk('tasks',null,{f:{}}),goProjects:this.lk('projects'),
+      pickFile:e=>{const f=e.target.files[0];if(!f)return this.setState(s=>({ui:{...s.ui,pick:'',pickErr:false}}));const er=this.validFile(f);this.setState(s=>({ui:{...s.ui,pick:er||`${f.name} · ${k.size(f.size)}`,pickErr:!!er}}));},
+      setPw:e=>{const v=e.target.value;this.setState(s=>({ui:{...s.ui,pw:v}}));},regenPw:()=>this.setState(s=>({ui:{...s.ui,pw:k.genPw()}})),
+      opt:{clientStatusAny:[{v:'',l:'Any status'},...['LEAD','ACTIVE','INACTIVE','ARCHIVED'].map(v=>({v,l:k.lab(v)}))],ownerAny:[{v:'',l:'Anyone'},...staff.map(u=>({v:u.id,l:u.name}))],staff:staff.map(u=>({v:u.id,l:u.name})),clients:clientsAlpha.map(c=>({v:c.id,l:c.name})),clientsAny:[{v:'',l:'All clients'},...clientsAlpha.map(c=>({v:c.id,l:c.name}))]},
+      login:this.vLogin(),register:this.vRegister()};
+  }
+  vLogin(){const e=this.state.err;return {email:'maya@kedi.studio',err:e.form||'',hasErr:!!e.form,eEmail:e.email||'',ePw:e.password||'',submit:ev=>{const v=this.form(ev);const err={};const email=(v.email||'').toLowerCase();if(!email)err.email='Email is required';else if(!EMAIL.test(email))err.email='Enter a valid email';if(!v.password)err.password='Password is required';if(Object.keys(err).length)return this.setState({err});const db=this.state.db;if(db.portalUsers.some(u=>u.email===email)){window.location.href='KediClient Portal.dc.html';return;}if(db.users.some(u=>u.email===email)){const u=db.users.find(u=>u.email===email);return this.go('dashboard',null,{roleO:u.role});}this.setState({err:{form:'Incorrect email or password.'}});}};}
+  vRegister(){const e=this.state.err;return {eName:e.name||'',eEmail:e.email||'',ePw:e.password||'',eConfirm:e.confirm||'',submit:ev=>{const v=this.form(ev);const err={};if(!v.name||v.name.length>120)err.name='Enter your name';if(!EMAIL.test(v.email||''))err.email='Enter a valid email';else if(this.state.db.users.some(u=>u.email===v.email.toLowerCase()))err.email='That email is already registered.';if((v.password||'').length<8)err.password='Use at least 8 characters';if(v.password!==v.confirm)err.confirm='Passwords do not match';if(Object.keys(err).length)return this.setState({err});this.go('dashboard',null,{emptyO:true});}};}
+
+  vDash(H){
+    const {k,db,cMap}=H,me=this.me(),b=k.buckets(db.invoices);
+    const active=db.clients.filter(c=>c.status==='ACTIVE').length,leads=db.clients.filter(c=>c.status==='LEAD').length;
+    const ap=db.projects.filter(p=>p.status==='ACTIVE').length,pl=db.projects.filter(p=>p.status==='PLANNING').length;
+    const stats=[
+      {label:'Active clients',value:String(active),sub:`${db.clients.length} total · ${leads} leads`,href:'#clients',go:this.lk('clients',null,{f:{cStatus:'ACTIVE'}})},
+      {label:'Active projects',value:String(ap),sub:`${pl} in planning`,href:'#projects',go:this.lk('projects',null,{f:{pStatus:'ACTIVE'}})},
+      {label:'Outstanding',value:k.compact(b.out),sub:`${k.compact(b.paid)} collected to date`,href:'#invoices',go:this.lk('invoices',null,{f:{iStatus:'SENT'}})},
+      {label:'Overdue invoices',value:String(b.overN),sub:b.overN?`${k.money(b.over)} past due`:'Nothing past due',href:'#invoices',go:this.lk('invoices',null,{f:{iStatus:'OVERDUE'}}),red:b.overN>0}
+    ].map(s=>({...s,bg:s.red?'var(--redbg)':'transparent',vc:s.red?'var(--red)':'var(--tx)',sc:s.red?'var(--red)':'var(--fa)'}));
+    const months=[];for(let i=5;i>=0;i--){const d=new Date(k.NOW);d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-i);months.push({y:d.getUTCFullYear(),m:d.getUTCMonth(),v:0});}
+    for(const i of db.invoices)if(k.eff(i)==='PAID'&&i.paidAt){const d=new Date(k.ts(i.paidAt));const mm=months.find(x=>x.y===d.getUTCFullYear()&&x.m===d.getUTCMonth());if(mm)mm.v+=k.tot(i).total;}
+    const peak=Math.max(0,...months.map(x=>x.v));
+    const rev=months.map(x=>({m:new Date(Date.UTC(x.y,x.m,1)).toLocaleString('en-US',{month:'short',timeZone:'UTC'}),short:k.compact(x.v),full:k.money(x.v),h:(x.v>0?Math.max(4,Math.round(x.v/(peak||1)*100)):1)+'%',c:x.v===peak&&peak>0?'var(--bar)':'var(--barc)'}));
+    const open=db.tasks.filter(t=>t.status!=='DONE');const overT=open.filter(H.isOver).length;
+    const sorted=open.slice().sort((a,b)=>(a.due?k.ts(a.due):9e15)-(b.due?k.ts(b.due):9e15)||b.created-a.created).slice(0,8);
+    const inv=db.invoices.filter(i=>['SENT','OVERDUE'].includes(k.eff(i))).sort((a,b)=>k.ts(a.due)-k.ts(b.due)).slice(0,5).map(H.invRow);
+    const clients=db.clients.slice().sort((a,b)=>b.created-a.created).slice(0,5).map(c=>({name:c.name,counts:`${k.plural(db.projects.filter(p=>p.client===c.id).length,'project')} · ${k.plural(db.contacts.filter(x=>x.client===c.id).length,'contact')}`,st:k.badge(c.status),open:this.lk('client',c.id),href:'#client/'+c.id}));
+    const act=db.activity.slice().sort((a,b)=>b.at-a.at).slice(0,10).map(a=>H.actRow(a));
+    return {dash:{title:`Welcome back, ${me.name.split(' ')[0]}`,stats,rev,revCaption:`Collected revenue by month · peak ${k.money(peak)}`,tasks:sorted.map(H.taskRow),noTasks:!sorted.length,tasksSub:overT?`${overT} overdue`:'Nothing overdue',tasksSubC:overT?'var(--red)':'var(--mu)',inv,noInv:!inv.length,act,noAct:!act.length,clients,noClients:!clients.length}};
+  }
+
+  vClients(H){
+    const {k,db,uMap}=H,f=this.state.f;const q=(f.cQ||'').toLowerCase();
+    let list=db.clients.filter(c=>(!q||[c.name,c.company,c.email,c.industry,c.city].some(x=>x&&x.toLowerCase().includes(q)))&&(!f.cStatus||c.status===f.cStatus)&&(!f.cOwner||c.owner===f.cOwner));
+    const order=['LEAD','ACTIVE','INACTIVE','ARCHIVED'];const sort=f.cSort||'new';
+    list.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name):sort==='status'?(a,b)=>order.indexOf(a.status)-order.indexOf(b.status)||a.name.localeCompare(b.name):(a,b)=>b.created-a.created);
+    const {rows,pager}=this.pager(list,12);const filtered=!!(q||f.cStatus||f.cOwner);
+    return {cl:{q:f.cQ||'',status:f.cStatus||'',owner:f.cOwner||'',sort,onQ:this.setF('cQ'),onStatus:this.setF('cStatus'),onOwner:this.setF('cOwner'),onSort:this.setF('cSort'),has:list.length>0,emptyFiltered:!list.length&&filtered,emptyNone:!list.length&&!filtered,clear:()=>this.setState(s=>({f:{...s.f,cQ:'',cStatus:'',cOwner:'',page:1}})),pager,
+      rows:rows.map(c=>{const out=k.buckets(db.invoices.filter(i=>i.client===c.id)).out;return {name:c.name,sub:[c.industry,c.city].filter(Boolean).join(' · ')||'—',st:k.badge(c.status),owner:c.owner&&uMap[c.owner]?uMap[c.owner].name:'Unassigned',ownerC:c.owner&&uMap[c.owner]?'var(--tx)':'var(--fa)',projects:db.projects.filter(p=>p.client===c.id).length,out:out?k.money(out):'—',added:k.rel(c.created),open:this.lk('client',c.id),href:'#client/'+c.id};})}};
+  }
+
+  vClient(H){
+    const {k,db,uMap}=H,c=db.clients.find(x=>x.id===this.state.id);if(!c)return {cd:{}};
+    const invs=db.invoices.filter(i=>i.client===c.id),b=k.buckets(invs);
+    const contacts=db.contacts.filter(x=>x.client===c.id).sort((a,b)=>(b.primary-a.primary)||a.last.localeCompare(b.last));
+    const projects=db.projects.filter(p=>p.client===c.id).sort((a,b)=>b.created-a.created);
+    const files=db.files.filter(f=>f.client===c.id).sort((a,b)=>b.at-a.at);
+    const stOrder=['IN_PROGRESS','TODO'];
+    const tasks=db.tasks.filter(t=>t.client===c.id&&t.status!=='DONE').sort((a,b)=>stOrder.indexOf(a.status)-stOrder.indexOf(b.status)||(a.due?k.ts(a.due):9e15)-(b.due?k.ts(b.due):9e15));
+    const pus=db.portalUsers.filter(u=>u.client===c.id);const primary=contacts.find(x=>x.primary)||contacts[0];
+    const notes=db.notes.filter(n=>n.client===c.id).sort((a,b)=>b.at-a.at);
+    const timeline=db.activity.filter(a=>a.client===c.id).sort((a,b)=>b.at-a.at).slice(0,12).map(a=>H.actRow(a));
+    const addr=[c.addressLine,[c.city,c.state,c.postalCode].filter(Boolean).join(', ').replace(/, (\d)/,' $1'),c.country].filter(Boolean).join('\n');
+    const ui=this.state.ui;
+    return {cd:{name:c.name,st:k.badge(c.status),sub:[c.company,c.industry].filter(Boolean).join(' · ')||'—',billed:k.money(b.billed),paid:k.money(b.paid),out:k.money(b.out),outC:b.out>0?'var(--red)':'var(--tx)',
+      newProject:this.lk('project-new',null,{f:{...this.state.f,preClient:c.id}}),newInvoice:this.lk('invoice-new',null,{f:{...this.state.f,preClient:c.id,preProject:''}}),edit:this.lk('client-edit',c.id),
+      contactsSub:`${contacts.length} on file`,noContacts:!contacts.length,toggleAddContact:this.tog('addContact'),
+      contacts:contacts.map(x=>({name:`${x.first} ${x.last}`,ini:k.ini(`${x.first} ${x.last}`),primary:x.primary,sub:[x.title,x.email,x.phone].filter(Boolean).join(' · ')||'—',edit:this.lk('contact-edit',x.id),href:'#contact-edit/'+x.id,del:()=>this.confirmDo(`Delete ${x.first} ${x.last}?`,()=>this.mut(db=>{db.contacts=db.contacts.filter(y=>y.id!==x.id);}))})),
+      addContact:e=>{const v=this.form(e);const err={};if(!v.first)err.first='First name is required';if(!v.last)err.last='Last name is required';if(v.email&&!EMAIL.test(v.email))err.email='Enter a valid email';if(Object.keys(err).length)return this.setState({err});const isP=!!v.primary;this.mut(db=>{if(isP)db.contacts=db.contacts.map(y=>y.client===c.id?{...y,primary:false}:y);db.contacts=[...db.contacts,{id:'k'+Date.now(),client:c.id,first:v.first.slice(0,80),last:v.last.slice(0,80),title:v.title||null,email:v.email||null,phone:v.phone||null,primary:isP}];this.log(db,'CONTACT_ADDED',`${v.first} ${v.last} was added to ${c.name}`,c.id);});this.setState(s=>({ui:{...s.ui,addContact:false},err:{}}));},
+      projects:projects.map(p=>({name:p.name,sub:`${k.money(p.budget)} budget`+(p.end?` · ends ${k.fd(p.end)}`:''),st:k.badge(p.status),open:this.lk('project',p.id),href:'#project/'+p.id})),noProjects:!projects.length,
+      invoices:invs.slice().sort((a,b)=>k.ts(b.issue)-k.ts(a.issue)).map(H.invRow),noInvoices:!invs.length,
+      filesSub:`${files.filter(f=>f.by==='STAFF').length} shared with this client · ${files.filter(f=>f.by==='CLIENT').length} received`,files:files.map(H.fileRow),projectOpts:projects.map(p=>({v:p.id,l:p.name})),
+      upload:e=>{const v=this.form(e);const er=this.validFile(v.file);if(er)return this.setState(s=>({ui:{...s.ui,pick:er,pickErr:true}}));this.addFile(v.file,c.id,v.project,v.note,'STAFF');e.currentTarget&&e.currentTarget.reset&&e.currentTarget.reset();this.setState(s=>({ui:{...s.ui,pick:'',pickErr:false}}));},
+      tasks:tasks.map(H.taskRow),noTasks:!tasks.length,allTasks:this.lk('tasks',null,{f:{tClient:c.id}}),
+      details:[['Owner',c.owner&&uMap[c.owner]?uMap[c.owner].name:'Unassigned'],['Email',c.email||'—'],['Phone',c.phone||'—'],['Website',c.website?c.website.replace(/^https?:\/\//,''):'—'],['Industry',c.industry||'—'],['Address',addr||'—'],['Client since',k.fd(c.created)]].map(([k1,v])=>({k:k1,v})),
+      hasNotes:!!c.notes,notesText:c.notes||'',
+      delete:()=>this.confirmDo(`Delete ${c.name}? This also removes their contacts, projects, tasks and invoices. This cannot be undone.`,()=>{this.mut(db=>{const pids=db.projects.filter(p=>p.client===c.id).map(p=>p.id);db.clients=db.clients.filter(x=>x.id!==c.id);db.contacts=db.contacts.filter(x=>x.client!==c.id);db.projects=db.projects.filter(x=>x.client!==c.id);db.tasks=db.tasks.filter(x=>x.client!==c.id&&!pids.includes(x.project));db.invoices=db.invoices.filter(x=>x.client!==c.id);db.notes=db.notes.filter(x=>x.client!==c.id);db.files=db.files.filter(x=>x.client!==c.id);db.activity=db.activity.filter(x=>x.client!==c.id);db.portalUsers=db.portalUsers.filter(x=>x.client!==c.id);this.log(db,'CLIENT_DELETED',`Client "${c.name}" was deleted`,null);});this.go('clients');}),
+      portalSub:pus.length?K().plural(pus.length,'login'):'No portal login yet',noPortal:!pus.length,inviteName:primary?`${primary.first} ${primary.last}`:'',inviteEmail:(primary&&primary.email)||c.email||'',
+      toggleInvite:this.tog('invite',()=>({pw:k.genPw(),resetFor:null,flashHas:false})),
+      invite:e=>{const v=this.form(e);const err={};if(!v.name)err.name='Name is required';if(!EMAIL.test(v.email||''))err.email='Enter a valid email';else{const em=v.email.toLowerCase();if(db.users.some(u=>u.email===em)||db.portalUsers.some(u=>u.email===em))err.email='That email already has an account.';}if((v.password||'').length<8)err.password='Use at least 8 characters';if(Object.keys(err).length)return this.setState({err});this.mut(db=>{db.portalUsers=[...db.portalUsers,{id:'pu'+Date.now(),client:c.id,name:v.name,email:v.email.toLowerCase(),last:null,created:k.NOW}];this.log(db,'PORTAL_ACCESS_GRANTED',`Portal access granted to ${v.email.toLowerCase()}`,c.id);});this.setState(s=>({ui:{...s.ui,invite:false,flashHas:true,flash:`Login created. Send the password to ${v.email} over a channel you trust.`},err:{}}));},
+      portal:pus.map(u=>({name:u.name,email:u.email,last:u.last?`Last signed in ${k.fdt(u.last)}`:'Has not signed in yet',resetting:ui.resetFor===u.id,reset:()=>this.setState(s=>({ui:{...s.ui,resetFor:s.ui.resetFor===u.id?null:u.id,pw:k.genPw(),invite:false,flashHas:false}})),
+        saveReset:e=>{const v=this.form(e);if((v.password||'').length<8)return;this.mut(db=>this.log(db,'PORTAL_PASSWORD_RESET',`Portal password reset for ${u.email}`,c.id));this.setState(s=>({ui:{...s.ui,resetFor:null,flashHas:true,flash:`Password updated. ${u.name} was signed out everywhere.`}}));},
+        revoke:()=>this.confirmDo(`Revoke portal access for ${u.email}? They will no longer be able to sign in.`,()=>this.mut(db=>{db.portalUsers=db.portalUsers.filter(x=>x.id!==u.id);this.log(db,'PORTAL_ACCESS_REVOKED',`Portal access revoked for ${u.email}`,c.id);}))})),
+      addNote:e=>{const form=e.currentTarget;const v=this.form(e);if(!v.body)return this.setState({err:{body:'Write something first'}});this.mut(db=>{db.notes=[{id:'n'+Date.now(),client:c.id,body:v.body.slice(0,5000),author:this.me().id,at:k.NOW},...db.notes];this.log(db,'NOTE_ADDED',`Note added on ${c.name}`,c.id);});form.reset();this.setState({err:{}});},
+      notes:notes.map(n=>({body:n.body,meta:`${n.author&&uMap[n.author]?uMap[n.author].name:'Unknown'} · ${k.rel(n.at)}`,del:()=>this.confirmDo('Delete this note?',()=>this.mut(db=>{db.notes=db.notes.filter(x=>x.id!==n.id);}))})),
+      timeline,noTimeline:!timeline.length}};
+  }
+
+  vClientForm(H){
+    const {k,db}=H,edit=this.state.route==='client-edit',c=edit?db.clients.find(x=>x.id===this.state.id):null;
+    const v=c?{...c}:{name:'',company:'',industry:'',email:'',phone:'',website:'',status:'LEAD',owner:this.me().id,addressLine:'',city:'',state:'',postalCode:'',country:'United States',notes:''};
+    for(const key in v)if(v[key]==null)v[key]='';
+    return {cf:{key:edit?'e'+(c&&c.id):'new',v,title:edit?`Edit ${c?c.name:'client'}`:'New client',submit:edit?'Save changes':'Create client',backLabel:edit?(c?c.name:'Back'):'Clients',backHref:edit?'#client/'+(c&&c.id):'#clients',back:edit?this.lk('client',c&&c.id):this.lk('clients'),
+      save:e=>{const f=this.form(e);const err={};if(!f.name||f.name.length>160)err.name='Name is required (max 160 characters)';if(f.email&&!EMAIL.test(f.email))err.email='Enter a valid email';if(Object.keys(err).length)return this.setState({err});
+        const vals={name:f.name,company:f.company||null,industry:f.industry||null,email:f.email||null,phone:f.phone||null,website:f.website||null,status:f.status,owner:f.owner||(edit?null:this.me().id),addressLine:f.addressLine||null,city:f.city||null,state:f.state||null,postalCode:f.postalCode||null,country:f.country||null,notes:f.notes||null};
+        let id=c&&c.id;
+        this.mut(db=>{if(edit){db.clients=db.clients.map(x=>x.id===id?{...x,...vals}:x);if(c.status!==vals.status)this.log(db,'CLIENT_STATUS_CHANGED',`${vals.name} moved from ${c.status} to ${vals.status}`,id);else this.log(db,'CLIENT_UPDATED',`${vals.name} was updated`,id);}else{id='c'+Date.now();db.clients=[...db.clients,{id,created:k.NOW,...vals}];this.log(db,'CLIENT_CREATED',`${vals.name} was added`,id);}});
+        this.go('client',id);}}};
+  }
+
+  extraViews(H,is){
+    if(is.contacts)return this.vContacts(H);if(is.contactEdit)return this.vContactEdit(H);
+    if(is.projects)return this.vProjects(H);if(is.project)return this.vProject(H);if(is.projectForm)return this.vProjectForm(H);
+    if(is.tasks)return this.vTasks(H);if(is.taskEdit)return this.vTaskEdit(H);
+    if(this.moreViews)return this.moreViews(H,is);return {};
+  }
+  vContacts(H){
+    const {k,db,cMap}=H,f=this.state.f,q=(f.ctQ||'').toLowerCase();
+    const list=db.contacts.filter(x=>(!q||[x.first,x.last,x.email,x.title,cMap[x.client]?.name].some(s=>s&&s.toLowerCase().includes(q)))&&(!f.ctClient||x.client===f.ctClient)).sort((a,b)=>a.last.localeCompare(b.last)||a.first.localeCompare(b.first));
+    const {rows,pager}=this.pager(list,20);const filtered=!!(q||f.ctClient);
+    return {ct:{q:f.ctQ||'',client:f.ctClient||'',onQ:this.setF('ctQ'),onClient:this.setF('ctClient'),has:list.length>0,empty:!list.length,emptyTitle:filtered?'No contacts match those filters':'No contacts yet',emptyText:filtered?'Try a different search or client.':'Contacts are added from a client page.',pager,
+      rows:rows.map(x=>({name:`${x.first} ${x.last}`,primary:x.primary,title:x.title||'',client:cMap[x.client]?.name||'',clientHref:'#client/'+x.client,openClient:this.lk('client',x.client),email:x.email||'—',phone:x.phone||'—',edit:this.lk('contact-edit',x.id),href:'#contact-edit/'+x.id,del:()=>this.confirmDo(`Delete ${x.first} ${x.last}?`,()=>this.mut(db=>{db.contacts=db.contacts.filter(y=>y.id!==x.id);}))}))}};
+  }
+  vContactEdit(H){
+    const {db,cMap}=H,x=db.contacts.find(c=>c.id===this.state.id);if(!x)return {ce:{v:{}}};
+    const v={...x};for(const key in v)if(v[key]==null)v[key]='';
+    return {ce:{key:'ce'+x.id,v,backLabel:cMap[x.client]?.name||'Back',backHref:'#client/'+x.client,back:this.lk('client',x.client),
+      save:e=>{const f=this.form(e);const err={};if(!f.first)err.first='First name is required';if(!f.last)err.last='Last name is required';if(f.email&&!EMAIL.test(f.email))err.email='Enter a valid email';if(Object.keys(err).length)return this.setState({err});const isP=!!f.primary;
+        this.mut(db=>{if(isP)db.contacts=db.contacts.map(y=>y.client===f.client?{...y,primary:false}:y);db.contacts=db.contacts.map(y=>y.id===x.id?{...y,client:f.client,first:f.first,last:f.last,title:f.title||null,email:f.email||null,phone:f.phone||null,primary:isP}:y);});this.go('client',f.client);}}};
+  }
+  vProjects(H){
+    const {k,db,cMap}=H,f=this.state.f,q=(f.pQ||'').toLowerCase();
+    const list=db.projects.filter(p=>(!q||[p.name,p.description,cMap[p.client]?.name].some(s=>s&&s.toLowerCase().includes(q)))&&(!f.pStatus||p.status===f.pStatus)&&(!f.pClient||p.client===f.pClient)).sort((a,b)=>b.created-a.created);
+    const {rows,pager}=this.pager(list,15);const filtered=!!(q||f.pStatus||f.pClient);
+    return {pl:{q:f.pQ||'',status:f.pStatus||'',client:f.pClient||'',onQ:this.setF('pQ'),onStatus:this.setF('pStatus'),onClient:this.setF('pClient'),statusOpts:[{v:'',l:'Any status'},...['PLANNING','ACTIVE','ON_HOLD','COMPLETED','CANCELLED'].map(v=>({v,l:k.lab(v)}))],
+      newProject:this.lk('project-new'),has:list.length>0,empty:!list.length,emptyTitle:filtered?'No projects match those filters':'No projects yet',emptyBtn:filtered?'Clear filters':'New project',emptyAct:filtered?()=>this.setState(s=>({f:{...s.f,pQ:'',pStatus:'',pClient:'',page:1}})):this.lk('project-new'),pager,
+      rows:rows.map(p=>({name:p.name,desc:p.description||'',client:cMap[p.client]?.name||'',st:k.badge(p.status),budget:k.money(p.budget),tasks:db.tasks.filter(t=>t.project===p.id).length,timeline:(p.start||p.end)?`${p.start?k.fd(p.start):'—'} → ${p.end?k.fd(p.end):'open'}`:'—',open:this.lk('project',p.id),href:'#project/'+p.id}))}};
+  }
+  vProject(H){
+    const {k,db,cMap}=H,p=db.projects.find(x=>x.id===this.state.id);if(!p)return {pd:{}};
+    const tasks=db.tasks.filter(t=>t.project===p.id);const done=tasks.filter(t=>t.status==='DONE').length;const pct=tasks.length?Math.round(done/tasks.length*100):0;
+    const order=['IN_PROGRESS','TODO','DONE'];
+    const invs=db.invoices.filter(i=>i.project===p.id);const invoiced=invs.filter(i=>!['DRAFT','VOID'].includes(k.eff(i))).reduce((s,i)=>s+k.tot(i).total,0);
+    const used=p.budget>0?Math.min(Math.round(invoiced/p.budget*100),999):0;
+    return {pd:{name:p.name,desc:p.description||'',client:cMap[p.client]?.name||'',clientHref:'#client/'+p.client,openClient:this.lk('client',p.client),hasLive:!!p.live,live:p.live||'',
+      newInvoice:this.lk('invoice-new',null,{f:{...this.state.f,preClient:p.client,preProject:p.id}}),edit:this.lk('project-edit',p.id),manage:this.lk('tasks',null,{f:{tProject:p.id}}),
+      doneOf:`${done} of ${tasks.length} complete`,hasTasks:tasks.length>0,noTasks:!tasks.length,pct:pct+'%',pctLabel:pct+'% complete',
+      tasks:tasks.slice().sort((a,b)=>order.indexOf(a.status)-order.indexOf(b.status)||(a.due?k.ts(a.due):9e15)-(b.due?k.ts(b.due):9e15)).map(H.taskRow),
+      invoices:invs.map(H.invRow),noInvoices:!invs.length,
+      details:[['Client',cMap[p.client]?.name||'—'],['Status',k.lab(p.status)],['Budget',k.money(p.budget)],['Invoiced',k.money(invoiced)],['Project link',p.live?p.live.replace(/^https?:\/\//,''):'Not set'],['Start',k.fd(p.start)],['End',k.fd(p.end)]].map(([a,b])=>({k:a,v:b,c:b==='Not set'?'var(--fa)':'var(--tx)'})),
+      hasBudget:p.budget>0,budgetPct:used+'%',budgetW:Math.min(used,100)+'%',budgetC:used>100?'var(--red)':'var(--ac)',
+      delete:()=>this.confirmDo(`Delete ${p.name}? Its tasks will be removed too.`,()=>{this.mut(db=>{db.projects=db.projects.filter(x=>x.id!==p.id);db.tasks=db.tasks.filter(t=>t.project!==p.id);db.invoices=db.invoices.map(i=>i.project===p.id?{...i,project:null}:i);db.files=db.files.map(x=>x.project===p.id?{...x,project:null}:x);this.log(db,'PROJECT_DELETED',`Project "${p.name}" was deleted`,p.client);});this.go('projects');})}};
+  }
+  vProjectForm(H){
+    const {k,db}=H,edit=this.state.route==='project-edit',p=edit?db.projects.find(x=>x.id===this.state.id):null;
+    const alpha=db.clients.slice().sort((a,b)=>a.name.localeCompare(b.name));const pre=this.state.f.preClient;
+    const v=p?{...p,budget:(p.budget/100).toFixed(2)}:{client:(alpha.find(c=>c.id===pre)||alpha[0]||{}).id||'',name:'',status:'PLANNING',budget:'0.00',live:'',start:'',end:'',description:''};
+    for(const key in v)if(v[key]==null)v[key]='';
+    return {pf:{key:edit?'pe'+(p&&p.id):'pn'+(pre||''),v,noClients:!alpha.length,hasClients:alpha.length>0,title:edit?`Edit ${p?p.name:'project'}`:'New project',submit:edit?'Save changes':'Create project',backLabel:edit?(p?p.name:'Back'):'Projects',backHref:edit?'#project/'+(p&&p.id):'#projects',back:edit?this.lk('project',p&&p.id):this.lk('projects'),
+      save:e=>{const f=this.form(e);const err={};if(!f.name||f.name.length>160)err.name='Name is required (max 160 characters)';const budget=Math.round(parseFloat((f.budget||'0').replace(/[^\d.]/g,''))*100)||0;if(f.live&&!/^https?:\/\//.test(f.live))err.live='Link must start with http:// or https://';if(f.start&&f.end&&f.end<f.start)err.end='End date cannot be before the start date';if(Object.keys(err).length)return this.setState({err});
+        const vals={client:f.client,name:f.name,status:f.status,budget,live:f.live||null,start:f.start||null,end:f.end||null,description:f.description||null};let id=p&&p.id;
+        this.mut(db=>{if(edit){db.projects=db.projects.map(x=>x.id===id?{...x,...vals}:x);if(p.status!==vals.status)this.log(db,'PROJECT_STATUS_CHANGED',`${vals.name} moved from ${p.status} to ${vals.status}`,vals.client);}else{id='p'+Date.now();db.projects=[...db.projects,{id,created:k.NOW,...vals}];this.log(db,'PROJECT_CREATED',`Project "${vals.name}" was created`,vals.client);}});
+        this.go('project',id);}}};
+  }
+  taskVals(f,existing){
+    const db=this.db();const proj=f.project?db.projects.find(p=>p.id===f.project):null;
+    let status=f.status,completedAt=null;if(status==='DONE')completedAt=existing&&existing.completedAt?existing.completedAt:K().NOW;
+    return {title:f.title.slice(0,200),status,priority:f.priority,due:f.due||null,client:proj?proj.client:(f.client||null),project:proj?proj.id:null,assignee:f.assignee||null,description:f.description||null,completedAt};
+  }
+  vTasks(H){
+    const {k,db,cMap,pMap}=H,f=this.state.f,ui=this.state.ui,q=(f.tQ||'').toLowerCase();
+    const list=db.tasks.filter(t=>(!q||[t.title,t.description].some(s=>s&&s.toLowerCase().includes(q)))&&(!f.tStatus||t.status===f.tStatus)&&(!f.tPriority||t.priority===f.tPriority)&&(!f.tClient||t.client===f.tClient)&&(!f.tAssignee||t.assignee===f.tAssignee)&&(!f.tProject||t.project===f.tProject));
+    const order=['IN_PROGRESS','TODO','DONE'];const srt=(a,b)=>order.indexOf(a.status)-order.indexOf(b.status)||(a.due?k.ts(a.due):9e15)-(b.due?k.ts(b.due):9e15)||b.created-a.created;
+    const open=list.filter(t=>t.status!=='DONE').sort(srt),done=list.filter(t=>t.status==='DONE').sort(srt);
+    const allOpen=db.tasks.filter(t=>t.status!=='DONE'),over=allOpen.filter(H.isOver).length;
+    const fc=ui.tc!==undefined?ui.tc:(f.tClient||(f.tProject&&pMap[f.tProject]?pMap[f.tProject].client:''));
+    return {tk:{sub:`${allOpen.length} open · ${over?over+' overdue':'nothing overdue'}`,subC:over?'var(--red)':'var(--mu)',q:f.tQ||'',status:f.tStatus||'',priority:f.tPriority||'',client:f.tClient||'',assignee:f.tAssignee||'',
+      onQ:this.setF('tQ'),onStatus:this.setF('tStatus'),onPriority:this.setF('tPriority'),onClient:this.setF('tClient'),onAssignee:this.setF('tAssignee'),
+      hasProjectFilter:!!f.tProject,projectName:f.tProject&&pMap[f.tProject]?pMap[f.tProject].name:'',clearProject:()=>this.setState(s=>({f:{...s.f,tProject:''}})),
+      toggleNew:this.tog('newTask',{tc:undefined}),fc,onFc:e=>{const v=e.target.value;this.setState(s=>({ui:{...s.ui,tc:v}}));},fp:f.tProject||'',fa:f.tAssignee||this.me().id,
+      projOpts:db.projects.filter(p=>!fc||p.client===fc).map(p=>({v:p.id,l:fc?p.name:`${p.name} · ${cMap[p.client]?.name||''}`})),
+      create:e=>{const form=e.currentTarget;const v=this.form(e);if(!v.title)return this.setState({err:{title:'Title is required'}});const vals=this.taskVals(v);this.mut(db=>{db.tasks=[{id:'t'+Date.now(),created:k.NOW,...vals},...db.tasks];this.log(db,'TASK_CREATED',`Task "${vals.title}" was created`,vals.client);});form.reset();this.setState(s=>({ui:{...s.ui,newTask:false,tc:undefined},err:{}}));},
+      sections:[{title:'Open',count:open.length,rows:open.map(H.taskRow),empty:!open.length,emptyText:list.length||db.tasks.length?'Nothing open here.':'No tasks yet. Add one to keep the next step visible.'},{title:'Completed',count:done.length,rows:done.map(H.taskRow),empty:!done.length,emptyText:'Nothing completed yet.'}]}};
+  }
+  vTaskEdit(H){
+    const {db,cMap}=H,t=db.tasks.find(x=>x.id===this.state.id);if(!t)return {te:{v:{}}};
+    const v={...t};for(const key in v)if(v[key]==null)v[key]='';const ui=this.state.ui;const fc=ui.tc!==undefined?ui.tc:(t.client||'');
+    return {te:{key:'te'+t.id,v,fc,onFc:e=>{const val=e.target.value;this.setState(s=>({ui:{...s.ui,tc:val}}));},projOpts:db.projects.filter(p=>!fc||p.client===fc).map(p=>({v:p.id,l:fc?p.name:`${p.name} · ${cMap[p.client]?.name||''}`})),
+      save:e=>{const f=this.form(e);if(!f.title)return this.setState({err:{title:'Title is required'}});const vals=this.taskVals(f,t);this.mut(db=>{db.tasks=db.tasks.map(x=>x.id===t.id?{...x,...vals}:x);});this.go('tasks');}}};
+  }
+  moreViews(H,is){
+    if(is.invoices)return this.vInvoices(H);if(is.invoiceForm)return this.vInvoiceForm(H);if(is.invoice)return this.vInvoice(H);
+    if(is.files)return this.vFiles(H);if(is.reports)return this.vReports(H);if(is.search)return this.vSearch(H);
+    if(is.team)return this.vTeam(H);if(is.oversight)return this.vOversight(H);return {};
+  }
+  vInvoices(H){
+    const {k,db,cMap}=H,f=this.state.f,q=(f.iQ||'').toLowerCase();
+    const list=db.invoices.filter(i=>(!q||[i.no,cMap[i.client]?.name].some(s=>s&&s.toLowerCase().includes(q)))&&(!f.iStatus||k.eff(i)===f.iStatus)&&(!f.iClient||i.client===f.iClient)).sort((a,b)=>k.ts(b.issue)-k.ts(a.issue));
+    const b=k.buckets(list);const filtered=!!(q||f.iStatus||f.iClient);
+    return {il:{sub:`${k.money(b.out)} outstanding · ${k.money(b.paid)} collected`,q:f.iQ||'',status:f.iStatus||'',client:f.iClient||'',onQ:this.setF('iQ'),onStatus:this.setF('iStatus'),onClient:this.setF('iClient'),rows:list.map(H.invRow),has:list.length>0,count:k.plural(list.length,'invoice'),empty:!list.length,emptyTitle:filtered?'No invoices match those filters':'No invoices yet',emptyBtn:filtered?'Clear filters':'New invoice',emptyAct:filtered?()=>this.setState(s=>({f:{...s.f,iQ:'',iStatus:'',iClient:''}})):this.lk('invoice-new')}};
+  }
+  nextNo(){const nos=this.db().invoices.map(i=>i.no).sort();const last=nos[nos.length-1];if(!last)return 'INV-1001';const m=last.match(/(\d+)$/);return 'INV-'+(m?+m[1]+1:1001);}
+  defaultDraft(){
+    const k=K(),db=this.db(),f=this.state.f;
+    if(this.state.route==='invoice-edit'){const i=db.invoices.find(x=>x.id===this.state.id);if(i)return {id:i.id,client:i.client,project:i.project||'',no:i.no,status:i.status,issue:i.issue,due:i.due,tax:String(i.tax),notes:i.notes||'',lines:i.lines.map(l=>({d:l.d,q:String(l.q),p:(l.p/100).toFixed(2)}))};}
+    const alpha=db.clients.slice().sort((a,b)=>a.name.localeCompare(b.name));const c=alpha.find(x=>x.id===f.preClient)||alpha[0];
+    const proj=f.preProject&&db.projects.find(p=>p.id===f.preProject&&c&&p.client===c.id);
+    return {id:null,client:c?c.id:'',project:proj?proj.id:'',no:this.nextNo(),status:'DRAFT',issue:k.iso(k.NOW),due:k.iso(k.NOW+30*k.DAY),tax:'0',notes:'',lines:[{d:'',q:'',p:''}]};
+  }
+  setD(patch){this.setState(s=>{const d=s.draft||this.defaultDraft();return {draft:{...d,...(typeof patch==='function'?patch(d):patch)}};});}
+  vInvoiceForm(H){
+    const {k,db,cMap}=H,d=this.state.draft||this.defaultDraft();const edit=!!d.id;
+    const cents=l=>{const q=l.q===''?1:parseFloat(l.q)||0,p=Math.round((parseFloat(String(l.p).replace(/[^\d.]/g,''))||0)*100);return {q,p,amt:Math.round(q*p)};};
+    const sub=d.lines.filter(l=>l.d).reduce((s,l)=>s+cents(l).amt,0),rate=parseFloat(d.tax)||0,tax=Math.round(sub*rate/100);
+    const fld=key=>e=>{const v=e.target.value;this.setD(key==='client'?dd=>({client:v,project:db.projects.some(p=>p.id===dd.project&&p.client===v)?dd.project:''}):{[key]:v});};
+    const setLine=(i,key)=>e=>{const v=e.target.value;this.setD(dd=>({lines:dd.lines.map((l,j)=>j===i?{...l,[key]:v}:l)}));};
+    return {ivf:{d,title:edit?`Edit ${d.no}`:'New invoice',submit:edit?'Save invoice':'Create invoice',backLabel:edit?d.no:'Invoices',backHref:edit?'#invoice/'+d.id:'#invoices',back:edit?this.lk('invoice',d.id):this.lk('invoices'),
+      noClients:!db.clients.length,hasClients:db.clients.length>0,hasFormErr:!!this.state.err.form,
+      on:{client:fld('client'),project:fld('project'),no:fld('no'),status:fld('status'),issue:fld('issue'),due:fld('due'),tax:fld('tax'),notes:fld('notes')},
+      projOpts:db.projects.filter(p=>p.client===d.client).map(p=>({v:p.id,l:p.name})),
+      lines:d.lines.map((l,i)=>({...l,amount:k.money(cents(l).amt),onD:setLine(i,'d'),onQ:setLine(i,'q'),onP:setLine(i,'p'),remove:()=>this.setD(dd=>({lines:dd.lines.length>1?dd.lines.filter((_,j)=>j!==i):[{d:'',q:'',p:''}]}))})),
+      addLine:()=>this.setD(dd=>({lines:[...dd.lines,{d:'',q:'',p:''}]})),
+      sub:k.money(sub),tax:k.money(tax),total:k.money(sub+tax),taxLabel:String(rate),
+      save:e=>{e.preventDefault();const err={};const no=d.no.trim();if(!no||no.length>40)err.no='Number is required';else if(db.invoices.some(i=>i.no===no&&i.id!==d.id))err.no='That invoice number is already in use.';
+        if(!(rate>=0&&rate<=100))err.tax='Tax must be between 0 and 100';const lines=d.lines.filter(l=>l.d.trim());if(!lines.length)err.lines='Add at least one line item';else if(lines.some(l=>cents(l).q<=0))err.lines='Quantity must be more than 0';
+        if(d.due<d.issue)err.due='Due date cannot be before the issue date';if(Object.keys(err).length)return this.setState({err});
+        const prev=edit?db.invoices.find(i=>i.id===d.id):null;const status=d.status;const paidAt=status==='PAID'?(prev&&prev.paidAt?prev.paidAt:k.NOW):null;
+        const proj=d.project&&db.projects.some(p=>p.id===d.project&&p.client===d.client)?d.project:null;
+        const vals={no,client:d.client,project:proj,status,issue:d.issue||prev.issue,due:d.due||prev.due,paidAt,tax:rate,notes:d.notes.trim()||null,lines:lines.map(l=>{const c=cents(l);return {d:l.d.trim().slice(0,200),q:c.q,p:c.p};})};
+        let id=d.id;this.mut(db=>{if(edit){db.invoices=db.invoices.map(i=>i.id===id?{...i,...vals}:i);if(prev.status!==status)this.log(db,'INVOICE_STATUS_CHANGED',`Invoice ${no} was marked ${k.lab(status).toLowerCase()}`,vals.client);}else{id='i'+Date.now();db.invoices=[...db.invoices,{id,...vals}];this.log(db,'INVOICE_CREATED',`Invoice ${no} was created`,vals.client);}});
+        this.go('invoice',id);}}};
+  }
+  vInvoice(H){
+    const {k,db,cMap,pMap}=H,i=db.invoices.find(x=>x.id===this.state.id);if(!i)return {iv:{}};
+    const c=cMap[i.client]||{},e=k.eff(i),t=k.tot(i);
+    const setStatus=(status,verb)=>()=>this.mut(db=>{db.invoices=db.invoices.map(x=>x.id!==i.id?x:{...x,status,paidAt:status==='PAID'?(x.paidAt||k.NOW):status==='SENT'?x.paidAt:null});this.log(db,'INVOICE_STATUS_CHANGED',`Invoice ${i.no} was ${verb}`,i.client);});
+    const addr=[c.addressLine,[c.city,c.state].filter(Boolean).join(', ')+(c.postalCode?' '+c.postalCode:''),c.country,c.email].filter(Boolean).join('\n');
+    return {iv:{no:i.no,issue:k.fd(i.issue),due:k.fd(i.due),client:c.name,clientHref:'#client/'+i.client,openClient:this.lk('client',i.client),st:k.badge(e),
+      canSend:i.status==='DRAFT',canPay:e!=='PAID'&&e!=='VOID',canVoid:e!=='VOID',canReopen:e==='VOID',
+      markSent:setStatus('SENT','marked sent'),markPaid:setStatus('PAID','marked paid'),void:setStatus('VOID','voided'),reopen:setStatus('DRAFT','reopened as draft'),edit:this.lk('invoice-edit',i.id),
+      billName:c.company||c.name,billAddr:addr,amountDue:k.money(e==='PAID'?0:t.total),isPaid:e==='PAID',paidAt:k.fd(i.paidAt),
+      lines:i.lines.map(l=>({d:l.d,q:String(l.q),p:k.money(l.p),amount:k.money(Math.round(l.q*l.p))})),sub:k.money(t.sub),tax:k.money(t.tax),taxRate:String(i.tax),total:k.money(t.total),hasNotes:!!i.notes,notes:i.notes||'',
+      details:[['Client',c.name],['Project',i.project&&pMap[i.project]?pMap[i.project].name:'—'],['Issued',k.fd(i.issue)],['Due',k.fd(i.due)]].map(([a,b])=>({k:a,v:b})),
+      delete:()=>this.confirmDo(`Delete invoice ${i.no}? This cannot be undone.`,()=>{this.mut(db=>{db.invoices=db.invoices.filter(x=>x.id!==i.id);this.log(db,'INVOICE_DELETED',`Invoice ${i.no} was deleted`,i.client);});this.go('invoices');})}};
+  }
+  vFiles(H){
+    const {k,db,cMap}=H,f=this.state.f,ui=this.state.ui,q=(f.fQ||'').toLowerCase();
+    const list=db.files.slice().sort((a,b)=>b.at-a.at).slice(0,100).filter(x=>(!q||[x.filename,x.note,cMap[x.client]?.name].some(s=>s&&s.toLowerCase().includes(q)))&&(!f.fDir||x.by===f.fDir)&&(!f.fClient||x.client===f.fClient));
+    const groups=[];for(const x of list){let g=groups.find(g=>g.id===x.client);if(!g){g={id:x.client,name:cMap[x.client]?.name||'',files:[]};groups.push(g);}g.files.push(H.fileRow(x));}
+    const total=db.files.reduce((s,x)=>s+x.bytes,0);const uc=ui.fc||f.fClient||'';
+    return {fl:{sub:`${k.plural(db.files.length,'file')} · ${db.files.filter(x=>x.by==='CLIENT').length} received from clients · ${k.size(total)} stored`,q:f.fQ||'',dir:f.fDir||'',client:f.fClient||'',onQ:this.setF('fQ'),onDir:this.setF('fDir'),onClient:this.setF('fClient'),
+      groups:groups.map(g=>({...g,count:k.plural(g.files.length,'file'),open:this.lk('client',g.id),href:'#client/'+g.id})),empty:!list.length,emptyText:db.files.length?'No files match those filters.':'No files yet. Share one with a client, or wait for one to arrive from the portal.',
+      noClients:!db.clients.length,hasClients:db.clients.length>0,uc,onUc:e=>{const v=e.target.value;this.setState(s=>({ui:{...s.ui,fc:v}}));},projOpts:db.projects.filter(p=>p.client===uc).map(p=>({v:p.id,l:p.name})),
+      upload:e=>{const form=e.currentTarget;const v=this.form(e);if(!uc)return this.setState({err:{client:'Choose a client'}});const er=this.validFile(v.file);if(er)return this.setState(s=>({ui:{...s.ui,pick:er,pickErr:true}}));this.addFile(v.file,uc,v.project,v.note,'STAFF');form.reset();this.setState(s=>({ui:{...s.ui,pick:'',pickErr:false},err:{}}));}}};
+  }
+  vReports(H){
+    const {k,db}=H;const per=db.clients.map(c=>({c,b:k.buckets(db.invoices.filter(i=>i.client===c.id))}));
+    const T=per.reduce((s,x)=>({billed:s.billed+x.b.billed,paid:s.paid+x.b.paid,out:s.out+x.b.out}),{billed:0,paid:0,out:0});
+    const allTot=db.invoices.reduce((s,i)=>s+k.tot(i).total,0),avg=db.invoices.length?Math.round(allTot/db.invoices.length):0;
+    const rate=T.billed?Math.round(T.paid/T.billed*100):0;const doneT=db.tasks.filter(t=>t.status==='DONE').length,dp=db.tasks.length?Math.round(doneT/db.tasks.length*100):0;
+    const ind={};for(const x of per){const n=x.c.industry||'Unspecified';ind[n]=ind[n]||{n,count:0,billed:0};ind[n].count++;ind[n].billed+=x.b.billed;}
+    return {rp:{totals:[{label:'Billed to date',value:k.money(T.billed),sub:'Excludes drafts and voids',c:'var(--tx)'},{label:'Collected',value:k.money(T.paid),sub:`${rate}% collection rate`,c:'var(--grn)'},{label:'Outstanding',value:k.money(T.out),sub:'Sent and overdue',c:T.out?'var(--red)':'var(--tx)'},{label:'Average invoice',value:k.money(avg),sub:`Across ${k.plural(db.invoices.length,'invoice')}`,c:'var(--tx)'}],
+      top:per.sort((a,b)=>b.b.billed-a.b.billed).slice(0,10).map(x=>({name:x.c.name,st:k.badge(x.c.status),billed:k.money(x.b.billed),paid:k.money(x.b.paid),out:x.b.out?k.money(x.b.out):'—',outC:x.b.out?'var(--red)':'var(--fa)',open:this.lk('client',x.c.id),href:'#client/'+x.c.id})),
+      pipeline:['PLANNING','ACTIVE','ON_HOLD','COMPLETED','CANCELLED'].map(s=>{const ps=db.projects.filter(p=>p.status===s);return {st:k.badge(s),count:k.plural(ps.length,'project'),budget:k.money(ps.reduce((a,p)=>a+p.budget,0))};}),
+      deliveryPct:dp+'%',deliveryText:`${doneT} of ${db.tasks.length} tasks complete`,
+      industry:Object.values(ind).sort((a,b)=>b.billed-a.billed).map(x=>({name:x.n,count:k.plural(x.count,'client'),billed:k.money(x.billed)}))}};
+  }
+  vSearch(H){
+    const {k,db,cMap}=H,q=(this.state.f.sQ||'').trim().toLowerCase();const has=s=>s&&s.toLowerCase().includes(q);
+    if(!q)return {sr:{q:'',onQ:this.setF('sQ'),idle:true,none:false,groups:[]}};
+    const groups=[
+      {title:'Clients',items:db.clients.filter(c=>[c.name,c.company,c.email,c.industry].some(has)).slice(0,8).map(c=>({title:c.name,sub:[c.company,c.industry].filter(Boolean).join(' · '),right:'',open:this.lk('client',c.id),href:'#client/'+c.id}))},
+      {title:'Contacts',items:db.contacts.filter(x=>[x.first,x.last,x.email,x.title].some(has)).slice(0,8).map(x=>({title:`${x.first} ${x.last}`,sub:[x.title,cMap[x.client]?.name].filter(Boolean).join(' · '),right:'',open:this.lk('client',x.client),href:'#client/'+x.client}))},
+      {title:'Projects',items:db.projects.filter(p=>[p.name,p.description,cMap[p.client]?.name].some(has)).slice(0,8).map(p=>({title:p.name,sub:cMap[p.client]?.name||'',right:'',open:this.lk('project',p.id),href:'#project/'+p.id}))},
+      {title:'Tasks',items:db.tasks.filter(t=>[t.title,t.description,cMap[t.client]?.name].some(has)).slice(0,8).map(t=>({title:t.title,sub:[cMap[t.client]?.name,k.lab(t.status)].filter(Boolean).join(' · '),right:'',open:this.lk('task-edit',t.id),href:'#task-edit/'+t.id}))},
+      {title:'Invoices',items:db.invoices.filter(i=>[i.no,i.notes,cMap[i.client]?.name].some(has)).slice(0,8).map(i=>({title:i.no,sub:`${cMap[i.client]?.name||''} · ${k.lab(k.eff(i))}`,right:k.money(k.tot(i).total),open:this.lk('invoice',i.id),href:'#invoice/'+i.id}))}].filter(g=>g.items.length);
+    return {sr:{q:this.state.f.sQ,onQ:this.setF('sQ'),idle:false,none:!groups.length,groups}};
+  }
+  vTeam(H){
+    const {k,db}=H,me=this.me(),myR=k.RANK[me.role],ui=this.state.ui;
+    const assignable=['ADMIN','MEMBER'].filter(r=>k.RANK[r]<myR);const admins=db.users.filter(u=>k.RANK[u.role]>=2).length;
+    const visible=db.users.filter(u=>me.role==='SUPER_ADMIN'||u.role!=='SUPER_ADMIN').sort((a,b)=>k.RANK[b.role]-k.RANK[a.role]||a.name.localeCompare(b.name));
+    const flash=(msg,err)=>this.setState(s=>({ui:{...s.ui,flashHas:!err,flash:msg,teamErrHas:!!err,teamErr:msg,resetFor:null}}));
+    return {tm:{title:k.plural(visible.length,'teammate'),canAdd:assignable.length>0,toggleAdd:this.tog('addMember',()=>({pw:k.genPw(),flashHas:false,teamErrHas:false})),roleOpts:assignable.map(r=>({v:r,l:k.lab(r)})),
+      add:e=>{const v=this.form(e);const err={};if(!v.name)err.name='Name is required';if(!EMAIL.test(v.email||''))err.email='Enter a valid email';else if(db.users.some(u=>u.email===v.email.toLowerCase())||db.portalUsers.some(u=>u.email===v.email.toLowerCase()))err.email='That email already has an account.';if((v.password||'').length<8)err.password='Use at least 8 characters';if(Object.keys(err).length)return this.setState({err});
+        this.mut(db=>{db.users=[...db.users,{id:'u'+Date.now(),name:v.name,email:v.email.toLowerCase(),role:v.role,last:null,created:k.NOW}];this.log(db,'TEAM_MEMBER_ADDED',`${v.name} joined as ${k.lab(v.role)}`,null);});this.setState(s=>({ui:{...s.ui,addMember:false,flashHas:true,flash:`${v.name} was added. Send them the temporary password.`},err:{}}));},
+      rows:visible.map(u=>{const r=k.RANK[u.role],isMe=u.id===me.id,manage=myR>r&&!isMe,last=r>=2&&admins===1;
+        const reason=isMe?'Your own account':u.role==='SUPER_ADMIN'?'Workspace owner':!manage?'Outranks you':last?'Only administrator':'';
+        return {name:u.name,first:u.name.split(' ')[0],email:u.email,isMe,role:u.role,st:k.badge(u.role),canChange:manage&&!last,locked:!(manage&&!last),reason,roleOpts:assignable.map(x=>({v:x,l:k.lab(x)})),
+          last:u.last?k.fdt(u.last):'Never',added:k.fd(u.created),canReset:manage,canRemove:manage&&!last,resetting:ui.resetFor===u.id,
+          onRole:e=>{const nr=e.target.value;if(r>=2&&k.RANK[nr]<2&&admins===1)return flash('This is the only administrator. Promote someone else first.',true);this.mut(db=>{db.users=db.users.map(x=>x.id===u.id?{...x,role:nr}:x);this.log(db,'TEAM_ROLE_CHANGED',`${u.name} is now ${k.lab(nr)}`,null);});flash(`${u.name} is now ${k.lab(nr)} and was signed out everywhere.`);},
+          reset:()=>this.setState(s=>({ui:{...s.ui,resetFor:s.ui.resetFor===u.id?null:u.id,pw:k.genPw(),flashHas:false,teamErrHas:false}})),
+          saveReset:e=>{const v=this.form(e);if((v.password||'').length<8)return flash('Use at least 8 characters',true);this.mut(db=>this.log(db,'TEAM_PASSWORD_RESET',`Password reset for ${u.name}`,null));flash(`Password updated. ${u.name} was signed out everywhere.`);},
+          remove:()=>this.confirmDo(`Remove ${u.name}? They will be signed out and lose access immediately. Their notes and activity history are kept.`,()=>{this.mut(db=>{db.users=db.users.filter(x=>x.id!==u.id);db.clients=db.clients.map(c=>c.owner===u.id?{...c,owner:null}:c);db.tasks=db.tasks.map(t=>t.assignee===u.id?{...t,assignee:null}:t);this.log(db,'TEAM_MEMBER_REMOVED',`${u.name} was removed from the team`,null);});flash(`${u.name} was removed.`);})};})}};
+  }
+  vOversight(H){
+    const {k,db}=H,f=this.state.f,per=f.ovP||'30';
+    const since=per==='all'?0:k.NOW-(+per)*k.DAY;const inP=db.activity.filter(a=>a.at>=since);
+    const staff=db.users.slice().sort((a,b)=>k.RANK[b.role]-k.RANK[a.role]);const ids=new Set(staff.map(u=>u.id));
+    const counts={},lastA={};for(const a of inP){counts[a.actor]=(counts[a.actor]||0)+1;lastA[a.actor]=Math.max(lastA[a.actor]||0,a.at);}
+    const feedAll=inP.filter(a=>(!f.ovPerson||a.actor===f.ovPerson)&&(!f.ovCat||k.cat(a.type)===f.ovCat)).sort((a,b)=>b.at-a.at);
+    const {rows,pager}=this.pager(feedAll,30);const dels=inP.filter(a=>k.cat(a.type)==='del').length;
+    const ptext={7:'in the last 7 days',30:'in the last 30 days',90:'in the last 90 days',all:'across all time'}[per];
+    return {ov:{desc:`What your admins and their teams have been doing, ${ptext}. Read-only — this page changes nothing.`,
+      periods:[['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','All time']].map(([v,l])=>({label:l,go:()=>this.setState(s=>({f:{...s.f,ovP:v,page:1}})),bg:per===v?'var(--ac)':'var(--pn)',fg:per===v?'#fff':'var(--tx)'})),
+      tiles:[{label:'Actions logged',value:String(inP.length)},{label:'Staff active',value:`${staff.filter(u=>counts[u.id]).length} of ${staff.length}`},{label:'Account & access changes',value:String(inP.filter(a=>k.cat(a.type)==='access').length)},{label:'Deletions',value:String(dels),red:dels>0}].map(t=>({...t,c:t.red?'var(--red)':'var(--tx)',bg:t.red?'var(--redbg)':'transparent'})),
+      team:staff.sort((a,b)=>k.RANK[b.role]-k.RANK[a.role]||(counts[b.id]||0)-(counts[a.id]||0)).map(u=>({name:u.name,st:k.badge(u.role),count:counts[u.id]||0,lastAction:lastA[u.id]?k.rel(lastA[u.id]):'Nothing yet',last:u.last?k.rel(u.last):'Never',filter:e=>{e.preventDefault();this.setState(s=>({f:{...s.f,ovPerson:u.id,page:1}}));}})),
+      person:f.ovPerson||'',cat:f.ovCat||'',onPerson:this.setF('ovPerson'),onCat:this.setF('ovCat'),personOpts:staff.map(u=>({v:u.id,l:u.name})),
+      feed:rows.map(a=>H.actRow(a,'A removed account')),empty:!rows.length,pager}};
+  }
+  renderVals(){
+    if(!this.state.db||!window.KEDI)return {isApp:true,is:{dashboard:true},L:{rail:true,shell:'208px minmax(0,1fr)',pad:'20px 24px',hpad:'24px',g4:'repeat(4,minmax(0,1fr))',g2:'1fr 1fr',g3:'1.2fr 1fr .8fr',showName:true,searchW:'360px'},dash:{},nav:[],me:{},ui:{},err:{}};
+    const H=this.helpers();const C=this.common(H);const is=C.is;
+    let v={};
+    if(is.dashboard)v=this.vDash(H);
+    else if(is.clients)v=this.vClients(H);
+    else if(is.client)v=this.vClient(H);
+    else if(is.clientForm)v=this.vClientForm(H);
+    if(this.extraViews)v={...v,...this.extraViews(H,is)};
+    return {...C,...v};
+  }
+}
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { clientSchema, noteSchema, toFieldErrors, type FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
+import { ownedClient, ownedNote } from "@/server/scope";
 
 function readClientForm(formData: FormData) {
   return clientSchema.safeParse({
@@ -23,7 +24,6 @@ function readClientForm(formData: FormData) {
     postalCode: formData.get("postalCode"),
     country: formData.get("country"),
     notes: formData.get("notes"),
-    ownerId: formData.get("ownerId"),
   });
 }
 
@@ -35,8 +35,9 @@ export async function createClientAction(
   const parsed = readClientForm(formData);
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
+  // The creator owns the client, permanently: ownership decides who can see it.
   const client = await prisma.client.create({
-    data: { ...parsed.data, ownerId: parsed.data.ownerId ?? user.id },
+    data: { ...parsed.data, ownerId: user.id },
   });
 
   await logActivity({
@@ -62,12 +63,12 @@ export async function updateClientAction(
   const parsed = readClientForm(formData);
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
-  const existing = await prisma.client.findUnique({ where: { id: clientId } });
+  const existing = await ownedClient(user, clientId);
   if (!existing) return { error: "That client no longer exists." };
 
   const client = await prisma.client.update({
-    where: { id: clientId },
-    data: { ...parsed.data, ownerId: parsed.data.ownerId ?? null },
+    where: { id: existing.id },
+    data: parsed.data,
   });
 
   await logActivity({
@@ -93,7 +94,7 @@ export async function deleteClientAction(formData: FormData): Promise<void> {
   const clientId = String(formData.get("clientId") ?? "");
   if (!clientId) return;
 
-  const client = await prisma.client.findUnique({ where: { id: clientId } });
+  const client = await ownedClient(user, clientId);
   if (!client) redirect("/clients");
 
   // Contacts, projects, tasks, invoices and notes cascade with the client.
@@ -120,7 +121,7 @@ export async function addNoteAction(_prev: FormState, formData: FormData): Promi
   });
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
-  const client = await prisma.client.findUnique({ where: { id: parsed.data.clientId } });
+  const client = await ownedClient(user, parsed.data.clientId);
   if (!client) return { error: "That client no longer exists." };
 
   await prisma.note.create({
@@ -142,11 +143,10 @@ export async function addNoteAction(_prev: FormState, formData: FormData): Promi
 }
 
 export async function deleteNoteAction(formData: FormData): Promise<void> {
-  await requireUser();
-  const noteId = String(formData.get("noteId") ?? "");
-  const note = await prisma.note.findUnique({ where: { id: noteId } });
+  const user = await requireUser();
+  const note = await ownedNote(user, String(formData.get("noteId") ?? ""));
   if (!note) return;
 
-  await prisma.note.delete({ where: { id: noteId } });
+  await prisma.note.delete({ where: { id: note.id } });
   revalidatePath(`/clients/${note.clientId}`);
 }

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { PageHeader } from "@/components/ui";
-import { STAFF_ONLY } from "@/lib/constants";
+import { BackLink, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { clientScope } from "@/server/scope";
 import { updateClientAction } from "@/server/actions/clients";
 import { ClientForm } from "../../client-form";
 
@@ -16,35 +15,25 @@ export default async function EditClientPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
-  const [client, owners] = await Promise.all([
-    prisma.client.findUnique({ where: { id } }),
-    prisma.user.findMany({
-      where: STAFF_ONLY,
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
+  const client = await prisma.client.findFirst({ where: { id, ...clientScope(user) } });
 
   if (!client) notFound();
 
   const updateWithId = updateClientAction.bind(null, client.id);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <PageHeader
         title={`Edit ${client.name}`}
         breadcrumb={
-          <Link href={`/clients/${client.id}`} className="hover:text-indigo-600 hover:underline">
-            ← {client.name}
-          </Link>
+          <BackLink href={`/clients/${client.id}`}>{client.name}</BackLink>
         }
       />
       <ClientForm
         action={updateWithId}
-        owners={owners}
         submitLabel="Save changes"
         cancelHref={`/clients/${client.id}`}
         values={{
@@ -61,9 +50,8 @@ export default async function EditClientPage({
           postalCode: client.postalCode ?? "",
           country: client.country ?? "",
           notes: client.notes ?? "",
-          ownerId: client.ownerId ?? "",
         }}
       />
-    </div>
+    </>
   );
 }

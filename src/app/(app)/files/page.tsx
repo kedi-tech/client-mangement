@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { FileList } from "@/components/file-list";
-import { FilterSelect } from "@/components/filters";
+import { FilterBar, FilterSelect } from "@/components/filters";
 import { SearchInput } from "@/components/search-input";
-import { Card, CardHeader, PageHeader } from "@/components/ui";
 import { UploadForm } from "@/components/upload-form";
+import { Card, CardHeader, EmptyBox, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/db";
+import { humanFileSize, plural } from "@/lib/format";
+import { like } from "@/lib/search";
+import { requireUser } from "@/lib/session";
+import { clientScope, viaClient } from "@/server/scope";
 import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 import { uploadStaffFileAction } from "@/server/actions/files";
-import { like } from "@/lib/search";
-import { humanFileSize } from "@/lib/format";
-import { requireUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Files" };
 
@@ -19,7 +20,7 @@ type SearchParams = Promise<Record<string, string | undefined>>;
 
 export default async function FilesPage({ searchParams }: { searchParams: SearchParams }) {
   // Any staff account may share a file with a client — admin, member or owner.
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
 
   const q = params.q?.trim() ?? "";
@@ -27,15 +28,12 @@ export default async function FilesPage({ searchParams }: { searchParams: Search
   const direction = params.direction ?? "";
 
   const where = {
+    ...viaClient(user),
     ...(clientId ? { clientId } : {}),
     ...(direction ? { uploadedBy: direction } : {}),
     ...(q
       ? {
-          OR: [
-            { filename: like(q) },
-            { note: like(q) },
-            { client: { name: like(q) } },
-          ],
+          OR: [{ filename: like(q) }, { note: like(q) }, { client: { name: like(q) } }],
         }
       : {}),
   };
@@ -51,9 +49,10 @@ export default async function FilesPage({ searchParams }: { searchParams: Search
         client: { select: { id: true, name: true } },
       },
     }),
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
     // Every project, so the form can narrow them once a client is chosen.
     prisma.project.findMany({
+      where: viaClient(user),
       orderBy: { name: "asc" },
       select: { id: true, name: true, clientId: true },
     }),
@@ -62,92 +61,86 @@ export default async function FilesPage({ searchParams }: { searchParams: Search
   const received = files.filter((file) => file.uploadedBy === "CLIENT");
   const totalBytes = files.reduce((sum, file) => sum + file.sizeBytes, 0);
 
-  // The shared list renders one client's files; here the client is worth naming,
-  // so files are grouped by client.
+  // Files are grouped by client, newest client activity first.
   const byClient = new Map<string, { name: string; files: typeof files }>();
   for (const file of files) {
     const entry = byClient.get(file.clientId) ?? { name: file.client.name, files: [] };
     entry.files.push(file);
     byClient.set(file.clientId, entry);
   }
+  const filtered = Boolean(q || clientId || direction);
 
   return (
     <>
       <PageHeader
         title="Files"
-        description={`${files.length} files · ${received.length} received from clients · ${humanFileSize(totalBytes)} stored`}
+        description={`${plural(files.length, "file")} · ${received.length} received from clients · ${humanFileSize(totalBytes)} stored`}
       />
 
-      <Card className="mb-6">
-        <div className="flex flex-wrap items-center gap-3 px-5 py-4">
-          <div className="min-w-56 flex-1">
-            <SearchInput placeholder="Search filename, message, client…" />
-          </div>
-          <FilterSelect
-            name="direction"
-            label="Direction"
-            allLabel="Both ways"
-            options={[
-              { value: "CLIENT", label: "Received from clients" },
-              { value: "STAFF", label: "Shared by your team" },
-            ]}
-          />
-          <FilterSelect
-            name="clientId"
-            label="Client"
-            allLabel="All clients"
-            options={clients.map((client) => ({ value: client.id, label: client.name }))}
-          />
+      <div className="grid grid-cols-1 items-start gap-4 min-[1100px]:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-3">
+          <FilterBar>
+            <SearchInput placeholder="Search filename, message, client" className="flex-[1_1_220px]" />
+            <FilterSelect
+              name="direction"
+              label="Direction"
+              allLabel="Both ways"
+              options={[
+                { value: "CLIENT", label: "Received from clients" },
+                { value: "STAFF", label: "Shared by your team" },
+              ]}
+            />
+            <FilterSelect
+              name="clientId"
+              label="Client"
+              allLabel="All clients"
+              options={clients.map((client) => ({ value: client.id, label: client.name }))}
+            />
+          </FilterBar>
+
+          {byClient.size === 0 ? (
+            <EmptyBox
+              title={filtered ? "No files match those filters" : "No files yet"}
+              description={
+                filtered
+                  ? "Try a different search or filter."
+                  : "Share one here, or wait for a client to send you something through their portal."
+              }
+            />
+          ) : (
+            [...byClient.entries()].map(([id, group]) => (
+              <Card key={id}>
+                <CardHeader
+                  title={
+                    <Link href={`/clients/${id}`} className="text-tx hover:text-ac">
+                      {group.name}
+                    </Link>
+                  }
+                  action={<span className="text-fa">{plural(group.files.length, "file")}</span>}
+                />
+                <FileList files={group.files} />
+              </Card>
+            ))
+          )}
         </div>
-      </Card>
 
-      <Card className="mb-6">
-        <CardHeader
-          title="Share a file with a client"
-          description="Uploads appear in that client's portal straight away. Nothing is public — downloads are authorised per file."
-        />
-        {clients.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500 dark:text-slate-400">
-            Add a client first, then you can share files with them.
-          </p>
-        ) : (
-          <UploadForm
-            action={uploadStaffFileAction}
-            clients={clients}
-            projects={projects}
-            accept={ACCEPT_ATTRIBUTE}
-            maxBytes={MAX_UPLOAD_BYTES}
-            submitLabel="Share with client"
-          />
-        )}
-      </Card>
-
-      {byClient.size === 0 ? (
         <Card>
-          <FileList
-            files={[]}
-            perspective="staff"
-            emptyTitle="No files match those filters"
-            emptyDescription="Share one above, or wait for a client to send you something through their portal."
-          />
+          <CardHeader title="Share a file with a client" />
+          {clients.length === 0 ? (
+            <div className="p-3.5 text-[13px] text-mu">Add a client first, then share files with them here.</div>
+          ) : (
+            <UploadForm
+              action={uploadStaffFileAction}
+              clients={clients}
+              projects={projects}
+              accept={ACCEPT_ATTRIBUTE}
+              maxBytes={MAX_UPLOAD_BYTES}
+              submitLabel="Share with client"
+              layout="panel"
+            />
+          )}
         </Card>
-      ) : (
-        <div className="space-y-6">
-          {[...byClient.entries()].map(([id, group]) => (
-            <Card key={id}>
-              <CardHeader
-                title={
-                  <Link href={`/clients/${id}`} className="hover:text-indigo-600 hover:underline">
-                    {group.name}
-                  </Link>
-                }
-                description={`${group.files.length} files`}
-              />
-              <FileList files={group.files} perspective="staff" />
-            </Card>
-          ))}
-        </div>
-      )}
+      </div>
     </>
   );
 }

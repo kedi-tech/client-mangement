@@ -1,156 +1,178 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import clsx from "clsx";
+import { useEffect, useState, type ReactNode } from "react";
+import { cn } from "@/lib/cn";
+
+import { ThemeToggle } from "@/components/theme-toggle";
+import { logoutAction } from "@/server/actions/auth";
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: "M3 12l9-9 9 9M5 10v10h14V10" },
-  { href: "/clients", label: "Clients", icon: "M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6M12 11a4 4 0 100-8 4 4 0 000 8z" },
-  { href: "/contacts", label: "Contacts", icon: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h3" },
-  { href: "/projects", label: "Projects", icon: "M3 7h6l2 2h10v10H3z" },
-  { href: "/tasks", label: "Tasks", icon: "M4 6h16M4 12h16M4 18h10" },
-  { href: "/invoices", label: "Invoices", icon: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" },
-  { href: "/files", label: "Files", icon: "M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" },
-  { href: "/reports", label: "Reports", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/clients", label: "Clients" },
+  { href: "/contacts", label: "Contacts" },
+  { href: "/projects", label: "Projects" },
+  { href: "/tasks", label: "Tasks" },
+  { href: "/invoices", label: "Invoices" },
+  { href: "/files", label: "Files" },
+  { href: "/reports", label: "Reports" },
 ];
 
-/** Reserved to the workspace owner. */
-const SUPER_ADMIN_NAV = [
-  {
-    href: "/oversight",
-    label: "Oversight",
-    icon: "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7zM12 15a3 3 0 100-6 3 3 0 000 6z",
-  },
-];
+const ADMIN_NAV = [{ href: "/team", label: "Team" }];
+const SUPER_ADMIN_NAV = [{ href: "/oversight", label: "Oversight" }];
 
-/** Admin-only entries, appended for ADMIN accounts. */
-const ADMIN_NAV = [
-  {
-    href: "/team",
-    label: "Team",
-    icon: "M17 20v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 10a4 4 0 100-8 4 4 0 000 8zM23 20v-2a4 4 0 00-3-3.87M16 2.13a4 4 0 010 7.75",
-  },
-];
-
-function NavIcon({ path }: { path: string }) {
+function Brand({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.7}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="size-5 shrink-0"
-      aria-hidden
-    >
-      <path d={path} />
-    </svg>
+    <span className={cn("flex items-center gap-2 text-[15px] font-semibold text-white", className)}>
+      <span className="size-[18px] rounded-[4px] bg-[#3b5bdb]" aria-hidden />
+      KediClient
+    </span>
   );
 }
 
-export function Sidebar({
-  userName,
-  userEmail,
-  isAdmin = false,
-  isSuperAdmin = false,
+function NavLinks({
+  items,
+  pathname,
+  large = false,
+  onNavigate,
 }: {
-  userName: string;
-  userEmail: string;
-  isAdmin?: boolean;
-  isSuperAdmin?: boolean;
+  items: { href: string; label: string }[];
+  pathname: string;
+  large?: boolean;
+  onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  // Hiding a link is presentation only — each page enforces its own role.
-  const items = [
-    ...NAV,
-    ...(isAdmin ? ADMIN_NAV : []),
-    ...(isSuperAdmin ? SUPER_ADMIN_NAV : []),
-  ];
-
-  const links = (
-    <nav className="space-y-0.5">
+  return (
+    <nav className="flex flex-col gap-px">
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
             key={item.href}
             href={item.href}
-            onClick={() => setOpen(false)}
+            onClick={onNavigate}
             aria-current={active ? "page" : undefined}
-            className={clsx(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            className={cn(
+              "block rounded-[4px] px-2",
+              large ? "py-[9px] text-[14px]" : "py-1.5 text-[13px]",
               active
-                ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100",
+                ? "bg-raila font-medium text-white hover:text-white"
+                : "text-railtx hover:bg-raila/60 hover:text-white",
             )}
           >
-            <NavIcon path={item.icon} />
             {item.label}
           </Link>
         );
       })}
     </nav>
   );
+}
+
+function RailFooter({ name, email }: { name: string; email: string }) {
+  return (
+    <div className="mt-auto border-t border-[#262b33] px-2 pt-2.5 text-[11.5px] leading-normal text-[#8a919c]">
+      <div className="text-[#e6e9ee]">{name}</div>
+      <div className="truncate">{email}</div>
+    </div>
+  );
+}
+
+/**
+ * The admin shell from design 1b: a dark 208px rail beside a 48px top bar.
+ * Below 900px the rail becomes a drawer opened from a "Menu" button.
+ *
+ * Hiding a link is presentation only — each page enforces its own role.
+ */
+export function AppShell({
+  userName,
+  userEmail,
+  isAdmin = false,
+  isSuperAdmin = false,
+  theme,
+  children,
+}: {
+  userName: string;
+  userEmail: string;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  theme: "light" | "dark";
+  children: ReactNode;
+}) {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  // Close the drawer whenever the route changes.
+  useEffect(() => setOpen(false), [pathname]);
+
+  const items = [...NAV, ...(isAdmin ? ADMIN_NAV : []), ...(isSuperAdmin ? SUPER_ADMIN_NAV : [])];
 
   return (
-    <>
-      {/* Mobile toggle */}
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="fixed left-4 top-3.5 z-50 rounded-lg border border-slate-300 bg-white p-2 text-slate-700 shadow-sm lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-        aria-label={open ? "Close navigation" : "Open navigation"}
-        aria-expanded={open}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-5">
-          {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-        </svg>
-      </button>
+    <div className="grid min-h-screen grid-cols-1 min-[900px]:grid-cols-[208px_minmax(0,1fr)]">
+      <aside className="sticky top-0 hidden h-screen flex-col gap-5 bg-rail px-3 py-4 text-railtx min-[900px]:flex">
+        <Link href="/dashboard" className="px-1.5 py-1 hover:text-white">
+          <Brand />
+        </Link>
+        <NavLinks items={items} pathname={pathname} />
+        <RailFooter name={userName} email={userEmail} />
+      </aside>
+
+      <div className="flex min-w-0 flex-col">
+        <header className="sticky top-0 z-[5] flex h-12 items-center gap-3 border-b border-ln bg-pn px-3 text-[13px] min-[720px]:px-6">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="rounded-[4px] border border-inpb bg-pn px-2.5 py-[5px] text-[12.5px] min-[900px]:hidden"
+            aria-expanded={open}
+          >
+            Menu
+          </button>
+          <span className="font-semibold min-[900px]:hidden">KediClient</span>
+          <Link
+            href="/search"
+            className="hidden max-w-[360px] flex-1 rounded-[4px] border border-ln bg-hov px-2.5 py-1.5 text-fa hover:text-mu min-[720px]:block"
+          >
+            Search everything
+          </Link>
+          <ThemeToggle
+            initial={theme}
+            className="ml-auto rounded-[4px] border border-ln bg-transparent px-[9px] py-1 text-[12px] text-mu"
+          />
+          <span className="hidden min-[720px]:inline">{userName}</span>
+          <form action={logoutAction}>
+            <button type="submit" className="border-0 bg-transparent p-0 text-mu hover:text-tx">
+              Sign out
+            </button>
+          </form>
+        </header>
+
+        <main className="box-border flex w-full max-w-[1400px] flex-col gap-4 p-3.5 min-[720px]:px-6 min-[720px]:py-5">
+          {children}
+        </main>
+      </div>
 
       {open ? (
-        <div
-          className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden"
-          onClick={() => setOpen(false)}
-          aria-hidden
-        />
-      ) : null}
-
-      <aside
-        className={clsx(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:translate-x-0 dark:border-slate-800 dark:bg-slate-900",
-          open ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex h-16 items-center gap-2 px-5">
-          <Image
-            src="/logo-mark.png"
-            alt=""
-            width={32}
-            height={32}
-            priority
-            unoptimized
-            className="size-8 shrink-0 rounded-lg bg-white ring-1 ring-slate-200 dark:ring-slate-700"
+        <>
+          <div
+            className="fixed inset-0 z-20 bg-[rgba(10,12,16,.45)]"
+            onClick={() => setOpen(false)}
+            aria-hidden
           />
-          <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-            KediClient
-          </span>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-3 py-2">{links}</div>
-
-        <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-          <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-            {userName}
-          </p>
-          <p className="truncate text-xs text-slate-500 dark:text-slate-400">{userEmail}</p>
-        </div>
-      </aside>
-    </>
+          <aside className="fixed inset-y-0 left-0 z-[21] box-border flex w-[260px] flex-col gap-5 bg-rail px-3 py-4 text-railtx shadow-soft">
+            <div className="flex items-center justify-between px-1.5 py-1">
+              <Brand />
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-[4px] border border-[#3a404a] bg-transparent px-2 py-[3px] text-[12px] text-[#c9ced6]"
+              >
+                Close
+              </button>
+            </div>
+            <NavLinks items={items} pathname={pathname} large onNavigate={() => setOpen(false)} />
+            <RailFooter name={userName} email={userEmail} />
+          </aside>
+        </>
+      ) : null}
+    </div>
   );
 }

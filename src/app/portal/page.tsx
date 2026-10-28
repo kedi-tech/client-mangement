@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { FileList } from "@/components/file-list";
-import { ProgressBar } from "@/components/progress-bar";
+import { PortalFileList } from "@/components/file-list";
 import {
-  Badge,
-  Card,
-  CardHeader,
-  EmptyState,
-  LinkButton,
-  PageHeader,
-} from "@/components/ui";
+  BandButton,
+  PortalCard,
+  PortalCardHead,
+  PortalEmpty,
+  PortalHero,
+  PortalMain,
+  PortalPill,
+  PortalProgress,
+} from "@/components/portal-ui";
 import { formatDate, formatMoney, plural } from "@/lib/format";
 import { requirePortalUser } from "@/lib/session";
 import { getPortalOverview } from "@/server/queries";
@@ -27,186 +28,107 @@ export default async function PortalHomePage() {
   );
   const unpaid = data.invoices
     .filter((invoice) => invoice.effectiveStatus === "SENT" || invoice.effectiveStatus === "OVERDUE")
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
     .slice(0, 4);
 
   return (
     <>
-      <PageHeader
+      <PortalHero
         title={`Hello, ${user.name.split(" ")[0]}`}
-        description="Your projects, invoices and shared files in one place."
-        actions={<LinkButton href="/portal/files">Send us a file</LinkButton>}
+        action={<BandButton href="/portal/files">Send us a file</BandButton>}
       />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Active projects</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            {totals.activeProjects}
-          </p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Balance due</p>
-          <p
-            className={
-              totals.outstandingCents > 0
-                ? "mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50"
-                : "mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400"
-            }
-          >
-            {formatMoney(totals.outstandingCents)}
-          </p>
-          {totals.overdueCount > 0 ? (
-            <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">
-              {formatMoney(totals.overdueCents)} past due
-            </p>
-          ) : (
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Nothing past due</p>
-          )}
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Paid to date</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            {formatMoney(totals.paidCents)}
-          </p>
-        </Card>
-      </div>
-
-      <div className="mt-6 space-y-6">
-        <Card>
-          <CardHeader
-            title="Project progress"
-            description="Live status of the work in flight"
-            action={
-              <Link
-                href="/portal/projects"
-                className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-              >
-                All projects
-              </Link>
-            }
-          />
-          {activeProjects.length === 0 ? (
-            <EmptyState
-              title="No active projects"
-              description="Once work starts, its progress will show up here."
-            />
-          ) : (
-            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-              {activeProjects.map((project) => (
-                <li key={project.id} className="px-5 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/portal/projects/${project.id}`}
-                        className="text-sm font-semibold text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
-                      >
-                        {project.name}
-                      </Link>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        {project.progress.total > 0
-                          ? `${project.progress.done} of ${plural(project.progress.total, "step")} complete`
-                          : "Not broken down yet"}
-                        {project.endDate ? ` · target ${formatDate(project.endDate)}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge value={project.status} />
-                      {project.liveUrl ? (
-                        <a
-                          href={project.liveUrl}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                        >
-                          Visit project
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={1.8}
-                            className="size-3.5"
-                            aria-hidden
-                          >
-                            <path d="M14 4h6v6M20 4l-8 8M10 6H5v13h13v-5" />
-                          </svg>
-                        </a>
-                      ) : null}
-                    </div>
-                  </div>
-                  <ProgressBar
-                    className="mt-3"
-                    percent={project.progress.percent}
-                    label={`${project.progress.percent}% complete`}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader
-              title="Invoices due"
-              action={
-                <Link
-                  href="/portal/invoices"
-                  className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  All invoices
-                </Link>
+      <PortalMain>
+        <div className="grid grid-cols-1 gap-4 min-[720px]:grid-cols-3">
+          <PortalCard raised>
+            <div className="text-[13.5px] text-mu">Active projects</div>
+            <div className="mt-1.5 text-[32px] font-semibold">{totals.activeProjects}</div>
+          </PortalCard>
+          <PortalCard raised>
+            <div className="text-[13.5px] text-mu">Balance due</div>
+            <div className={`mt-1.5 text-[32px] font-semibold ${totals.outstandingCents > 0 ? "" : "text-grn"}`}>
+              {formatMoney(totals.outstandingCents)}
+            </div>
+            <span
+              className="mt-2 inline-block rounded-full px-2.5 py-[3px] text-[12px] font-medium"
+              style={
+                totals.overdueCount > 0
+                  ? { background: "var(--rose-b)", color: "var(--rose-f)" }
+                  : { background: "var(--emerald-b)", color: "var(--emerald-f)" }
               }
-            />
-            {unpaid.length === 0 ? (
-              <EmptyState title="Nothing due" description="Every invoice is settled — thank you." />
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {unpaid.map((invoice) => (
-                  <li key={invoice.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/portal/invoices/${invoice.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {invoice.number}
-                      </Link>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Due {formatDate(invoice.dueDate)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                        {formatMoney(invoice.totals.totalCents)}
-                      </span>
-                      <Badge value={invoice.effectiveStatus} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <Card>
-            <CardHeader
-              title="Recent files"
-              action={
-                <Link
-                  href="/portal/files"
-                  className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  All files
-                </Link>
-              }
-            />
-            <FileList
-              files={data.files}
-              perspective="portal"
-              emptyTitle="No files yet"
-              emptyDescription="Anything we share with you, and anything you send us, appears here."
-            />
-          </Card>
+            >
+              {totals.overdueCount > 0 ? `${formatMoney(totals.overdueCents)} past due` : "Nothing past due"}
+            </span>
+          </PortalCard>
+          <PortalCard raised>
+            <div className="text-[13.5px] text-mu">Paid to date</div>
+            <div className="mt-1.5 text-[32px] font-semibold">{formatMoney(totals.paidCents)}</div>
+          </PortalCard>
         </div>
-      </div>
+
+        <PortalCard>
+          <h2 className="m-0 mb-1.5 text-[17px] font-semibold">Project progress</h2>
+          {activeProjects.length === 0 ? (
+            <div className="border-t border-ln pt-5 pb-1.5 text-[14px] text-mu">
+              Once work starts, its progress will show up here.
+            </div>
+          ) : (
+            activeProjects.map((project) => (
+              <div key={project.id} className="flex flex-col gap-2.5 border-t border-ln py-3.5">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
+                  <div>
+                    <Link href={`/portal/projects/${project.id}`} className="text-[15px] font-medium text-tx">
+                      {project.name}
+                    </Link>
+                    <span className="text-[13px] text-fa">
+                      {" · "}
+                      {project.progress.total > 0
+                        ? `${project.progress.done} of ${plural(project.progress.total, "step")} complete`
+                        : "Not broken down yet"}
+                      {project.endDate ? ` · target ${formatDate(project.endDate)}` : ""}
+                    </span>
+                  </div>
+                  {project.liveUrl ? (
+                    <a href={project.liveUrl} target="_blank" rel="noreferrer noopener" className="text-[13px]">
+                      Visit project ↗
+                    </a>
+                  ) : null}
+                </div>
+                <PortalProgress percent={project.progress.percent} />
+                <div className="text-[12.5px] text-mu">{project.progress.percent}% complete</div>
+              </div>
+            ))
+          )}
+        </PortalCard>
+
+        <div className="grid grid-cols-1 gap-4 min-[900px]:grid-cols-2">
+          <PortalCard className="pb-3">
+            <PortalCardHead title="Invoices due" action={<Link href="/portal/invoices">All invoices</Link>} />
+            {unpaid.length === 0 ? (
+              <PortalEmpty>Nothing due right now.</PortalEmpty>
+            ) : (
+              unpaid.map((invoice) => (
+                <Link
+                  key={invoice.id}
+                  href={`/portal/invoices/${invoice.id}`}
+                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-t border-ln py-2.5 text-tx hover:text-tx"
+                >
+                  <span>
+                    <span className="block text-[14px] font-medium">{invoice.number}</span>
+                    <span className="block text-[12.5px] text-fa">Due {formatDate(invoice.dueDate)}</span>
+                  </span>
+                  <span className="text-[14px]">{formatMoney(invoice.totals.totalCents)}</span>
+                  <PortalPill value={invoice.effectiveStatus} />
+                </Link>
+              ))
+            )}
+          </PortalCard>
+
+          <PortalCard className="pb-3">
+            <PortalCardHead title="Recent files" action={<Link href="/portal/files">All files</Link>} />
+            <PortalFileList files={data.files} mode="compact" emptyText="No files yet." />
+          </PortalCard>
+        </div>
+      </PortalMain>
     </>
   );
 }

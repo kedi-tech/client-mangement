@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import clsx from "clsx";
+
+import { buttonClass } from "@/components/ui";
 
 function ConfirmSubmit({
   children,
@@ -39,13 +40,17 @@ export function ConfirmForm({
   children,
   className,
   variant = "danger",
+  buttonTextClass,
 }: {
   action: (formData: FormData) => Promise<void>;
   hidden: Record<string, string>;
   confirmMessage: string;
   children: ReactNode;
   className?: string;
+  /** `danger` is an outlined button; `subtle` is a red text link. */
   variant?: "danger" | "subtle";
+  /** Extra classes for the button, e.g. a smaller font or tighter padding. */
+  buttonTextClass?: string;
 }) {
   return (
     <form action={action} className={className}>
@@ -54,12 +59,11 @@ export function ConfirmForm({
       ))}
       <ConfirmSubmit
         confirmMessage={confirmMessage}
-        className={clsx(
-          "inline-flex items-center rounded-lg text-sm font-medium transition-colors disabled:opacity-60",
+        className={
           variant === "danger"
-            ? "border border-rose-300 bg-white px-3 py-2 text-rose-700 hover:bg-rose-50 dark:border-rose-500/40 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
-            : "px-2 py-1 text-xs text-slate-400 hover:text-rose-600 dark:hover:text-rose-400",
-        )}
+            ? buttonClass("danger", "sm", buttonTextClass ?? "px-2.5 py-[5px]")
+            : buttonClass("linkDanger", "sm", buttonTextClass)
+        }
       >
         {children}
       </ConfirmSubmit>

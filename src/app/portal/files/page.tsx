@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
-import { FileList } from "@/components/file-list";
-import { Card, CardHeader, PageHeader } from "@/components/ui";
+import { PortalFileList } from "@/components/file-list";
+import { PortalCard, PortalHero, PortalMain } from "@/components/portal-ui";
 import { UploadForm } from "@/components/upload-form";
 import { prisma } from "@/lib/db";
 import { plural } from "@/lib/format";
-import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 import { requirePortalUser } from "@/lib/session";
+import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 import { uploadClientFileAction } from "@/server/actions/files";
 
 export const metadata: Metadata = { title: "Files" };
@@ -35,48 +35,34 @@ export default async function PortalFilesPage() {
 
   return (
     <>
-      <PageHeader
-        title="Files"
-        description="Send us documents, and pick up anything we have shared with you."
-      />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader title="Shared with you" description={plural(fromUs.length, "file")} />
-            <FileList
-              files={fromUs}
-              perspective="portal"
-              emptyTitle="Nothing shared yet"
-              emptyDescription="Deliverables and documents we send you will appear here."
-            />
-          </Card>
-
-          <Card>
-            <CardHeader
-              title="Files you sent"
-              description={`${plural(fromClient.length, "file")} · you can remove your own uploads`}
-            />
-            <FileList
-              files={fromClient}
-              perspective="portal"
-              emptyTitle="You haven't sent anything yet"
-              emptyDescription="Use the upload panel to send us a document."
-            />
-          </Card>
-        </div>
-
-        <Card className="h-fit">
-          <CardHeader title="Send us a file" description="We'll be notified in your account timeline." />
+      <PortalHero title="Files" sub="Everything we have shared, and everything you have sent us." />
+      <PortalMain>
+        <div className="grid grid-cols-1 items-start gap-4 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="flex min-w-0 flex-col gap-4">
+            <PortalCard raised className="pb-3">
+              <h2 className="m-0 mb-0.5 text-[17px] font-semibold">Shared with you</h2>
+              <div className="mb-2 text-[13px] text-fa">{plural(fromUs.length, "file")}</div>
+              <PortalFileList files={fromUs} mode="shared" emptyText="Nothing shared with you yet." />
+            </PortalCard>
+            <PortalCard className="pb-3">
+              <h2 className="m-0 mb-0.5 text-[17px] font-semibold">Files you sent</h2>
+              <div className="mb-2 text-[13px] text-fa">
+                {plural(fromClient.length, "file")} · you can remove your own uploads
+              </div>
+              <PortalFileList files={fromClient} mode="sent" emptyText="You haven't sent anything yet." />
+            </PortalCard>
+          </div>
           <UploadForm
             action={uploadClientFileAction}
             projects={projects}
             accept={ACCEPT_ATTRIBUTE}
             maxBytes={MAX_UPLOAD_BYTES}
             submitLabel="Send file"
+            layout="portal"
+            successMessage="Sent. Your team can see it now."
           />
-        </Card>
-      </div>
+        </div>
+      </PortalMain>
     </>
   );
 }

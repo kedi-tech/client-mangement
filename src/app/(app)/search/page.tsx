@@ -2,23 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SearchInput } from "@/components/search-input";
-import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
+import { Card } from "@/components/ui";
+import { label } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { like } from "@/lib/search";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoice";
+import { like } from "@/lib/search";
 import { requireUser } from "@/lib/session";
+import { clientScope, taskScope, viaClient } from "@/server/scope";
 
 export const metadata: Metadata = { title: "Search" };
 
 const LIMIT = 8;
+
+type ResultItem = { key: string; href: string; title: string; sub: string; right?: string };
 
 export default async function SearchPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
 
@@ -26,56 +30,39 @@ export default async function SearchPage({
     ? await Promise.all([
         prisma.client.findMany({
           where: {
-            OR: [
-              { name: like(q) },
-              { company: like(q) },
-              { email: like(q) },
-              { industry: like(q) },
-            ],
+            ...clientScope(user),
+            OR: [{ name: like(q) }, { company: like(q) }, { email: like(q) }, { industry: like(q) }],
           },
           take: LIMIT,
         }),
         prisma.contact.findMany({
           where: {
-            OR: [
-              { firstName: like(q) },
-              { lastName: like(q) },
-              { email: like(q) },
-              { title: like(q) },
-            ],
+            ...viaClient(user),
+            OR: [{ firstName: like(q) }, { lastName: like(q) }, { email: like(q) }, { title: like(q) }],
           },
           take: LIMIT,
           include: { client: { select: { id: true, name: true } } },
         }),
         prisma.project.findMany({
           where: {
-            OR: [
-              { name: like(q) },
-              { description: like(q) },
-              { client: { name: like(q) } },
-            ],
+            ...viaClient(user),
+            OR: [{ name: like(q) }, { description: like(q) }, { client: { name: like(q) } }],
           },
           take: LIMIT,
           include: { client: { select: { id: true, name: true } } },
         }),
         prisma.task.findMany({
           where: {
-            OR: [
-              { title: like(q) },
-              { description: like(q) },
-              { client: { name: like(q) } },
-            ],
+            AND: [taskScope(user)],
+            OR: [{ title: like(q) }, { description: like(q) }, { client: { name: like(q) } }],
           },
           take: LIMIT,
           include: { client: { select: { id: true, name: true } } },
         }),
         prisma.invoice.findMany({
           where: {
-            OR: [
-              { number: like(q) },
-              { notes: like(q) },
-              { client: { name: like(q) } },
-            ],
+            ...viaClient(user),
+            OR: [{ number: like(q) }, { notes: like(q) }, { client: { name: like(q) } }],
           },
           take: LIMIT,
           include: { items: true, client: { select: { id: true, name: true } } },
@@ -83,156 +70,97 @@ export default async function SearchPage({
       ])
     : [[], [], [], [], []];
 
-  const totalResults =
-    clients.length + contacts.length + projects.length + tasks.length + invoices.length;
+  const groups: { title: string; items: ResultItem[] }[] = [
+    {
+      title: "Clients",
+      items: clients.map((client) => ({
+        key: client.id,
+        href: `/clients/${client.id}`,
+        title: client.name,
+        sub: [client.company, client.industry].filter(Boolean).join(" · "),
+      })),
+    },
+    {
+      title: "Contacts",
+      items: contacts.map((contact) => ({
+        key: contact.id,
+        href: `/clients/${contact.client.id}`,
+        title: `${contact.firstName} ${contact.lastName}`,
+        sub: [contact.title, contact.client.name].filter(Boolean).join(" · "),
+      })),
+    },
+    {
+      title: "Projects",
+      items: projects.map((project) => ({
+        key: project.id,
+        href: `/projects/${project.id}`,
+        title: project.name,
+        sub: project.client.name,
+      })),
+    },
+    {
+      title: "Tasks",
+      items: tasks.map((task) => ({
+        key: task.id,
+        href: `/tasks/${task.id}/edit`,
+        title: task.title,
+        sub: [task.client?.name, label(task.status)].filter(Boolean).join(" · "),
+      })),
+    },
+    {
+      title: "Invoices",
+      items: invoices.map((invoice) => ({
+        key: invoice.id,
+        href: `/invoices/${invoice.id}`,
+        title: invoice.number,
+        sub: `${invoice.client.name} · ${label(effectiveInvoiceStatus(invoice))}`,
+        right: formatMoney(invoiceTotals(invoice.items, invoice.taxRate).totalCents),
+      })),
+    },
+  ].filter((group) => group.items.length > 0);
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHeader
-        title="Search"
-        description="Look across clients, contacts, projects, tasks and invoices at once."
+    <>
+      <h1 className="m-0 text-[20px] font-semibold">Search</h1>
+      <SearchInput
+        placeholder="Search clients, contacts, projects, tasks and invoices"
+        autoFocus
+        large
+        className="w-full max-w-[720px]"
       />
 
-      <div className="mb-6">
-        <SearchInput placeholder="Search everything…" basePath="/search" />
-      </div>
-
       {!q ? (
-        <Card>
-          <EmptyState
-            title="Start typing"
-            description="Results appear as you type — try a client name, an invoice number, or a person."
-          />
-        </Card>
-      ) : totalResults === 0 ? (
-        <Card>
-          <EmptyState title={`No results for "${q}"`} description="Try a different or shorter term." />
-        </Card>
+        <div className="py-10 text-[13.5px] text-mu">Start typing to search everything.</div>
+      ) : groups.length === 0 ? (
+        <div className="max-w-[720px] rounded-[6px] border border-dashed border-inpb bg-pn px-4 py-10 text-center text-[13.5px] text-mu">
+          Nothing matches &ldquo;{q}&rdquo;.
+        </div>
       ) : (
-        <div className="space-y-6">
-          {clients.length > 0 ? (
-            <Card>
-              <CardHeader title="Clients" description={`${clients.length} matches`} />
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {clients.map((client) => (
-                  <li key={client.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/clients/${client.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {client.name}
-                      </Link>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {[client.industry, client.email].filter(Boolean).join(" · ") || "—"}
-                      </p>
-                    </div>
-                    <Badge value={client.status} />
-                  </li>
-                ))}
-              </ul>
+        <div className="flex max-w-[720px] flex-col gap-3">
+          {groups.map((group) => (
+            <Card key={group.title}>
+              <div className="border-b border-l2 px-3.5 py-2 text-[11px] tracking-[.06em] text-mu uppercase">
+                {group.title}
+              </div>
+              {group.items.map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className="flex justify-between gap-3 border-b border-l2 px-3.5 py-[9px] text-tx last:border-b-0 hover:bg-hov hover:text-tx"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-medium">{item.title}</span>
+                    <span className="block text-[12px] text-fa">{item.sub}</span>
+                  </span>
+                  {item.right ? (
+                    <span className="self-center font-mono text-[12.5px] text-mu">{item.right}</span>
+                  ) : null}
+                </Link>
+              ))}
             </Card>
-          ) : null}
-
-          {contacts.length > 0 ? (
-            <Card>
-              <CardHeader title="Contacts" description={`${contacts.length} matches`} />
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {contacts.map((contact) => (
-                  <li key={contact.id} className="px-5 py-3">
-                    <Link
-                      href={`/clients/${contact.client.id}`}
-                      className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                    >
-                      {contact.firstName} {contact.lastName}
-                    </Link>
-                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                      {[contact.title, contact.client.name, contact.email]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
-
-          {projects.length > 0 ? (
-            <Card>
-              <CardHeader title="Projects" description={`${projects.length} matches`} />
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {projects.map((project) => (
-                  <li key={project.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/projects/${project.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {project.name}
-                      </Link>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {project.client.name} · {formatMoney(project.budgetCents)}
-                      </p>
-                    </div>
-                    <Badge value={project.status} />
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
-
-          {tasks.length > 0 ? (
-            <Card>
-              <CardHeader title="Tasks" description={`${tasks.length} matches`} />
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {tasks.map((task) => (
-                  <li key={task.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/tasks/${task.id}/edit`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {task.title}
-                      </Link>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {[task.client?.name, task.dueDate ? `due ${formatDate(task.dueDate)}` : null]
-                          .filter(Boolean)
-                          .join(" · ") || "No client"}
-                      </p>
-                    </div>
-                    <Badge value={task.status} />
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
-
-          {invoices.length > 0 ? (
-            <Card>
-              <CardHeader title="Invoices" description={`${invoices.length} matches`} />
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {invoices.map((invoice) => (
-                  <li key={invoice.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/invoices/${invoice.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {invoice.number}
-                      </Link>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {invoice.client.name} ·{" "}
-                        {formatMoney(invoiceTotals(invoice.items, invoice.taxRate).totalCents)}
-                      </p>
-                    </div>
-                    <Badge value={effectiveInvoiceStatus(invoice)} />
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
+          ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
+import { BackLink, EmptyBox, LinkButton, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { dateToInput } from "@/lib/format";
 import { nextInvoiceNumber } from "@/lib/invoice";
 import { requireUser } from "@/lib/session";
+import { clientScope, viaClient } from "@/server/scope";
 import { emptyLine } from "@/lib/form-defaults";
 import { createInvoiceAction } from "@/server/actions/invoices";
 import { InvoiceForm } from "../invoice-form";
@@ -17,12 +17,13 @@ export default async function NewInvoicePage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
 
   const [clients, projects, latest] = await Promise.all([
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.project.findMany({
+      where: viaClient(user),
       orderBy: { name: "asc" },
       select: { id: true, name: true, clientId: true },
     }),
@@ -31,16 +32,15 @@ export default async function NewInvoicePage({
 
   if (clients.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <PageHeader title="New invoice" />
-        <Card>
-          <EmptyState
-            title="Add a client first"
-            description="An invoice is always addressed to a client."
-            action={<LinkButton href="/clients/new">New client</LinkButton>}
-          />
-        </Card>
-      </div>
+      <>
+        <PageHeader title="New invoice" breadcrumb={<BackLink href="/invoices">Invoices</BackLink>} />
+        <EmptyBox
+          title="Add a client first"
+          description="Invoices are billed to a client."
+          action={<LinkButton href="/clients/new">New client</LinkButton>}
+          className="max-w-[760px]"
+        />
+      </>
     );
   }
 
@@ -57,14 +57,11 @@ export default async function NewInvoicePage({
   const dueDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <>
       <PageHeader
         title="New invoice"
-        description="Net-30 by default — adjust the dates and lines as needed."
         breadcrumb={
-          <Link href="/invoices" className="hover:text-indigo-600 hover:underline">
-            ← Invoices
-          </Link>
+          <BackLink href={"/invoices"}>Invoices</BackLink>
         }
       />
       <InvoiceForm
@@ -85,6 +82,6 @@ export default async function NewInvoicePage({
           items: [{ ...emptyLine }],
         }}
       />
-    </div>
+    </>
   );
 }

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><meta name="design_doc_mode" content="canvas"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"><style>body{margin:0;background:#e9eaee;font-family:'IBM Plex Sans',system-ui,sans-serif}a{color:#3b5bdb;text-decoration:none}a:hover{color:#2c46b0}</style></helmet>
+<div style="padding:40px 44px 20px;max-width:900px">
+<h1 style="margin:0;font-size:22px;font-weight:600;color:#15181d">KediClient · screen gallery</h1>
+<p style="margin:8px 0 0;font-size:13px;line-height:1.6;color:#5d6470">Each frame is the live prototype at that viewport. Admin uses direction 1b, the portal uses 1f. Click inside any frame to use it, or open the full prototypes: <a href="KediClient Admin.dc.html">Admin</a> · <a href="KediClient Portal.dc.html">Portal</a>. Sign in with dana@northwind.co on the login screen to jump to the portal.</p>
+</div>
+<sc-for list="{{ rows }}" as="row" hint-placeholder-count="3">
+<section style="padding:24px 44px 36px;border-top:1px solid rgba(0,0,0,.08)">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px"><span style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:#15181d;color:#fff;border-radius:4px">{{ row.tag }}</span><span style="font-size:14px;font-weight:600;color:#15181d">{{ row.title }}</span><span style="font-size:12px;color:#8a919c">{{ row.note }}</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+<sc-for list="{{ row.frames }}" as="f" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:8px;align-items:baseline;font-size:12px;color:#5d6470"><span style="font-weight:500;color:#15181d">{{ f.label }}</span><a href="{{ f.src }}" target="_blank" rel="noopener">open ↗</a></div><iframe src="{{ f.src }}" loading="lazy" title="{{ f.label }}" style="width:{{ f.w }};height:{{ f.h }};border:1px solid rgba(0,0,0,.12);border-radius:{{ f.r }};background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)"></iframe></div></sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const A='KediClient%20Admin.dc.html#',P='KediClient%20Portal.dc.html#';
+const fr=(base,hash,label,w,h)=>({src:base+hash,label,w:w+'px',h:h+'px',r:w<500?'22px':'6px'});
+const ROWS=[
+ {tag:'A1',title:'Admin · desktop 1440 · light',note:'',frames:[fr(A,'dashboard~light','Dashboard',1440,900),fr(A,'client/c1~light','Client detail',1440,1300),fr(A,'invoice/i13~light','Invoice detail',1440,900),fr(A,'oversight~light','Oversight (super admin)',1440,1100)]},
+ {tag:'A2',title:'Admin · laptop 1280 · dark',note:'',frames:[fr(A,'clients~dark','Clients list',1280,820),fr(A,'project/p1~dark','Project detail',1280,1000),fr(A,'invoice-new~dark','Invoice editor',1280,820),fr(A,'team~dark','Team',1280,720),fr(A,'reports~dark','Reports',1280,1000),fr(A,'files~dark','Files',1280,1000)]},
+ {tag:'A3',title:'Admin · laptop 1280 · light',note:'Lists, forms and permission states',frames:[fr(A,'tasks~light~newtask','Tasks, new task panel open',1280,1000),fr(A,'contacts~light','Contacts',1280,820),fr(A,'client-new~light','New client',1280,900),fr(A,'search~light~f.sQ=north','Search',1280,760),fr(A,'client/c4~light~invite','Portal invite open',1280,1200),fr(A,'team~light~admin','Team as an admin',1280,620),fr(A,'dashboard~light~member','Member view (no Team, no Oversight)',1280,820)]},
+ {tag:'A4',title:'Admin · tablet 834',note:'Sidebar becomes a drawer below 900px',frames:[fr(A,'dashboard~light','Dashboard',834,1112),fr(A,'tasks~dark','Tasks · dark',834,1112),fr(A,'client/c1~light~menu','Drawer open',834,1112)]},
+ {tag:'A5',title:'Admin · mobile 390',note:'',frames:[fr(A,'dashboard~light','Dashboard',390,844),fr(A,'client/c1~light','Client detail',390,844),fr(A,'invoices~dark','Invoices · dark',390,844),fr(A,'dashboard~light~menu','Menu',390,844)]},
+ {tag:'A6',title:'Sign-in and system states',note:'',frames:[fr(A,'login~light','Sign in',1280,760),fr(A,'login~dark','Sign in · dark',390,844),fr(A,'register~light','First-run sign-up',1280,800),fr(A,'register-closed~light','Sign-up closed',1280,600),fr(A,'404~light','Not found',1280,600),fr(A,'error~dark','Unexpected error',1280,600)]},
+ {tag:'A7',title:'Empty workspace',note:'Every list with no data yet',frames:[fr(A,'dashboard~light~empty','Dashboard',1280,860),fr(A,'clients~light~empty','Clients',1280,600),fr(A,'invoice-new~light~empty','New invoice, no clients',1280,600),fr(A,'tasks~dark~empty','Tasks · dark',1280,600)]},
+ {tag:'P1',title:'Client portal · desktop 1440',note:'',frames:[fr(P,'overview~light','Overview',1440,1100),fr(P,'project/p1~light','Project detail',1440,1300),fr(P,'invoices~light','Invoices',1440,760),fr(P,'files~light','Files',1440,1000),fr(P,'account~light','Account',1440,800)]},
+ {tag:'P2',title:'Client portal · dark 1280',note:'',frames:[fr(P,'overview~dark','Overview',1280,1100),fr(P,'invoice/i13~dark','Invoice detail',1280,900),fr(P,'projects~dark','Projects',1280,1000)]},
+ {tag:'P3',title:'Client portal · tablet and mobile',note:'',frames:[fr(P,'overview~light','Overview · tablet',834,1112),fr(P,'overview~light','Overview · mobile',390,844),fr(P,'project/p1~light','Project · mobile',390,844),fr(P,'files~dark','Files · mobile dark',390,844),fr(P,'overview~light~empty','Empty portal',390,844)]}];
+class Component extends DCLogic { renderVals(){ return {rows:ROWS}; } }
+</script>
+</body>
+</html>

@@ -3,41 +3,42 @@ import Link from "next/link";
 
 import { FilterSelect, Pagination } from "@/components/filters";
 import {
-  Avatar,
   Badge,
   Card,
   CardHeader,
-  EmptyState,
+  GridHead,
+  GridTable,
   PageHeader,
-  Table,
-  Td,
-  Th,
+  Pill,
+  StatGrid,
+  StatTile,
 } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import {
   ACTIVITY_CATEGORIES,
   ACTIVITY_CATEGORY_KEYS,
   ACTIVITY_CATEGORY_TONES,
   activityCategory,
   label,
+  oversightMessage,
   roleRank,
   type ActivityCategory,
 } from "@/lib/constants";
-import { formatDateTime, initials, relativeTime } from "@/lib/format";
+import { relativeTime } from "@/lib/format";
 import { requireSuperAdmin } from "@/lib/session";
 import { getOversightData } from "@/server/queries";
 
 export const metadata: Metadata = { title: "Oversight" };
 
 const PAGE_SIZE = 30;
+const TEAM_COLS = "minmax(180px,1.4fr) 110px 80px 150px 150px";
 
-/** Windows offered in the period filter, in days. "0" means all time. */
 const PERIODS = [
   { value: "7", label: "Last 7 days" },
   { value: "30", label: "Last 30 days" },
   { value: "90", label: "Last 90 days" },
   { value: "0", label: "All time" },
 ];
-
 const DEFAULT_PERIOD = "30";
 
 type SearchParams = Promise<Record<string, string | undefined>>;
@@ -76,177 +77,150 @@ export default async function OversightPage({ searchParams }: { searchParams: Se
     (a, b) => roleRank(b.role) - roleRank(a.role) || b.actionCount - a.actionCount,
   );
 
+  /** Same URL with some params replaced; resets paging. */
+  const hrefWith = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value && key !== "page") next.set(key, value);
+    }
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    const query = next.toString();
+    return query ? `/oversight?${query}` : "/oversight";
+  };
+
   return (
     <>
       <PageHeader
         title="Oversight"
-        description={`What your admins and their teams have been doing, ${windowLabel}. Read-only — this page changes nothing.`}
+        description={`What your admins and their teams have been doing, ${windowLabel}. Client details stay private to each owner. Read-only — this page changes nothing.`}
+        actions={
+          <div className="flex overflow-hidden rounded-[4px] border border-inpb text-[12.5px]">
+            {PERIODS.map((option) => {
+              const active = option.value === period;
+              return (
+                <Link
+                  key={option.value}
+                  href={hrefWith({ period: option.value === DEFAULT_PERIOD ? null : option.value })}
+                  aria-current={active ? "true" : undefined}
+                  className={cn(
+                    "border-r border-inpb px-[11px] py-[5px] last:border-r-0",
+                    active ? "bg-ac text-white hover:text-white" : "bg-pn text-tx hover:bg-hov hover:text-tx",
+                  )}
+                >
+                  {option.label}
+                </Link>
+              );
+            })}
+          </div>
+        }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Actions logged</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            {data.totals.actions}
-          </p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Staff active</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            {data.totals.activeStaff} of {data.roster.length}
-          </p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Account &amp; access changes</p>
-          <p className="mt-1 text-2xl font-semibold text-violet-600 dark:text-violet-400">
-            {data.totals.accessChanges}
-          </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Roles, password resets, portal access
-          </p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Deletions</p>
-          <p
-            className={
-              data.totals.deletions > 0
-                ? "mt-1 text-2xl font-semibold text-rose-600 dark:text-rose-400"
-                : "mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50"
-            }
-          >
-            {data.totals.deletions}
-          </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Clients, projects, invoices
-          </p>
-        </Card>
-      </div>
+      <StatGrid>
+        <StatTile label="Actions logged" value={data.totals.actions} />
+        <StatTile label="Staff active" value={`${data.totals.activeStaff} of ${data.roster.length}`} />
+        <StatTile label="Account & access changes" value={data.totals.accessChanges} />
+        <StatTile label="Deletions" value={data.totals.deletions} warn={data.totals.deletions > 0} />
+      </StatGrid>
 
-      <Card className="mt-6">
-        <CardHeader
-          title="The team"
-          description={`Activity per person, ${windowLabel}. Counts cover everything they did, not the filtered feed below.`}
-        />
-        <Table>
-          <thead>
-            <tr>
-              <Th>Name</Th>
-              <Th>Role</Th>
-              <Th className="text-right">Actions</Th>
-              <Th>Last action</Th>
-              <Th>Last sign-in</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {roster.map((member) => (
-              <tr key={member.id}>
-                <Td>
-                  <div className="flex items-center gap-3">
-                    <Avatar text={initials(member.name)} />
-                    <div className="min-w-0">
-                      <Link
-                        href={`/oversight?actorId=${member.id}&period=${period}`}
-                        className="truncate font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
-                      >
-                        {member.name}
-                      </Link>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {member.email}
-                      </p>
-                    </div>
-                  </div>
-                </Td>
-                <Td>
-                  <Badge value={member.role} />
-                </Td>
-                <Td className="text-right font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                  {member.actionCount}
-                </Td>
-                <Td className="whitespace-nowrap text-slate-500 dark:text-slate-400">
-                  {member.lastActionAt ? relativeTime(member.lastActionAt) : "Nothing yet"}
-                </Td>
-                <Td className="whitespace-nowrap text-slate-500 dark:text-slate-400">
-                  {member.lastLoginAt ? formatDateTime(member.lastLoginAt) : "Never"}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+      <Card>
+        <CardHeader title="The team" />
+        <GridTable minWidth={680}>
+          <GridHead cols={TEAM_COLS}>
+            <span>Name</span>
+            <span>Role</span>
+            <span className="text-right">Actions</span>
+            <span>Last action</span>
+            <span>Last sign-in</span>
+          </GridHead>
+          {roster.map((member) => (
+            <div
+              key={member.id}
+              className="grid items-center gap-3 border-b border-l2 px-3.5 py-2 text-[13px] last:border-b-0"
+              style={{ gridTemplateColumns: TEAM_COLS }}
+            >
+              <Link href={hrefWith({ actorId: member.id })} className="truncate" title={member.email}>
+                {member.name}
+              </Link>
+              <span>
+                <Badge value={member.role} />
+              </span>
+              <span className="text-right font-mono">{member.actionCount}</span>
+              <span className="text-[12.5px] text-mu">
+                {member.lastActionAt ? relativeTime(member.lastActionAt) : "Nothing yet"}
+              </span>
+              <span className="text-[12.5px] text-mu">
+                {member.lastLoginAt ? relativeTime(member.lastLoginAt) : "Never"}
+              </span>
+            </div>
+          ))}
+        </GridTable>
       </Card>
 
-      <Card className="mt-6">
-        <CardHeader
-          title="Activity"
-          description={`${data.total} ${data.total === 1 ? "entry" : "entries"} matching these filters`}
-        />
-
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-          <FilterSelect name="period" label="Period" allLabel="Last 30 days" options={PERIODS} />
-          <FilterSelect
-            name="actorId"
-            label="Person"
-            allLabel="Everyone"
-            options={data.roster.map((member) => ({ value: member.id, label: member.name }))}
-          />
-          <FilterSelect
-            name="category"
-            label="Category"
-            allLabel="All activity"
-            options={ACTIVITY_CATEGORY_KEYS.map((key) => ({
-              value: key,
-              label: ACTIVITY_CATEGORIES[key].label,
-            }))}
-          />
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-l2 px-3.5 py-2 text-[13px]">
+          <span>
+            <span className="font-semibold">Activity</span>
+            <span className="text-fa"> · {data.total} {data.total === 1 ? "entry" : "entries"}</span>
+          </span>
+          <div className="flex gap-2">
+            <FilterSelect
+              name="actorId"
+              label="Person"
+              allLabel="Everyone"
+              compact
+              options={data.roster.map((member) => ({ value: member.id, label: member.name }))}
+            />
+            <FilterSelect
+              name="category"
+              label="Category"
+              allLabel="All categories"
+              compact
+              options={ACTIVITY_CATEGORY_KEYS.map((key) => ({
+                value: key,
+                label: ACTIVITY_CATEGORIES[key].label,
+              }))}
+            />
+          </div>
         </div>
 
         {data.entries.length === 0 ? (
-          <EmptyState
-            title="Nothing logged"
-            description="No activity matches these filters. Try a longer period or a different person."
-          />
+          <div className="px-3.5 py-7 text-center text-[13px] text-mu">
+            Nothing logged for this filter and period.
+          </div>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-            {data.entries.map((entry) => {
-              const bucket = activityCategory(entry.type);
-              return (
-                <li key={entry.id} className="flex flex-wrap items-start gap-3 px-5 py-3">
-                  <Avatar text={entry.actor ? initials(entry.actor.name) : "??"} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-slate-900 dark:text-slate-100">{entry.message}</p>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                      {entry.actor ? entry.actor.name : "A removed account"}
-                      {entry.client ? (
-                        <>
-                          {" · "}
-                          <Link
-                            href={`/clients/${entry.client.id}`}
-                            className="hover:text-indigo-600 hover:underline dark:hover:text-indigo-400"
-                          >
-                            {entry.client.name}
-                          </Link>
-                        </>
-                      ) : null}
-                      {" · "}
-                      {relativeTime(entry.createdAt)}
-                    </p>
+          data.entries.map((entry) => {
+            const bucket = activityCategory(entry.type);
+            return (
+              <div
+                key={entry.id}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-l2 px-3.5 py-[9px]"
+              >
+                <div className="min-w-0">
+                  <div className="text-[13px]">{oversightMessage(entry)}</div>
+                  <div className="mt-0.5 flex flex-wrap gap-1 text-[11.5px] text-fa">
+                    <span>{entry.actor ? entry.actor.name : "A removed account"}</span>
+                    <span>· {relativeTime(entry.createdAt)}</span>
                   </div>
-                  <span
-                    title={label(entry.type)}
-                    className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset ${ACTIVITY_CATEGORY_TONES[bucket]}`}
-                  >
-                    {ACTIVITY_CATEGORIES[bucket].label}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+                </div>
+                <Pill tone={ACTIVITY_CATEGORY_TONES[bucket]} title={label(entry.type)} className="px-[7px]">
+                  {ACTIVITY_CATEGORIES[bucket].label}
+                </Pill>
+              </div>
+            );
+          })
         )}
 
         <Pagination
           page={page}
           pageCount={data.pageCount}
           total={data.total}
+          noun="entry"
+          nounPlural="entries"
           searchParams={params}
+          className="px-3.5 py-[9px]"
         />
       </Card>
     </>

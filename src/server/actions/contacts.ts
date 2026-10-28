@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { contactSchema, toFieldErrors, type FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
+import { ownedClient, ownedContact } from "@/server/scope";
 
 function readContactForm(formData: FormData) {
   return contactSchema.safeParse({
@@ -36,7 +37,7 @@ export async function createContactAction(
   const parsed = readContactForm(formData);
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
-  const client = await prisma.client.findUnique({ where: { id: parsed.data.clientId } });
+  const client = await ownedClient(user, parsed.data.clientId);
   if (!client) return { error: "That client no longer exists." };
 
   const contact = await prisma.contact.create({ data: parsed.data });
@@ -61,11 +62,18 @@ export async function updateContactAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = readContactForm(formData);
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
-  const contact = await prisma.contact.update({ where: { id: contactId }, data: parsed.data });
+  // Both the contact and the client it is moved to must be the user's.
+  const existing = await ownedContact(user, contactId);
+  if (!existing) return { error: "That contact no longer exists." };
+  if (!(await ownedClient(user, parsed.data.clientId))) {
+    return { fieldErrors: { clientId: ["Choose one of your clients."] } };
+  }
+
+  const contact = await prisma.contact.update({ where: { id: existing.id }, data: parsed.data });
   if (contact.isPrimary) await enforceSinglePrimary(contact.clientId, contact.id);
 
   revalidatePath(`/clients/${contact.clientId}`);
@@ -74,12 +82,11 @@ export async function updateContactAction(
 }
 
 export async function deleteContactAction(formData: FormData): Promise<void> {
-  await requireUser();
-  const contactId = String(formData.get("contactId") ?? "");
-  const contact = await prisma.contact.findUnique({ where: { id: contactId } });
+  const user = await requireUser();
+  const contact = await ownedContact(user, String(formData.get("contactId") ?? ""));
   if (!contact) return;
 
-  await prisma.contact.delete({ where: { id: contactId } });
+  await prisma.contact.delete({ where: { id: contact.id } });
   revalidatePath(`/clients/${contact.clientId}`);
   revalidatePath("/contacts");
 }

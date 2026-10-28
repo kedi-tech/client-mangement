@@ -3,7 +3,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import Link from "next/link";
-import clsx from "clsx";
+import { cn } from "@/lib/cn";
+
+import { buttonClass } from "@/components/ui";
+
+const filterClass =
+  "rounded-[4px] border border-inpb bg-inp px-2 py-[7px] text-[13px] text-tx disabled:opacity-60";
 
 /** Dropdown filter that writes its value straight into the query string. */
 export function FilterSelect({
@@ -11,11 +16,14 @@ export function FilterSelect({
   label,
   options,
   allLabel = "All",
+  compact = false,
 }: {
   name: string;
   label: string;
   options: { value: string; label: string }[];
   allLabel?: string;
+  /** Smaller control for filters that sit inside a panel header. */
+  compact?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,44 +45,47 @@ export function FilterSelect({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="text-slate-500 dark:text-slate-400">{label}</span>
-      <select
-        value={current}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={pending}
-        className="rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-slate-900 focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-      >
-        <option value="">{allLabel}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <select
+      aria-label={label}
+      value={current}
+      onChange={(event) => onChange(event.target.value)}
+      disabled={pending}
+      className={cn(filterClass, compact && "px-1.5 py-1 text-[12.5px]")}
+    >
+      <option value="">{allLabel}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
-/** Server-rendered pagination that preserves every other query parameter. */
+/** Row of search box and filters above a list. */
+export function FilterBar({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-wrap gap-2">{children}</div>;
+}
+
 export function Pagination({
   page,
   pageCount,
   total,
+  noun = "result",
+  nounPlural,
   searchParams,
+  className,
 }: {
   page: number;
   pageCount: number;
   total: number;
+  /** Singular noun for the count, e.g. "client". */
+  noun?: string;
+  nounPlural?: string;
   searchParams: Record<string, string | undefined>;
+  className?: string;
 }) {
-  if (pageCount <= 1) {
-    return (
-      <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        {total} {total === 1 ? "result" : "results"}
-      </div>
-    );
-  }
+  const count = `${total} ${total === 1 ? noun : (nounPlural ?? `${noun}s`)}`;
 
   const hrefFor = (target: number) => {
     const params = new URLSearchParams();
@@ -86,37 +97,27 @@ export function Pagination({
     return query ? `?${query}` : "?";
   };
 
-  const linkClass = (disabled: boolean) =>
-    clsx(
-      "rounded-lg border px-3 py-1.5 text-sm font-medium",
-      disabled
-        ? "pointer-events-none border-slate-200 text-slate-300 dark:border-slate-800 dark:text-slate-600"
-        : "border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
-    );
+  const pagerClass = (disabled: boolean) =>
+    buttonClass("secondary", "sm", cn("px-2.5 py-1 text-[12.5px]", disabled && "pointer-events-none opacity-40"));
 
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-800">
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Page {page} of {pageCount} · {total} results
-      </p>
-      <div className="flex gap-2">
-        <Link
-          href={hrefFor(page - 1)}
-          aria-disabled={page <= 1}
-          className={linkClass(page <= 1)}
-          scroll={false}
-        >
-          Previous
-        </Link>
-        <Link
-          href={hrefFor(page + 1)}
-          aria-disabled={page >= pageCount}
-          className={linkClass(page >= pageCount)}
-          scroll={false}
-        >
-          Next
-        </Link>
-      </div>
+    <div className={cn("flex items-center justify-between text-[12.5px] text-mu", className)}>
+      <span>{pageCount > 1 ? `Page ${page} of ${pageCount} · ${count}` : count}</span>
+      {pageCount > 1 ? (
+        <div className="flex gap-1.5">
+          <Link href={hrefFor(page - 1)} aria-disabled={page <= 1} scroll={false} className={pagerClass(page <= 1)}>
+            Previous
+          </Link>
+          <Link
+            href={hrefFor(page + 1)}
+            aria-disabled={page >= pageCount}
+            scroll={false}
+            className={pagerClass(page >= pageCount)}
+          >
+            Next
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

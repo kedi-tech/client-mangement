@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { Card, CardHeader, DetailList, DetailRow, PageHeader } from "@/components/ui";
+import { PortalCard, PortalDetail, PortalH2, PortalHero, PortalMain } from "@/components/portal-ui";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/format";
 import { requirePortalUser } from "@/lib/session";
@@ -30,34 +30,26 @@ export default async function PortalAccountPage() {
 
   return (
     <>
-      <PageHeader title="Your account" description="Your sign-in details for this portal." />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Details" />
-          <DetailList>
-            <DetailRow term="Name">{user.name}</DetailRow>
-            <DetailRow term="Email">{user.email}</DetailRow>
-            <DetailRow term="Account">{client?.name ?? "—"}</DetailRow>
-            <DetailRow term="Last signed in">
+      <PortalHero title="Account" sub="Your sign-in details." />
+      <PortalMain>
+        <div className="grid grid-cols-1 items-start gap-4 min-[900px]:grid-cols-2">
+          <PortalCard raised>
+            <PortalH2>Details</PortalH2>
+            <PortalDetail term="Name">{user.name}</PortalDetail>
+            <PortalDetail term="Email">{user.email}</PortalDetail>
+            <PortalDetail term="Account">{client?.name ?? "—"}</PortalDetail>
+            <PortalDetail term="Last sign-in">
               {account?.lastLoginAt ? formatDateTime(account.lastLoginAt) : "This is your first visit"}
-            </DetailRow>
-          </DetailList>
-          <p className="border-t border-slate-200 px-5 py-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            {client?.owner
-              ? `Need your name or email changed? Ask ${client.owner.name} (${client.owner.email}).`
-              : "Need your name or email changed? Ask your account manager."}
-          </p>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Change password"
-            description="Changing it signs you out on every other device."
-          />
+            </PortalDetail>
+            <div className="mt-3 text-[13px] leading-normal text-mu">
+              {client?.owner
+                ? `Need your name or email changed? Ask ${client.owner.name} (${client.owner.email}).`
+                : "Need your name or email changed? Reply to your latest email from us."}
+            </div>
+          </PortalCard>
           <ChangePasswordForm />
-        </Card>
-      </div>
+        </div>
+      </PortalMain>
     </>
   );
 }

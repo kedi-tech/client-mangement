@@ -3,22 +3,25 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { Button, Field, FormError, Input, Textarea } from "@/components/ui";
+import { Button, CardHeader, Checkbox, Field, FormError, Input, Textarea } from "@/components/ui";
 import { addNoteAction } from "@/server/actions/clients";
 import { createContactAction } from "@/server/actions/contacts";
 import type { FormState } from "@/lib/validation";
 
-function Submit({ children }: { children: string }) {
+function Submit({ children, className }: { children: string; className?: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className={className ?? "text-[12.5px]"}>
       {pending ? "Saving…" : children}
     </Button>
   );
 }
 
-/** Collapsible "add contact" form living inside the client detail page. */
-export function AddContactForm({ clientId }: { clientId: string }) {
+/**
+ * Header of the Contacts panel with its "Add contact" toggle. The form opens
+ * below the header, above the contact list, as in the design.
+ */
+export function ContactsHeader({ clientId, count }: { clientId: string; count: number }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState<FormState, FormData>(createContactAction, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -30,66 +33,56 @@ export function AddContactForm({ clientId }: { clientId: string }) {
     }
   }, [state.ok]);
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-      >
-        Add contact
-      </button>
-    );
-  }
-
   const errors = state.fieldErrors ?? {};
 
   return (
-    <form
-      ref={formRef}
-      action={formAction}
-      className="mt-3 w-full space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-800/30"
-    >
-      <input type="hidden" name="clientId" value={clientId} />
-      <FormError message={state.error} />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="First name" htmlFor="firstName" errors={errors.firstName} required>
-          <Input id="firstName" name="firstName" required />
-        </Field>
-        <Field label="Last name" htmlFor="lastName" errors={errors.lastName} required>
-          <Input id="lastName" name="lastName" required />
-        </Field>
-        <Field label="Job title" htmlFor="title" errors={errors.title}>
-          <Input id="title" name="title" />
-        </Field>
-        <Field label="Email" htmlFor="contactEmail" errors={errors.email}>
-          <Input id="contactEmail" name="email" type="email" />
-        </Field>
-        <Field label="Phone" htmlFor="contactPhone" errors={errors.phone}>
-          <Input id="contactPhone" name="phone" />
-        </Field>
-        <label className="flex items-center gap-2 self-end pb-2 text-sm text-slate-700 dark:text-slate-300">
-          <input
-            type="checkbox"
-            name="isPrimary"
-            className="size-4 rounded border-slate-300 text-indigo-600"
-          />
-          Primary contact
-        </label>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Submit>Add contact</Submit>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+    <>
+      <CardHeader
+        title="Contacts"
+        description={`${count} on file`}
+        action={
+          <Button variant="secondary" size="sm" onClick={() => setOpen((value) => !value)}>
+            Add contact
+          </Button>
+        }
+      />
+      {open ? (
+        <form
+          ref={formRef}
+          action={formAction}
+          className="grid grid-cols-1 gap-2.5 border-b border-l2 bg-hov px-3.5 py-3 min-[720px]:grid-cols-2"
         >
-          Cancel
-        </button>
-      </div>
-    </form>
+          <input type="hidden" name="clientId" value={clientId} />
+          {state.error ? (
+            <div className="col-span-full">
+              <FormError message={state.error} />
+            </div>
+          ) : null}
+          <Field label="First name" htmlFor="firstName" errors={errors.firstName} required size="sm">
+            <Input id="firstName" name="firstName" size="sm" required />
+          </Field>
+          <Field label="Last name" htmlFor="lastName" errors={errors.lastName} required size="sm">
+            <Input id="lastName" name="lastName" size="sm" required />
+          </Field>
+          <Field label="Title" htmlFor="title" errors={errors.title} size="sm">
+            <Input id="title" name="title" size="sm" />
+          </Field>
+          <Field label="Email" htmlFor="contactEmail" errors={errors.email} size="sm">
+            <Input id="contactEmail" name="email" type="email" size="sm" />
+          </Field>
+          <Field label="Phone" htmlFor="contactPhone" errors={errors.phone} size="sm">
+            <Input id="contactPhone" name="phone" size="sm" />
+          </Field>
+          <Checkbox name="isPrimary" label="Primary contact" />
+          <div className="flex gap-2">
+            <Submit>Save contact</Submit>
+            <Button variant="secondary" className="text-[12.5px]" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      ) : null}
+    </>
   );
 }
 
@@ -103,19 +96,25 @@ export function AddNoteForm({ clientId }: { clientId: string }) {
   }, [state.ok]);
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-3 px-5 py-5">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-2 border-b border-l2 px-3.5 py-3">
       <input type="hidden" name="clientId" value={clientId} />
       <FormError message={state.error} />
-      <Field label="Add a note" htmlFor="body" errors={state.fieldErrors?.body}>
-        <Textarea
-          id="body"
-          name="body"
-          rows={3}
-          placeholder="What came out of the last conversation?"
-          required
-        />
-      </Field>
-      <Submit>Save note</Submit>
+      <Textarea
+        id="body"
+        name="body"
+        rows={3}
+        maxLength={5000}
+        aria-label="Add a note"
+        placeholder="What came out of the last conversation?"
+        size="sm"
+        required
+      />
+      {state.fieldErrors?.body ? (
+        <span className="text-[12px] text-red">{state.fieldErrors.body[0]}</span>
+      ) : null}
+      <div>
+        <Submit className="px-2.5 py-[5px] text-[12px]">Add note</Submit>
+      </div>
     </form>
   );
 }

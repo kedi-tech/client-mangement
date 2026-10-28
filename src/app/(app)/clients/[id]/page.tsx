@@ -8,49 +8,58 @@ import { TaskRow } from "@/components/task-row";
 import { UploadForm } from "@/components/upload-form";
 import {
   Avatar,
+  BackLink,
   Badge,
   Card,
   CardHeader,
   DetailList,
   DetailRow,
-  EmptyState,
+  Dot,
+  EmptyRow,
   LinkButton,
+  MicroLabel,
+  MoneyCard,
   PageHeader,
+  Pill,
 } from "@/components/ui";
+import { ACTIVITY_CATEGORY_TONES, activityCategory } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { formatDate, formatDateTime, formatMoney, initials, relativeTime } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
 import { requireUser } from "@/lib/session";
+import { clientScope } from "@/server/scope";
+import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 import { deleteClientAction, deleteNoteAction } from "@/server/actions/clients";
 import { deleteContactAction } from "@/server/actions/contacts";
 import { uploadStaffFileAction } from "@/server/actions/files";
-import { revokePortalUserAction } from "@/server/actions/portal-access";
-import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
-import { AddContactForm, AddNoteForm } from "./client-panels";
-import { CreatePortalUser, ResetPortalPassword } from "./portal-access";
+import { AddNoteForm, ContactsHeader } from "./client-panels";
+import { PortalAccessPanel } from "./portal-access";
 
 type Params = Promise<{ id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { id } = await params;
-  const client = await prisma.client.findUnique({ where: { id }, select: { name: true } });
+  const user = await requireUser();
+  const client = await prisma.client.findFirst({ where: { id, ...clientScope(user) }, select: { name: true } });
   return { title: client?.name ?? "Client" };
 }
 
 export default async function ClientDetailPage({ params }: { params: Params }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
-  const client = await prisma.client.findUnique({
-    where: { id },
+  const client = await prisma.client.findFirst({
+    where: { id, ...clientScope(user) },
     include: {
-      owner: { select: { id: true, name: true } },
       contacts: { orderBy: [{ isPrimary: "desc" }, { lastName: "asc" }] },
       projects: { orderBy: { createdAt: "desc" } },
       invoices: { include: { items: true }, orderBy: { issueDate: "desc" } },
       tasks: {
         orderBy: [{ status: "asc" }, { dueDate: "asc" }],
-        include: { assignee: { select: { id: true, name: true } } },
+        include: {
+          assignee: { select: { id: true, name: true } },
+          project: { select: { id: true, name: true } },
+        },
       },
       noteLog: {
         orderBy: { createdAt: "desc" },
@@ -102,19 +111,18 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
     .filter((line) => line && line.trim() !== "")
     .join("\n");
 
+  const primary = client.contacts.find((contact) => contact.isPrimary);
+  const received = client.attachments.filter((file) => file.uploadedBy === "CLIENT").length;
+
   return (
     <>
       <PageHeader
         title={client.name}
+        titleExtra={<Badge value={client.status} />}
         description={[client.company, client.industry].filter(Boolean).join(" · ") || undefined}
-        breadcrumb={
-          <Link href="/clients" className="hover:text-indigo-600 hover:underline">
-            ← Clients
-          </Link>
-        }
+        breadcrumb={<BackLink href="/clients">Clients</BackLink>}
         actions={
           <>
-            <Badge value={client.status} className="self-center" />
             <LinkButton href={`/projects/new?clientId=${client.id}`} variant="secondary">
               New project
             </LinkButton>
@@ -126,245 +134,144 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Billed to date</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-50">
-            {formatMoney(billedCents)}
-          </p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Collected</p>
-          <p className="mt-1 text-xl font-semibold text-emerald-600 dark:text-emerald-400">
-            {formatMoney(paidCents)}
-          </p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Outstanding</p>
-          <p
-            className={
-              outstandingCents > 0
-                ? "mt-1 text-xl font-semibold text-rose-600 dark:text-rose-400"
-                : "mt-1 text-xl font-semibold text-slate-900 dark:text-slate-50"
-            }
-          >
-            {formatMoney(outstandingCents)}
-          </p>
-        </Card>
+      <div className="grid grid-cols-1 gap-3 min-[720px]:grid-cols-3">
+        <MoneyCard label="Billed to date" value={formatMoney(billedCents)} />
+        <MoneyCard label="Collected" value={formatMoney(paidCents)} valueClassName="text-grn" />
+        <MoneyCard
+          label="Outstanding"
+          value={formatMoney(outstandingCents)}
+          valueClassName={outstandingCents > 0 ? "text-red" : undefined}
+        />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          {/* Contacts */}
+      <div className="grid grid-cols-1 items-start gap-4 min-[1100px]:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-4">
           <Card>
-            <CardHeader
-              title="Contacts"
-              description={`${client.contacts.length} on file`}
-              action={<AddContactForm clientId={client.id} />}
-            />
+            <ContactsHeader clientId={client.id} count={client.contacts.length} />
             {client.contacts.length === 0 ? (
-              <EmptyState title="No contacts yet" description="Add the people you work with here." />
+              <EmptyRow>No contacts yet.</EmptyRow>
             ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {client.contacts.map((contact) => (
-                  <li key={contact.id} className="flex items-center gap-3 px-5 py-3">
-                    <Avatar text={initials(`${contact.firstName} ${contact.lastName}`)} />
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {contact.firstName} {contact.lastName}
-                        {contact.isPrimary ? (
-                          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
-                            Primary
-                          </span>
-                        ) : null}
-                      </p>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {[contact.title, contact.email, contact.phone].filter(Boolean).join(" · ") ||
-                          "—"}
-                      </p>
+              client.contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  className="grid grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-2.5 border-b border-l2 px-3.5 py-[9px] last:border-b-0"
+                >
+                  <Avatar text={initials(`${contact.firstName} ${contact.lastName}`)} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-[13px] font-medium">
+                      {contact.firstName} {contact.lastName}
+                      {contact.isPrimary ? (
+                        <Pill accent className="px-[5px] text-[10.5px] font-medium">
+                          Primary
+                        </Pill>
+                      ) : null}
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Link
-                        href={`/contacts/${contact.id}/edit`}
-                        className="rounded-lg px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
-                      >
-                        Edit
-                      </Link>
-                      <ConfirmForm
-                        action={deleteContactAction}
-                        hidden={{ contactId: contact.id }}
-                        confirmMessage={`Delete ${contact.firstName} ${contact.lastName}?`}
-                        variant="subtle"
-                      >
-                        Delete
-                      </ConfirmForm>
+                    <div className="truncate text-[12px] text-fa">
+                      {[contact.title, contact.email, contact.phone].filter(Boolean).join(" · ") || "—"}
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-[12px]">
+                    <Link href={`/contacts/${contact.id}/edit`}>Edit</Link>
+                    <ConfirmForm
+                      action={deleteContactAction}
+                      hidden={{ contactId: contact.id }}
+                      confirmMessage={`Delete ${contact.firstName} ${contact.lastName}?`}
+                      variant="subtle"
+                    >
+                      Delete
+                    </ConfirmForm>
+                  </div>
+                </div>
+              ))
             )}
           </Card>
 
-          {/* Projects */}
           <Card>
-            <CardHeader
-              title="Projects"
-              description={`${client.projects.length} total`}
-              action={
-                <Link
-                  href={`/projects/new?clientId=${client.id}`}
-                  className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  New project
-                </Link>
-              }
-            />
+            <CardHeader title="Projects" />
             {client.projects.length === 0 ? (
-              <EmptyState title="No projects yet" description="Track engagements and their budgets here." />
+              <EmptyRow>No projects yet.</EmptyRow>
             ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {client.projects.map((project) => (
-                  <li key={project.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/projects/${project.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {project.name}
-                      </Link>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {formatMoney(project.budgetCents)} budget
-                        {project.endDate ? ` · ends ${formatDate(project.endDate)}` : ""}
-                      </p>
-                    </div>
-                    <Badge value={project.status} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          {/* Invoices */}
-          <Card>
-            <CardHeader
-              title="Invoices"
-              description={`${invoices.length} total`}
-              action={
+              client.projects.map((project) => (
                 <Link
-                  href={`/invoices/new?clientId=${client.id}`}
-                  className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                  key={project.id}
+                  href={`/projects/${project.id}`}
+                  className="flex items-center justify-between gap-2.5 border-b border-l2 px-3.5 py-[9px] text-tx last:border-b-0 hover:bg-hov hover:text-tx"
                 >
-                  New invoice
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-medium">{project.name}</span>
+                    <span className="block text-[12px] text-fa">
+                      {formatMoney(project.budgetCents)} budget
+                      {project.endDate ? ` · ends ${formatDate(project.endDate)}` : ""}
+                    </span>
+                  </span>
+                  <Badge value={project.status} />
                 </Link>
-              }
-            />
-            {invoices.length === 0 ? (
-              <EmptyState title="No invoices yet" />
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {invoices.map((invoice) => (
-                  <li key={invoice.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/invoices/${invoice.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {invoice.number}
-                      </Link>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Issued {formatDate(invoice.issueDate)} · due {formatDate(invoice.dueDate)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                        {formatMoney(invoice.totals.totalCents)}
-                      </span>
-                      <Badge value={invoice.effectiveStatus} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              ))
             )}
           </Card>
 
-          {/* Files */}
+          <Card>
+            <CardHeader title="Invoices" />
+            {invoices.length === 0 ? (
+              <EmptyRow>No invoices yet.</EmptyRow>
+            ) : (
+              invoices.map((invoice) => (
+                <Link
+                  key={invoice.id}
+                  href={`/invoices/${invoice.id}`}
+                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-l2 px-3.5 py-[9px] text-tx last:border-b-0 hover:bg-hov hover:text-tx"
+                >
+                  <span className="min-w-0">
+                    <span className="block font-mono text-[12.5px]">{invoice.number}</span>
+                    <span className="block text-[12px] text-fa">
+                      Issued {formatDate(invoice.issueDate)} · due {formatDate(invoice.dueDate)}
+                    </span>
+                  </span>
+                  <span className="font-mono text-[12.5px]">{formatMoney(invoice.totals.totalCents)}</span>
+                  <Badge value={invoice.effectiveStatus} />
+                </Link>
+              ))
+            )}
+          </Card>
+
           <Card>
             <CardHeader
               title="Files"
-              description={`${client.attachments.length} shared with this client`}
-              action={
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {client.attachments.filter((file) => file.uploadedBy === "CLIENT").length} received
-                </span>
-              }
+              description={`${client.attachments.length} shared · ${received} received`}
             />
-            <FileList
-              files={client.attachments}
-              perspective="staff"
-              emptyTitle="No files yet"
-              emptyDescription="Upload a deliverable for the client, or wait for them to send one through the portal."
+            <FileList files={client.attachments} emptyText="No files yet." />
+            <UploadForm
+              action={uploadStaffFileAction}
+              clientId={client.id}
+              projects={client.projects.map((project) => ({ id: project.id, name: project.name }))}
+              accept={ACCEPT_ATTRIBUTE}
+              maxBytes={MAX_UPLOAD_BYTES}
+              submitLabel="Share with client"
+              layout="inline"
             />
-            <div className="border-t border-slate-200 dark:border-slate-800">
-              <UploadForm
-                action={uploadStaffFileAction}
-                clientId={client.id}
-                projects={client.projects.map((project) => ({ id: project.id, name: project.name }))}
-                accept={ACCEPT_ATTRIBUTE}
-                maxBytes={MAX_UPLOAD_BYTES}
-                submitLabel="Share with client"
-              />
-            </div>
           </Card>
 
-          {/* Tasks */}
           <Card>
-            <CardHeader
-              title="Open tasks"
-              description={`${openTasks.length} outstanding`}
-              action={
-                <Link
-                  href={`/tasks?clientId=${client.id}`}
-                  className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  All tasks
-                </Link>
-              }
-            />
+            <CardHeader title="Open tasks" action={<Link href={`/tasks?clientId=${client.id}`}>All tasks</Link>} />
             {openTasks.length === 0 ? (
-              <EmptyState title="Nothing outstanding" description="No open tasks for this client." />
+              <EmptyRow>No open tasks.</EmptyRow>
             ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {openTasks.map((task) => (
-                  <TaskRow key={task.id} task={task} showClient={false} />
-                ))}
-              </ul>
+              openTasks.map((task) => <TaskRow key={task.id} task={task} variant="client" />)
             )}
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="flex min-w-0 flex-col gap-4">
           <Card>
             <CardHeader title="Details" />
             <DetailList>
-              <DetailRow term="Owner">{client.owner?.name ?? "Unassigned"}</DetailRow>
               <DetailRow term="Email">
-                {client.email ? (
-                  <a href={`mailto:${client.email}`} className="text-indigo-600 hover:underline dark:text-indigo-400">
-                    {client.email}
-                  </a>
-                ) : (
-                  "—"
-                )}
+                {client.email ? <a href={`mailto:${client.email}`}>{client.email}</a> : "—"}
               </DetailRow>
               <DetailRow term="Phone">{client.phone ?? "—"}</DetailRow>
               <DetailRow term="Website">
                 {client.website ? (
-                  <a
-                    href={client.website}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="text-indigo-600 hover:underline dark:text-indigo-400"
-                  >
+                  <a href={client.website} target="_blank" rel="noreferrer noopener">
                     {client.website.replace(/^https?:\/\//, "")}
                   </a>
                 ) : (
@@ -377,21 +284,18 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
               </DetailRow>
               <DetailRow term="Client since">{formatDate(client.createdAt)}</DetailRow>
             </DetailList>
-            {client.notes ? (
-              <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Internal notes
-                </p>
-                <p className="mt-1 whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">
-                  {client.notes}
-                </p>
-              </div>
-            ) : null}
-            <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">
+            <div className="flex flex-col items-start px-3.5 pb-3">
+              {client.notes ? (
+                <div className="mt-1 w-full rounded-[4px] bg-hov p-2.5 text-[12.5px] leading-normal">
+                  <MicroLabel className="mb-1">Internal notes</MicroLabel>
+                  <span className="whitespace-pre-line">{client.notes}</span>
+                </div>
+              ) : null}
               <ConfirmForm
                 action={deleteClientAction}
                 hidden={{ clientId: client.id }}
                 confirmMessage={`Delete ${client.name}? This also removes their contacts, projects, tasks and invoices. This cannot be undone.`}
+                className="mt-3"
               >
                 Delete client
               </ConfirmForm>
@@ -399,115 +303,64 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
           </Card>
 
           <Card>
-            <CardHeader
-              title="Portal access"
-              description={
-                client.portalUsers.length === 0
-                  ? "No portal login yet"
-                  : `${client.portalUsers.length} login${client.portalUsers.length === 1 ? "" : "s"}`
-              }
-              action={
-                <CreatePortalUser
-                  clientId={client.id}
-                  defaultName={
-                    client.contacts.find((contact) => contact.isPrimary)
-                      ? `${client.contacts.find((contact) => contact.isPrimary)!.firstName} ${
-                          client.contacts.find((contact) => contact.isPrimary)!.lastName
-                        }`
-                      : ""
-                  }
-                  defaultEmail={
-                    client.contacts.find((contact) => contact.isPrimary)?.email ??
-                    client.email ??
-                    ""
-                  }
-                />
-              }
+            <PortalAccessPanel
+              clientId={client.id}
+              defaultName={primary ? `${primary.firstName} ${primary.lastName}` : ""}
+              defaultEmail={primary?.email ?? client.email ?? ""}
+              logins={client.portalUsers.map((login) => ({
+                id: login.id,
+                name: login.name,
+                email: login.email,
+                lastSeen: login.lastLoginAt
+                  ? `Last signed in ${formatDateTime(login.lastLoginAt)}`
+                  : "Has not signed in yet",
+              }))}
             />
-            {client.portalUsers.length === 0 ? (
-              <p className="px-5 py-4 text-sm text-slate-500 dark:text-slate-400">
-                Invite this client to sign in at{" "}
-                <span className="font-medium text-slate-700 dark:text-slate-200">/login</span> and see
-                their projects, invoices and files.
-              </p>
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {client.portalUsers.map((portalUser) => (
-                  <li key={portalUser.id} className="flex flex-wrap items-start gap-2 px-5 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {portalUser.name}
-                      </p>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {portalUser.email}
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        {portalUser.lastLoginAt
-                          ? `Last signed in ${formatDateTime(portalUser.lastLoginAt)}`
-                          : "Has not signed in yet"}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <ResetPortalPassword userId={portalUser.id} />
-                      <ConfirmForm
-                        action={revokePortalUserAction}
-                        hidden={{ userId: portalUser.id }}
-                        confirmMessage={`Revoke portal access for ${portalUser.email}? They will no longer be able to sign in.`}
-                        variant="subtle"
-                      >
-                        Revoke
-                      </ConfirmForm>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
           </Card>
 
           <Card>
-            <CardHeader title="Notes" description={`${client.noteLog.length} entries`} />
+            <CardHeader title="Notes" />
             <AddNoteForm clientId={client.id} />
-            {client.noteLog.length > 0 ? (
-              <ul className="divide-y divide-slate-100 border-t border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-                {client.noteLog.map((note) => (
-                  <li key={note.id} className="px-5 py-3">
-                    <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-300">
-                      {note.body}
-                    </p>
-                    <div className="mt-1 flex items-center justify-between gap-2">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {note.author?.name ?? "Unknown"} · {relativeTime(note.createdAt)}
-                      </p>
-                      <ConfirmForm
-                        action={deleteNoteAction}
-                        hidden={{ noteId: note.id }}
-                        confirmMessage="Delete this note?"
-                        variant="subtle"
-                      >
-                        Delete
-                      </ConfirmForm>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            {client.noteLog.map((note) => (
+              <div key={note.id} className="border-b border-l2 px-3.5 py-2.5 last:border-b-0">
+                <div className="text-[13px] leading-normal whitespace-pre-line">{note.body}</div>
+                <div className="mt-1 flex justify-between text-[11.5px] text-fa">
+                  <span>
+                    {note.author?.name ?? "Unknown"} · {relativeTime(note.createdAt)}
+                  </span>
+                  <ConfirmForm
+                    action={deleteNoteAction}
+                    hidden={{ noteId: note.id }}
+                    confirmMessage="Delete this note?"
+                    variant="subtle"
+                    buttonTextClass="text-[11.5px]"
+                  >
+                    Delete
+                  </ConfirmForm>
+                </div>
+              </div>
+            ))}
           </Card>
 
           <Card>
             <CardHeader title="Timeline" />
             {client.activities.length === 0 ? (
-              <EmptyState title="No activity yet" />
+              <div className="p-3.5 text-[12.5px] text-mu">No activity yet.</div>
             ) : (
-              <ol className="divide-y divide-slate-100 dark:divide-slate-800">
-                {client.activities.map((entry) => (
-                  <li key={entry.id} className="px-5 py-3">
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{entry.message}</p>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              client.activities.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="grid grid-cols-[6px_minmax(0,1fr)] gap-2.5 border-b border-l2 px-3.5 py-2 last:border-b-0"
+                >
+                  <Dot tone={ACTIVITY_CATEGORY_TONES[activityCategory(entry.type)]} />
+                  <div>
+                    <div className="text-[12.5px] leading-[1.4]">{entry.message}</div>
+                    <div className="mt-0.5 text-[11px] text-fa">
                       {entry.actor?.name ?? "System"} · {relativeTime(entry.createdAt)}
-                    </p>
-                  </li>
-                ))}
-              </ol>
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
           </Card>
         </div>

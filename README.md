@@ -13,21 +13,13 @@ invoices, and exchange files with you — scoped so a client can only ever see
 their own account.
 
 Built with Next.js 15 (App Router), TypeScript, Tailwind CSS v4, Prisma and
-Postgres. Ships with a Dockerfile and a Compose stack, so a deployment is one
-command.
+Postgres.
 
 ---
 
 ## Quick start
 
-The fastest path is Docker — it brings up Postgres alongside the app:
-
-```bash
-cp .env.example .env      # set AUTH_SECRET and POSTGRES_PASSWORD
-docker compose up -d --build
-```
-
-Or run it locally against your own Postgres:
+Run it locally against Neon or your own Postgres:
 
 ```bash
 npm install
@@ -170,16 +162,13 @@ any client data. The card also shows whether they have ever signed in.
 ## Project layout
 
 ```
-.github/workflows/       CI: check, migrate, build image, boot the stack
+.github/workflows/       CI: check, migrate, test, build
 scripts/
   ensure-superadmin.ts    Creates or promotes the workspace owner
 prisma/
   migrations/            Versioned schema history, applied on deploy
   schema.prisma          Data model
   seed.ts                Demo dataset
-Dockerfile               Multi-stage production image (non-root, standalone)
-docker-compose.yml       App + Postgres + volumes
-docker-entrypoint.sh     Applies migrations, then starts the server
 src/
   app/
     (auth)/              Sign in and registration
@@ -259,22 +248,21 @@ tests/                   Unit tests
 
 ## Deploying
 
-Docker, behind your own TLS terminating reverse proxy. Two supported shapes:
+Build and run with Node, behind your own TLS terminating reverse proxy:
 
-| | Database | Compose file |
-| --- | --- | --- |
-| **Neon** (recommended) | Managed, off this host | `docker-compose.neon.yml` |
-| **Self-hosted** | Postgres container + volume | `docker-compose.yml` |
+```bash
+npm ci
+npm run db:migrate        # prisma migrate deploy
+npm run build
+npm start                 # http://localhost:3000 (change with PORT)
+```
 
-Either way the app comes up on `127.0.0.1:3000` (change with `APP_PORT`), bound
-to loopback on purpose — put nginx, Caddy or Traefik in front of it and terminate
-TLS there. **Sign-in does not work over plain HTTP**: the session cookie is
-marked `secure`, so the browser will refuse to store it.
+Put nginx, Caddy or Traefik in front of it and terminate TLS there. **Sign-in
+does not work over plain HTTP**: the session cookie is marked `secure`, so the
+browser will refuse to store it.
 
-On boot the container runs `prisma migrate deploy` before starting the server,
-retrying while the database becomes reachable. `migrate deploy` only plays
-committed migrations forward — it never generates, resets or drops anything — so
-it is safe to run on every restart and on every replica.
+`migrate deploy` only plays committed migrations forward — it never generates,
+resets or drops anything — so it is safe to run on every deploy.
 
 ### Using Neon
 
@@ -303,24 +291,15 @@ missing or points at a pooled endpoint, and warns if a Neon URL omits
 `sslmode=require`. Those are the two mistakes that otherwise surface as a hung
 deploy.
 
-Then deploy without a Postgres container:
-
-```bash
-docker compose -f docker-compose.neon.yml up -d --build
-```
-
-That stack has no `db` service and no database volume. Migrations still run on
-boot, through the direct URL.
-
-**Uploaded files still live on disk**, in the `uploads` volume — Neon holds the
-database, not your files. That volume is the one thing left to back up. Moving
+**Uploaded files still live on disk**, in `UPLOAD_DIR` — Neon holds the
+database, not your files. That directory is the one thing left to back up. Moving
 the app to a platform with an ephemeral filesystem means reimplementing
 `saveUpload`, `uploadPath` and `deleteUpload` in `src/lib/storage.ts` against
 object storage; nothing else touches the disk.
 
 Two Neon details worth knowing: free-tier projects **scale to zero**, so the
-first request after an idle period pays a cold start (hence the longer
-healthcheck `start_period` and `connect_timeout=15`); and a paused project
+first request after an idle period pays a cold start (hence
+`connect_timeout=15`); and a paused project
 returns connection errors, which `/api/health` reports as `503`.
 
 ### Latency
@@ -337,41 +316,21 @@ statements. The flag makes Prisma disable them and measured **5x slower**:
 1084ms vs 218ms for a warm `SELECT 1`. Verified safe to omit with 480
 concurrent queries across 4 clients and zero prepared-statement errors.
 
-A page is several round trips, not one: Prisma issues a separate query per
-`include`, and a child query cannot start until its parent returns. The
-dashboard is 15 statements. If pages still feel slow after the region move, the
-next lever is Prisma's `relationJoins` preview feature, which folds `include`s
-into a single SQL join.
-
-### Self-hosting Postgres instead
-
-`docker-compose.yml` brings up Postgres alongside the app, with the database in a
-`db-data` volume on the host:
-
-```bash
-cp .env.example .env
-# Set at minimum:
-#   AUTH_SECRET       openssl rand -base64 32
-#   POSTGRES_PASSWORD a password you did not reuse
-docker compose up -d --build
-```
-
-It sets `DATABASE_URL` and `DATABASE_URL_UNPOOLED` to the same connection, since
-there is no pooler in that stack. You own backups, upgrades and disk for both
-volumes.
+A page is several round trips, not one, which is why `prisma/schema.prisma`
+enables Prisma's `relationJoins` preview feature: each `include` is folded into
+the parent query with a SQL join instead of costing its own round trip. Measured
+on the client page: 16 queries (~6s) without it, 1 query (~0.2s) with it.
 
 ### What must survive a redeploy
 
 | State | Where it lives | Kept by |
 | --- | --- | --- |
 | Database (Neon) | Neon, off this host | Neon's own backups / branches |
-| Database (self-hosted) | Postgres container | the `db-data` volume |
-| Uploaded files | `UPLOAD_DIR` (`/data/uploads`) | the `uploads` volume — **both setups** |
+| Uploaded files | `UPLOAD_DIR` (default `./uploads`) | your own backups |
 
-Everything else in the container is disposable. Note that Neon takes the database
-off your host but **not the files**: an `Attachment` row whose bytes are missing
-renders as a broken download, so back the `uploads` volume up alongside whatever
-covers the database, and restore them together.
+Note that Neon takes the database off your host but **not the files**: an
+`Attachment` row whose bytes are missing renders as a broken download, so back
+`UPLOAD_DIR` up alongside the database, and restore them together.
 
 ### Behind a reverse proxy
 
@@ -395,12 +354,11 @@ only route reachable without a session.
 - [ ] `AUTH_SECRET` is a fresh 32+ character random value, not the example one.
       Changing it later signs everyone out — which is also the fastest way to
       revoke every session at once.
-- [ ] `POSTGRES_PASSWORD` is set and not reused elsewhere.
 - [ ] `ALLOW_OPEN_REGISTRATION` is **unset**. The app refuses to start in
       production if it is on.
 - [ ] TLS terminates in front of the app, and HTTP redirects to HTTPS.
 - [ ] The first admin has registered, closing `/register` (see below).
-- [ ] Both volumes are included in your backups, and a restore has been tested.
+- [ ] The database and `UPLOAD_DIR` are included in your backups, and a restore has been tested.
 - [ ] The demo seed has **not** been run against the real database — it clears
       every table first.
 
@@ -501,10 +459,14 @@ Next 16 — revisit it whenever Next.js is bumped.
 
 ### Known limits
 
-- **Staff see every client.** `SUPER_ADMIN`, `ADMIN` and `MEMBER` all read and
-  edit all client data; the role hierarchy governs *account administration*
-  only. There is no per-client access control for staff.
-- **Uploads are on local disk.** Fine for one container with a volume. Running
+- **Each staff member sees only their own clients.** A client belongs to the
+  staff account that created it, and only that account sees it and everything
+  under it (contacts, projects, tasks, invoices, notes, files, activity). This
+  applies to `MEMBER`, `ADMIN` and `SUPER_ADMIN` alike — roles govern account
+  administration only. Ownership is fixed at creation; there is no transfer in
+  the app. Oversight shows what each person did, with client details replaced
+  by generic text. Existing data is migrated with `npm run owners:backfill`.
+- **Uploads are on local disk.** Fine for a single server. Running
   more than one app replica means putting the files on shared storage, or
   reimplementing `saveUpload`, `uploadPath` and `deleteUpload` in
   `src/lib/storage.ts` against object storage — nothing else touches the disk.
@@ -526,5 +488,4 @@ invoice numbering, project-progress maths, role routing, the upload policy
 validation, session-revocation timing and throttle messages.
 
 CI additionally applies the migrations to a real Postgres, fails if
-`prisma/schema.prisma` has drifted from `prisma/migrations`, builds the
-production image, and boots the whole compose stack until `/api/health` answers.
+`prisma/schema.prisma` has drifted from `prisma/migrations`, and builds the app.

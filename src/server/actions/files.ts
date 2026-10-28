@@ -7,6 +7,7 @@ import { getCurrentUser, requirePortalUser, requireUser } from "@/lib/session";
 import { deleteUpload, saveUpload } from "@/lib/storage";
 import type { FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
+import { ownedClient } from "@/server/scope";
 
 const MAX_NOTE_LENGTH = 500;
 
@@ -32,11 +33,7 @@ export async function uploadStaffFileAction(
 ): Promise<FormState> {
   const user = await requireUser();
 
-  const clientId = String(formData.get("clientId") ?? "");
-  const client = await prisma.client.findUnique({
-    where: { id: clientId },
-    select: { id: true, name: true },
-  });
+  const client = await ownedClient(user, String(formData.get("clientId") ?? ""));
   if (!client) return { error: "That client no longer exists." };
 
   const file = formData.get("file");
@@ -125,11 +122,14 @@ export async function deleteFileAction(formData: FormData): Promise<void> {
   });
   if (!attachment) return;
 
-  const isPortal = user.role === "CLIENT";
-  if (isPortal) {
+  // A portal user may withdraw only their own uploads; staff only files of
+  // clients they own.
+  if (user.role === "CLIENT") {
     const ownFile =
       attachment.clientId === user.clientId && attachment.uploadedBy === "CLIENT";
     if (!ownFile) return;
+  } else if (!(await ownedClient(user, attachment.clientId))) {
+    return;
   }
 
   await prisma.attachment.delete({ where: { id: attachment.id } });

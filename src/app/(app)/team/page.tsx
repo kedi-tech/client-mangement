@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
-import { ConfirmForm } from "@/components/confirm-form";
-import { Avatar, Badge, Card, CardHeader, PageHeader, Table, Td, Th } from "@/components/ui";
+import { Card, PageHeader } from "@/components/ui";
 import {
   STAFF_ROLES,
   assignableRolesFor,
@@ -11,10 +10,9 @@ import {
   roleRank,
 } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { formatDateTime, initials } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
-import { removeTeamMemberAction } from "@/server/actions/team";
-import { AddTeamMember, ResetTeamPassword, RoleSelect } from "./team-panels";
+import { TeamPanel, type TeamRow } from "./team-panels";
 
 export const metadata: Metadata = { title: "Team" };
 
@@ -59,101 +57,45 @@ export default async function TeamPage() {
   // What this actor is allowed to hand out — an admin sees only "Member".
   const assignable = assignableRolesFor(admin.role);
 
+  const rows: TeamRow[] = members.map((member) => {
+    const isSelf = member.id === admin.id;
+    const isLastAdmin = isAdminRole(member.role) && adminCount <= 1;
+    // Rank already excludes yourself, your peers and the super admin.
+    const outranked = canManageRole(admin.role, member.role);
+    const manageable = outranked && !isLastAdmin;
+    const reason = isSelf
+      ? "Your own account"
+      : isSuperAdmin(member.role)
+        ? "Workspace owner"
+        : !outranked
+          ? "Outranks you"
+          : isLastAdmin
+            ? "Only administrator"
+            : "";
+
+    return {
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      role: member.role,
+      isSelf,
+      canChange: manageable,
+      canReset: outranked,
+      canRemove: manageable,
+      reason,
+      lastSeen: member.lastLoginAt ? formatDateTime(member.lastLoginAt) : "Never",
+      added: formatDateTime(member.createdAt),
+    };
+  });
+
   return (
     <>
       <PageHeader
         title="Team"
-        description="Staff accounts with access to the admin app. You can only change accounts ranked below your own. Client portal logins are managed on each client's page."
+        description="You can only change accounts ranked below your own. Client portal logins are managed on each client's page."
       />
-
       <Card>
-        <CardHeader
-          title={`${members.length} ${members.length === 1 ? "teammate" : "teammates"}`}
-          description="New accounts sign in with the temporary password you set here."
-          action={assignable.length > 0 ? <AddTeamMember roles={assignable} /> : null}
-        />
-
-        <Table>
-          <thead>
-            <tr>
-              <Th>Name</Th>
-              <Th>Role</Th>
-              <Th>Last sign-in</Th>
-              <Th>Added</Th>
-              <Th className="text-right">Actions</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((member) => {
-              const isSelf = member.id === admin.id;
-              const isLastAdmin = isAdminRole(member.role) && adminCount <= 1;
-              // Rank already excludes yourself, your peers and the super admin.
-              const manageable = canManageRole(admin.role, member.role) && !isLastAdmin;
-
-              return (
-                <tr key={member.id}>
-                  <Td>
-                    <div className="flex items-center gap-3">
-                      <Avatar text={initials(member.name)} />
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-slate-900 dark:text-slate-100">
-                          {member.name}
-                          {isSelf ? (
-                            <span className="ml-2 text-xs font-normal text-slate-400">You</span>
-                          ) : null}
-                        </p>
-                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                          {member.email}
-                        </p>
-                      </div>
-                    </div>
-                  </Td>
-                  <Td>
-                    {manageable ? (
-                      <RoleSelect userId={member.id} role={member.role} roles={assignable} />
-                    ) : (
-                      <div className="flex flex-col gap-1">
-                        <Badge value={member.role} />
-                        <span className="text-xs text-slate-400">
-                          {isSuperAdmin(member.role)
-                            ? "Workspace owner"
-                            : isLastAdmin
-                              ? "Only administrator"
-                              : isSelf
-                                ? "Your own account"
-                                : "Outranks you"}
-                        </span>
-                      </div>
-                    )}
-                  </Td>
-                  <Td className="whitespace-nowrap text-slate-500 dark:text-slate-400">
-                    {member.lastLoginAt ? formatDateTime(member.lastLoginAt) : "Never"}
-                  </Td>
-                  <Td className="whitespace-nowrap text-slate-500 dark:text-slate-400">
-                    {formatDateTime(member.createdAt)}
-                  </Td>
-                  <Td>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      {canManageRole(admin.role, member.role) ? (
-                        <ResetTeamPassword userId={member.id} />
-                      ) : null}
-                      {!manageable ? null : (
-                        <ConfirmForm
-                          action={removeTeamMemberAction}
-                          hidden={{ userId: member.id }}
-                          confirmMessage={`Remove ${member.name}? They will be signed out and lose access immediately. Their notes and activity history are kept.`}
-                          variant="subtle"
-                        >
-                          Remove
-                        </ConfirmForm>
-                      )}
-                    </div>
-                  </Td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
+        <TeamPanel rows={rows} assignable={assignable} />
       </Card>
     </>
   );

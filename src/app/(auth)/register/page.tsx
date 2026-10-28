@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { homePathFor } from "@/lib/auth-token";
 import { getCurrentUser } from "@/lib/session";
 import { registrationOpen } from "@/server/registration";
+import { AuthCard, AuthHeading } from "../auth-card";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = { title: "Create account" };
@@ -17,39 +18,26 @@ export default async function RegisterPage() {
   // from /team, so the form is not offered at all.
   if (!(await registrationOpen())) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Sign-up is closed</h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          This workspace already has an administrator. Ask them to create an account for you, then
-          sign in with the details they send you.
+      <AuthCard>
+        <h1 className="m-0 text-[20px] font-semibold">Sign-up is closed</h1>
+        <p className="m-0 text-[13.5px] leading-[1.55] text-mu">
+          This workspace already has an administrator. Ask them to add you as a teammate, then sign
+          in with the details they send you.
         </p>
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          <Link
-            href="/login"
-            className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-          >
-            Back to sign in
-          </Link>
-        </p>
-      </div>
+        <Link href="/login" className="text-[13.5px]">
+          ← Back to sign in
+        </Link>
+      </AuthCard>
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Create your account</h1>
-      <p className="mt-1 mb-6 text-sm text-slate-500 dark:text-slate-400">
-        The first account created becomes the workspace admin.
-      </p>
-
+    <AuthCard>
+      <AuthHeading
+        title="Set up your workspace"
+        subtitle="The first account created becomes the workspace admin."
+      />
       <RegisterForm />
-
-      <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-          Sign in
-        </Link>
-      </p>
-    </div>
+    </AuthCard>
   );
 }

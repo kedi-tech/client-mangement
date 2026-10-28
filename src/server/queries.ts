@@ -8,9 +8,16 @@ import {
 import { prisma } from "@/lib/db";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
 import { projectProgress } from "@/lib/progress";
+import { activityScope, clientScope, taskScope, viaClient } from "@/server/scope";
 
-/** Every invoice with its lines, so totals can be computed in one place. */
-export async function invoicesWithTotals(where: Record<string, unknown> = {}) {
+type Staff = { id: string };
+
+/**
+ * Invoices with their lines, so totals can be computed in one place. Callers
+ * pass the scope — staff pages always include `viaClient(user)`, portal reads
+ * filter on the session's client id.
+ */
+export async function invoicesWithTotals(where: Record<string, unknown>) {
   const invoices = await prisma.invoice.findMany({
     where,
     include: {
@@ -30,7 +37,7 @@ export async function invoicesWithTotals(where: Record<string, unknown> = {}) {
 
 export type InvoiceWithTotals = Awaited<ReturnType<typeof invoicesWithTotals>>[number];
 
-export async function getDashboardData() {
+export async function getDashboardData(user: Staff) {
   const now = new Date();
   const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -43,20 +50,24 @@ export async function getDashboardData() {
     recentClients,
     activity,
   ] = await Promise.all([
-    prisma.client.groupBy({ by: ["status"], _count: { _all: true } }),
-    prisma.project.groupBy({ by: ["status"], _count: { _all: true } }),
-    invoicesWithTotals(),
+    prisma.client.groupBy({ by: ["status"], where: clientScope(user), _count: { _all: true } }),
+    prisma.project.groupBy({ by: ["status"], where: viaClient(user), _count: { _all: true } }),
+    invoicesWithTotals(viaClient(user)),
     prisma.task.findMany({
-      where: { status: { not: "DONE" } },
+      where: { AND: [taskScope(user), { status: { not: "DONE" } }] },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
       take: 8,
       include: {
         client: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true } },
         assignee: { select: { id: true, name: true } },
       },
     }),
-    prisma.task.count({ where: { status: { not: "DONE" }, dueDate: { lt: now } } }),
+    prisma.task.count({
+      where: { AND: [taskScope(user), { status: { not: "DONE" }, dueDate: { lt: now } }] },
+    }),
     prisma.client.findMany({
+      where: clientScope(user),
       orderBy: { createdAt: "desc" },
       take: 5,
       include: {
@@ -65,6 +76,7 @@ export async function getDashboardData() {
       },
     }),
     prisma.activity.findMany({
+      where: activityScope(user),
       orderBy: { createdAt: "desc" },
       take: 10,
       include: {
@@ -133,16 +145,17 @@ export async function getDashboardData() {
   };
 }
 
-/** Per-client rollups used by the clients table and the reports page. */
-export async function getClientRollups() {
+/** Per-client rollups for the reports page, over the user's own clients. */
+export async function getClientRollups(user: Staff) {
   const [clients, invoices] = await Promise.all([
     prisma.client.findMany({
+      where: clientScope(user),
       include: {
         owner: { select: { id: true, name: true } },
         _count: { select: { contacts: true, projects: true, invoices: true } },
       },
     }),
-    invoicesWithTotals(),
+    invoicesWithTotals(viaClient(user)),
   ]);
 
   return clients.map((client) => {
@@ -229,7 +242,7 @@ export async function getPortalProject(clientId: string, projectId: string) {
     include: {
       tasks: {
         orderBy: [{ status: "asc" }, { dueDate: "asc" }],
-        select: { id: true, title: true, status: true, dueDate: true },
+        select: { id: true, title: true, status: true, dueDate: true, completedAt: true },
       },
       attachments: {
         orderBy: { createdAt: "desc" },
@@ -293,9 +306,12 @@ export type OversightFilters = {
 export async function getOversightData(filters: OversightFilters) {
   const { actorId, category, since, page, pageSize } = filters;
 
+  // Portal uploads are logged too; oversight is about the team, so only
+  // activity by staff accounts counts.
+  const byStaff = { actor: { role: { in: [...STAFF_ROLES] } } };
+
   const where = {
-    // Portal uploads are logged too; oversight is about the team, so activity
-    // with no actor (or a client actor) is excluded by the staff join below.
+    ...byStaff,
     ...(actorId ? { actorId } : {}),
     ...(category ? { type: { in: [...ACTIVITY_CATEGORIES[category].types] } } : {}),
     ...(since ? { createdAt: { gte: since } } : {}),
@@ -313,26 +329,28 @@ export async function getOversightData(filters: OversightFilters) {
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
+      // No client relation: oversight never names a client (see oversightMessage).
       include: {
         actor: { select: { id: true, name: true, email: true, role: true } },
-        client: { select: { id: true, name: true } },
       },
     }),
     // Per-person totals for the same window, so the roster and the feed agree.
     prisma.activity.groupBy({
       by: ["actorId"],
-      where: { ...(since ? { createdAt: { gte: since } } : {}) },
+      where: { ...byStaff, ...(since ? { createdAt: { gte: since } } : {}) },
       _count: { _all: true },
       _max: { createdAt: true },
     }),
     prisma.activity.count({
       where: {
+        ...byStaff,
         ...(since ? { createdAt: { gte: since } } : {}),
         type: { in: [...ACTIVITY_CATEGORIES.ACCESS.types] },
       },
     }),
     prisma.activity.count({
       where: {
+        ...byStaff,
         ...(since ? { createdAt: { gte: since } } : {}),
         type: { in: [...ACTIVITY_CATEGORIES.DELETION.types] },
       },

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><title>Northwind Logistics · KediClient</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"><script src="kedi-data.js"></script><style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--tx);
+--bg:#f1f3f9;--card:#fff;--tx:#1d2233;--mu:#535a70;--fa:#8b91a6;--ln:#eceef5;--band:#3b5bdb;--ac:#3b5bdb;--ach:#2c46b0;--acs:#e8ecfc;--track:#eef0f8;--fill:#8ea2f0;--inp:#fff;--inpb:#d8dcea;--shadow:0 8px 24px rgba(30,40,90,.08);--red:#b4283a;--grn:#1f7a46;--chip:#f1f3f9;
+--amber-f:#8a5a0b;--amber-b:#fbefd5;--emerald-f:#1f6a3f;--emerald-b:#dff3e6;--slate-f:#4c5562;--slate-b:#eceef1;--sky-f:#1f4f8f;--sky-b:#ddebfb;--sky-d:#3b82d6;--orange-f:#9a4515;--orange-b:#fde6d6;--indigo-f:#3a3f9e;--indigo-b:#e4e5fb;--rose-f:#9c2534;--rose-b:#fbe1e3;--violet-f:#5d2f9c;--violet-b:#eee3fb;--amber-d:#d99a1e;--emerald-d:#2f9e5f;--slate-d:#a3aab5;--orange-d:#e07a33;--indigo-d:#5b61d6;--rose-d:#d9475a;--violet-d:#8b5cd6}
+body.dark{--bg:#0f1220;--card:#181c2c;--tx:#e6e8f0;--mu:#a3a9bd;--fa:#7a8098;--ln:#252a3c;--band:#2a3f9e;--ac:#8fa2f0;--ach:#adbcf5;--acs:#222c55;--track:#252a3c;--fill:#6d86ea;--inp:#12152a;--inpb:#2f3550;--shadow:0 8px 24px rgba(0,0,0,.4);--red:#f19aa6;--grn:#7fd3a2;--chip:#21263a;
+--amber-f:#f0c46a;--amber-b:#3a2c10;--emerald-f:#7fd3a2;--emerald-b:#12301f;--slate-f:#b3bac5;--slate-b:#252a31;--sky-f:#8fbcf2;--sky-b:#132a45;--orange-f:#f3a774;--orange-b:#3a2214;--indigo-f:#a9acf3;--indigo-b:#22244a;--rose-f:#f19aa6;--rose-b:#3d1a20;--violet-f:#c6a6f2;--violet-b:#2c1f45}
+a{color:var(--ac);text-decoration:none}a:hover{color:var(--ach)}button{white-space:nowrap}
+input,select,textarea,button{font:inherit;color:inherit}input::placeholder,textarea::placeholder{color:var(--fa)}
+</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+<div style="background:var(--band);color:#fff;padding:{{ L.bandPad }}">
+<div style="max-width:1080px;margin:0 auto;padding:0 {{ L.px }};box-sizing:border-box;display:flex;align-items:center;gap:12px;font-size:13.5px"><span style="width:30px;height:30px;flex:none;border-radius:10px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:600;font-size:12px">NL</span><span style="font-weight:600;font-size:15.5px;white-space:nowrap">Northwind Logistics</span><sc-if value="{{ L.showName }}" hint-placeholder-val="{{ true }}"><span style="margin-left:auto;white-space:nowrap">{{ user.name }}</span></sc-if><button onClick="{{ toggleTheme }}" style="margin-left:{{ L.themeMl }};padding:6px 12px;border:0;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:12.5px">{{ themeLabel }}</button><a href="KediClient Admin.dc.html#login" style="padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-size:12.5px;white-space:nowrap">Sign out</a></div>
+<nav style="max-width:1080px;margin:18px auto 0;padding:0 {{ L.px }};box-sizing:border-box;display:flex;gap:4px;font-size:14px;overflow-x:auto"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><a href="{{ t.href }}" onClick="{{ t.go }}" style="padding:8px 16px;border-radius:999px;white-space:nowrap;background:{{ t.bg }};color:{{ t.fg }};font-weight:{{ t.fw }}">{{ t.label }}</a></sc-for></nav>
+<div style="max-width:1080px;margin:30px auto 0;padding:0 {{ L.px }};box-sizing:border-box;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center"><div><sc-if value="{{ hasCrumb }}" hint-placeholder-val="{{ false }}"><a href="{{ crumb.href }}" onClick="{{ crumb.go }}" style="display:inline-block;margin-bottom:6px;color:rgba(255,255,255,.85);font-size:13px">← {{ crumb.label }}</a></sc-if><h1 style="margin:0;font-size:{{ L.h1 }};font-weight:600;letter-spacing:-.01em">{{ title }}</h1><sc-if value="{{ hasSub }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:rgba(255,255,255,.85);margin-top:4px">{{ sub }}</div></sc-if></div>
+<sc-if value="{{ is.overview }}" hint-placeholder-val="{{ true }}"><a href="#files" onClick="{{ goFiles }}" style="padding:11px 20px;border-radius:14px;background:#fff;color:#2c46b0;font-size:14px;font-weight:500;white-space:nowrap">Send us a file</a></sc-if>
+<sc-if value="{{ heroBadge.show }}" hint-placeholder-val="{{ false }}"><span style="padding:5px 12px;border-radius:999px;background:#fff;color:{{ heroBadge.f }};font-size:13px;font-weight:500">{{ heroBadge.label }}</span></sc-if>
+</div>
+</div>
+<main style="max-width:1080px;width:100%;margin:-64px auto 0;padding:0 {{ L.px }} 32px;box-sizing:border-box;flex:1;display:flex;flex-direction:column;gap:16px">
+
+<sc-if value="{{ is.overview }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:{{ L.g3 }};gap:16px">
+<div style="background:var(--card);border-radius:20px;padding:22px;box-shadow:var(--shadow)"><div style="font-size:13.5px;color:var(--mu)">Active projects</div><div style="font-size:32px;font-weight:600;margin-top:6px">{{ ov.active }}</div></div>
+<div style="background:var(--card);border-radius:20px;padding:22px;box-shadow:var(--shadow)"><div style="font-size:13.5px;color:var(--mu)">Balance due</div><div style="font-size:32px;font-weight:600;margin-top:6px;color:{{ ov.balC }}">{{ ov.balance }}</div><span style="display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;background:{{ ov.pastBg }};color:{{ ov.pastFg }};font-size:12px;font-weight:500">{{ ov.past }}</span></div>
+<div style="background:var(--card);border-radius:20px;padding:22px;box-shadow:var(--shadow)"><div style="font-size:13.5px;color:var(--mu)">Paid to date</div><div style="font-size:32px;font-weight:600;margin-top:6px">{{ ov.paid }}</div></div>
+</div>
+<div style="background:var(--card);border-radius:20px;padding:22px">
+<h2 style="margin:0 0 6px;font-size:17px;font-weight:600">Project progress</h2>
+<sc-for list="{{ ov.projects }}" as="p" hint-placeholder-count="3"><div style="padding:14px 0;border-top:1px solid var(--ln);display:flex;flex-direction:column;gap:10px"><div style="display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:space-between;align-items:baseline"><div><a href="{{ p.href }}" onClick="{{ p.open }}" style="font-size:15px;font-weight:500;color:var(--tx)">{{ p.name }}</a><span style="font-size:13px;color:var(--fa)"> · {{ p.sub }}</span></div><sc-if value="{{ p.hasLive }}" hint-placeholder-val="{{ false }}"><a href="{{ p.live }}" target="_blank" rel="noopener" style="font-size:13px">Visit project ↗</a></sc-if></div><div style="height:10px;border-radius:999px;background:var(--track)"><div style="height:10px;border-radius:999px;width:{{ p.pct }};background:var(--fill)"></div></div><div style="font-size:12.5px;color:var(--mu)">{{ p.pctLabel }}</div></div></sc-for>
+<sc-if value="{{ ov.noProjects }}" hint-placeholder-val="{{ false }}"><div style="padding:20px 0 6px;border-top:1px solid var(--ln);font-size:14px;color:var(--mu)">Once work starts, its progress will show up here.</div></sc-if>
+</div>
+<div style="display:grid;grid-template-columns:{{ L.g2 }};gap:16px">
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><h2 style="margin:0;font-size:17px;font-weight:600">Invoices due</h2><a href="#invoices" onClick="{{ goInvoices }}" style="font-size:13px">All invoices</a></div>
+<sc-for list="{{ ov.invoices }}" as="i" hint-placeholder-count="2"><a href="{{ i.href }}" onClick="{{ i.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--ln);color:var(--tx)"><span><span style="display:block;font-size:14px;font-weight:500">{{ i.no }}</span><span style="display:block;font-size:12.5px;color:var(--fa)">Due {{ i.due }}</span></span><span style="font-size:14px">{{ i.total }}</span><span style="padding:4px 10px;border-radius:999px;background:{{ i.st.b }};color:{{ i.st.f }};font-size:12px;font-weight:500">{{ i.st.label }}</span></a></sc-for>
+<sc-if value="{{ ov.noInvoices }}" hint-placeholder-val="{{ false }}"><div style="padding:16px 0 10px;border-top:1px solid var(--ln);font-size:14px;color:var(--mu)">Nothing due right now.</div></sc-if></div>
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><h2 style="margin:0;font-size:17px;font-weight:600">Recent files</h2><a href="#files" onClick="{{ goFiles }}" style="font-size:13px">All files</a></div>
+<sc-for list="{{ ov.files }}" as="f" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;padding:7px 0"><span style="width:36px;height:36px;border-radius:11px;background:var(--chip);color:var(--mu);display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase">{{ f.ext }}</span><div style="min-width:0"><a href="#" onClick="{{ f.dl }}" style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">{{ f.name }}</a><div style="font-size:12px;color:var(--fa)">{{ f.origin }} · {{ f.size }}</div></div><span style="font-size:12px;color:var(--fa);white-space:nowrap">{{ f.when }}</span></div></sc-for>
+<sc-if value="{{ ov.noFiles }}" hint-placeholder-val="{{ false }}"><div style="padding:16px 0 10px;font-size:14px;color:var(--mu)">No files yet.</div></sc-if></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.projects }}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{ pj.list }}" as="p" hint-placeholder-count="3"><div style="background:var(--card);border-radius:20px;padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:flex-start"><div style="min-width:0;flex:1 1 300px"><a href="{{ p.href }}" onClick="{{ p.open }}" style="font-size:17px;font-weight:600;color:var(--tx)">{{ p.name }}</a><sc-if value="{{ p.hasDesc }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:var(--mu);margin-top:4px">{{ p.desc }}</div></sc-if><div style="font-size:13px;color:var(--fa);margin-top:6px">{{ p.dates }}</div></div><div style="display:flex;gap:10px;align-items:center"><sc-if value="{{ p.hasLive }}" hint-placeholder-val="{{ false }}"><a href="{{ p.live }}" target="_blank" rel="noopener" style="font-size:13px">Visit project ↗</a></sc-if><span style="padding:4px 10px;border-radius:999px;background:{{ p.st.b }};color:{{ p.st.f }};font-size:12px;font-weight:500">{{ p.st.label }}</span></div></div>
+<div style="height:10px;border-radius:999px;background:var(--track)"><div style="height:10px;border-radius:999px;width:{{ p.pct }};background:var(--fill)"></div></div><div style="font-size:12.5px;color:var(--mu)">{{ p.progress }}</div>
+</div></sc-for>
+<sc-if value="{{ pj.empty }}" hint-placeholder-val="{{ false }}"><div style="background:var(--card);border-radius:20px;padding:40px 22px;text-align:center;font-size:14px;color:var(--mu);box-shadow:var(--shadow)">No projects yet. Once work starts, it will show up here.</div></sc-if>
+</sc-if>
+
+<sc-if value="{{ is.project }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--card);border-radius:20px;padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;color:var(--mu)">Overall progress</span><span style="font-size:28px;font-weight:600">{{ pd.pct }}</span></div><div style="height:12px;border-radius:999px;background:var(--track)"><div style="height:12px;border-radius:999px;width:{{ pd.pct }};background:var(--fill)"></div></div><div style="font-size:12.5px;color:var(--mu)">{{ pd.progress }}</div></div>
+<div style="display:grid;grid-template-columns:{{ L.side }};gap:16px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px"><h2 style="margin:0 0 8px;font-size:17px;font-weight:600">What's next</h2>
+<sc-for list="{{ pd.next }}" as="t" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--ln)"><span style="width:10px;height:10px;border-radius:50%;background:{{ t.dot }}"></span><span style="font-size:14px">{{ t.title }}</span><span style="font-size:12.5px;color:var(--fa);white-space:nowrap">{{ t.target }}</span></div></sc-for>
+<sc-if value="{{ pd.allDone }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 0 8px;border-top:1px solid var(--ln);font-size:14px;color:var(--mu)">Every published step is done. We'll add more as the work moves on.</div></sc-if>
+<div style="display:flex;gap:14px;padding:10px 0 4px;font-size:12px;color:var(--fa)"><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sky-d)"></span>In progress</span><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--slate-d)"></span>To do</span></div>
+</div>
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px"><h2 style="margin:0 0 8px;font-size:17px;font-weight:600">Completed</h2>
+<sc-for list="{{ pd.done }}" as="t" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--ln)"><span style="width:18px;height:18px;border-radius:50%;background:var(--emerald-b);color:var(--emerald-f);display:grid;place-items:center;font-size:11px">✓</span><span style="font-size:14px;color:var(--mu)">{{ t.title }}</span></div></sc-for>
+<sc-if value="{{ pd.noneDone }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 0 8px;border-top:1px solid var(--ln);font-size:14px;color:var(--mu)">Nothing completed yet.</div></sc-if>
+</div>
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px"><h2 style="margin:0 0 8px;font-size:17px;font-weight:600">Files for this project</h2>
+<sc-for list="{{ pd.files }}" as="f" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;padding:7px 0"><span style="width:36px;height:36px;border-radius:11px;background:var(--chip);color:var(--mu);display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase">{{ f.ext }}</span><div style="min-width:0"><a href="#" onClick="{{ f.dl }}" style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">{{ f.name }}</a><div style="font-size:12px;color:var(--fa)">{{ f.origin }} · {{ f.size }}</div></div><span style="font-size:12px;color:var(--fa);white-space:nowrap">{{ f.when }}</span></div></sc-for>
+<sc-if value="{{ pd.noFiles }}" hint-placeholder-val="{{ false }}"><div style="padding:6px 0 10px;font-size:14px;color:var(--mu)">No files for this project yet.</div></sc-if>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--card);border-radius:20px;padding:22px"><h2 style="margin:0 0 8px;font-size:17px;font-weight:600">Details</h2>
+<sc-for list="{{ pd.details }}" as="d" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--ln);font-size:13.5px"><span style="color:var(--mu)">{{ d.k }}</span><span style="white-space:nowrap">{{ d.v }}</span></div></sc-for>
+<sc-if value="{{ pd.hasLive }}" hint-placeholder-val="{{ false }}"><a href="{{ pd.live }}" target="_blank" rel="noopener" style="display:block;margin-top:12px;padding:10px 14px;border-radius:14px;background:var(--acs);text-align:center;font-size:14px;font-weight:500">Open project ↗</a></sc-if>
+</div>
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px"><h2 style="margin:0 0 8px;font-size:17px;font-weight:600">Invoices</h2>
+<sc-for list="{{ pd.invoices }}" as="i" hint-placeholder-count="2"><a href="{{ i.href }}" onClick="{{ i.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--ln);color:var(--tx)"><span><span style="display:block;font-size:14px;font-weight:500">{{ i.no }}</span><span style="display:block;font-size:12.5px;color:var(--fa)">{{ i.total }}</span></span><span style="padding:4px 10px;border-radius:999px;background:{{ i.st.b }};color:{{ i.st.f }};font-size:12px;font-weight:500">{{ i.st.label }}</span></a></sc-for>
+<sc-if value="{{ pd.noInvoices }}" hint-placeholder-val="{{ false }}"><div style="padding:6px 0 10px;font-size:14px;color:var(--mu)">No invoices yet.</div></sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.invoices }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--card);border-radius:20px;box-shadow:var(--shadow);overflow:hidden">
+<div style="overflow-x:auto"><div style="min-width:640px">
+<div style="display:grid;grid-template-columns:110px minmax(140px,1fr) 100px 120px 120px 120px;gap:12px;padding:16px 22px 10px;font-size:12px;color:var(--fa)"><span>Invoice</span><span>Project</span><span>Status</span><span>Issued</span><span>Due</span><span style="text-align:right">Amount</span></div>
+<sc-for list="{{ iv.rows }}" as="r" hint-placeholder-count="6"><a href="{{ r.href }}" onClick="{{ r.open }}" style="display:grid;grid-template-columns:110px minmax(140px,1fr) 100px 120px 120px 120px;gap:12px;align-items:center;padding:12px 22px;border-top:1px solid var(--ln);font-size:14px;color:var(--tx)"><span style="font-weight:500">{{ r.no }}</span><span style="color:var(--mu)">{{ r.project }}</span><span><span style="padding:3px 10px;border-radius:999px;background:{{ r.st.b }};color:{{ r.st.f }};font-size:12px;font-weight:500">{{ r.st.label }}</span></span><span style="color:var(--mu);font-size:13px">{{ r.issue }}</span><span style="color:var(--mu);font-size:13px">{{ r.due }}</span><span style="text-align:right">{{ r.total }}</span></a></sc-for>
+</div></div>
+<div style="display:flex;justify-content:space-between;padding:14px 22px;border-top:1px solid var(--ln);font-size:13.5px;color:var(--mu)"><span>{{ iv.count }}</span><span>Outstanding <strong style="color:var(--tx);font-weight:600">{{ iv.out }}</strong></span></div>
+</div>
+<sc-if value="{{ iv.empty }}" hint-placeholder-val="{{ false }}"><div style="background:var(--card);border-radius:20px;padding:40px 22px;text-align:center;font-size:14px;color:var(--mu)">No invoices yet.</div></sc-if>
+</sc-if>
+
+<sc-if value="{{ is.invoice }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ L.side }};gap:16px;align-items:start">
+<div style="background:var(--card);border-radius:20px;padding:{{ L.docPad }};box-shadow:var(--shadow);display:flex;flex-direction:column;gap:24px;min-width:0">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px">
+<div><div style="font-size:12.5px;color:var(--fa);margin-bottom:6px">Billed to</div><div style="font-size:15px;font-weight:500">{{ inv.billName }}</div><div style="font-size:13.5px;color:var(--mu);white-space:pre-line;line-height:1.5">{{ inv.billAddr }}</div></div>
+<div style="text-align:right"><div style="font-size:12.5px;color:var(--fa);margin-bottom:6px">{{ inv.amountLabel }}</div><div style="font-size:30px;font-weight:600">{{ inv.amount }}</div><sc-if value="{{ inv.isPaid }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--grn);margin-top:2px">Received {{ inv.paidAt }}</div></sc-if></div>
+</div>
+<div style="overflow-x:auto"><div style="min-width:400px">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 44px 104px 104px;gap:10px;padding:0 0 8px;font-size:12px;color:var(--fa)"><span>Description</span><span style="text-align:right">Qty</span><span style="text-align:right">Unit price</span><span style="text-align:right">Amount</span></div>
+<sc-for list="{{ inv.lines }}" as="l" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:minmax(0,1fr) 44px 104px 104px;gap:10px;padding:12px 0;border-top:1px solid var(--ln);font-size:14px"><span>{{ l.d }}</span><span style="text-align:right">{{ l.q }}</span><span style="text-align:right">{{ l.p }}</span><span style="text-align:right">{{ l.amount }}</span></div></sc-for>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:8px 10px;padding-top:14px;border-top:1px solid var(--ln);font-size:14px;justify-items:end"><span style="color:var(--mu)">Subtotal</span><span>{{ inv.sub }}</span><span style="color:var(--mu)">Tax ({{ inv.taxRate }}%)</span><span>{{ inv.tax }}</span><span style="font-weight:600">Total</span><span style="font-weight:600">{{ inv.total }}</span></div>
+</div></div>
+<sc-if value="{{ inv.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 16px;border-radius:14px;background:var(--chip);font-size:13.5px;line-height:1.5;color:var(--mu)">{{ inv.notes }}</div></sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--card);border-radius:20px;padding:22px"><sc-for list="{{ inv.details }}" as="d" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--ln);font-size:13.5px"><span style="color:var(--mu)">{{ d.k }}</span><span style="white-space:nowrap">{{ d.v }}</span></div></sc-for><sc-if value="{{ inv.hasProject }}" hint-placeholder-val="{{ false }}"><a href="{{ inv.projectHref }}" onClick="{{ inv.openProject }}" style="display:block;margin-top:12px;font-size:13.5px">View {{ inv.project }} →</a></sc-if></div>
+<div style="background:var(--acs);border-radius:20px;padding:18px 20px;font-size:13.5px;line-height:1.55">Need a change to this invoice, or a copy for your finance team? Reply to your account manager and we'll sort it out.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.files }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ L.side }};gap:16px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px;box-shadow:var(--shadow)"><h2 style="margin:0 0 2px;font-size:17px;font-weight:600">Shared with you</h2><div style="font-size:13px;color:var(--fa);margin-bottom:8px">{{ fl.sharedSub }}</div>
+<sc-for list="{{ fl.shared }}" as="f" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--ln)"><span style="width:36px;height:36px;border-radius:11px;background:var(--chip);color:var(--mu);display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase">{{ f.ext }}</span><div style="min-width:0"><a href="#" onClick="{{ f.dl }}" style="display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.name }}</a><sc-if value="{{ f.hasNote }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--mu)">{{ f.note }}</div></sc-if><div style="font-size:12px;color:var(--fa)">{{ f.meta }}</div></div><a href="#" onClick="{{ f.dl }}" style="font-size:13px">Download</a></div></sc-for>
+<sc-if value="{{ fl.noShared }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 0 10px;border-top:1px solid var(--ln);font-size:14px;color:var(--mu)">Nothing shared with you yet.</div></sc-if>
+</div>
+<div style="background:var(--card);border-radius:20px;padding:22px 22px 12px"><h2 style="margin:0 0 2px;font-size:17px;font-weight:600">Files you sent</h2><div style="font-size:13px;color:var(--fa);margin-bottom:8px">{{ fl.sentSub }}</div>
+<sc-for list="{{ fl.sent }}" as="f" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--ln)"><span style="width:36px;height:36px;border-radius:11px;background:var(--sky-b);color:var(--sky-f);display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase">{{ f.ext }}</span><div style="min-width:0"><a href="#" onClick="{{ f.dl }}" style="display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.name }}</a><sc-if value="{{ f.hasNote }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--mu)">{{ f.note }}</div></sc-if><div style="font-size:12px;color:var(--fa)">{{ f.meta }}</div></div><button onClick="{{ f.del }}" style="padding:0;border:0;background:none;color:var(--red);cursor:pointer;font-size:13px">Delete</button></div></sc-for>
+<sc-if value="{{ fl.noSent }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 0 10px;border-top:1px solid var(--ln);font-size:14px;color:var(--mu)">You haven't sent anything yet.</div></sc-if>
+</div>
+</div>
+<form onSubmit="{{ fl.upload }}" noValidate="{{ true }}" style="background:var(--card);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)">
+<h2 style="margin:0;font-size:17px;font-weight:600">Send us a file</h2>
+<label style="display:flex;flex-direction:column;gap:8px;padding:18px;border:1.5px dashed var(--inpb);border-radius:14px;font-size:13.5px;color:var(--mu);cursor:pointer">Choose a file (up to 25 MB)<input type="file" name="file" onChange="{{ pickFile }}" style="font-size:13px"><span style="font-size:13px;color:{{ fl.pickC }}">{{ fl.pick }}</span></label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500">Project (optional)<select name="project" style="padding:9px 12px;border:1px solid var(--inpb);border-radius:12px;background:var(--inp);font-size:14px"><option value="">No project</option><sc-for list="{{ fl.projOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500">Message (optional)<textarea name="note" rows="3" maxLength="500" placeholder="Anything we should know about this file?" style="padding:9px 12px;border:1px solid var(--inpb);border-radius:12px;background:var(--inp);font-size:14px;resize:vertical"></textarea></label>
+<button type="submit" style="padding:11px 18px;border:0;border-radius:14px;background:var(--ac);color:#fff;font-size:14px;font-weight:500;cursor:pointer">Send file</button>
+<sc-if value="{{ fl.sentFlash }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--grn)">Sent. Your team at Kedi Studio can see it now.</div></sc-if>
+</form>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.account }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ L.g2 }};gap:16px;align-items:start">
+<div style="background:var(--card);border-radius:20px;padding:22px;box-shadow:var(--shadow)"><h2 style="margin:0 0 8px;font-size:17px;font-weight:600">Details</h2>
+<sc-for list="{{ ac.details }}" as="d" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--ln);font-size:14px"><span style="color:var(--mu)">{{ d.k }}</span><span style="text-align:right;min-width:0;overflow-wrap:anywhere">{{ d.v }}</span></div></sc-for>
+<div style="margin-top:12px;font-size:13px;line-height:1.5;color:var(--mu)">{{ ac.help }}</div></div>
+<form onSubmit="{{ ac.change }}" noValidate="{{ true }}" style="background:var(--card);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)">
+<h2 style="margin:0;font-size:17px;font-weight:600">Change password</h2>
+<sc-if value="{{ ac.hasErr }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 14px;border-radius:12px;background:var(--rose-b);color:var(--rose-f);font-size:13.5px">{{ err.form }}</div></sc-if>
+<sc-if value="{{ ac.ok }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 14px;border-radius:12px;background:var(--emerald-b);color:var(--emerald-f);font-size:13.5px">Password changed. Your other devices were signed out.</div></sc-if>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500">Current password<input type="password" name="current" style="padding:9px 12px;border:1px solid var(--inpb);border-radius:12px;background:var(--inp);font-size:14px"><span style="font-weight:400;color:var(--red)">{{ err.current }}</span></label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500">New password<input type="password" name="next" placeholder="At least 8 characters" style="padding:9px 12px;border:1px solid var(--inpb);border-radius:12px;background:var(--inp);font-size:14px"><span style="font-weight:400;color:var(--red)">{{ err.next }}</span></label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500">Confirm new password<input type="password" name="confirm" style="padding:9px 12px;border:1px solid var(--inpb);border-radius:12px;background:var(--inp);font-size:14px"><span style="font-weight:400;color:var(--red)">{{ err.confirm }}</span></label>
+<button type="submit" style="align-self:flex-start;padding:10px 18px;border:0;border-radius:14px;background:var(--ac);color:#fff;font-size:14px;font-weight:500;cursor:pointer">Update password</button>
+<div style="font-size:12px;color:var(--fa)">Prototype: the current password is demo-password.</div>
+</form>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.notFound }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--card);border-radius:20px;padding:40px 28px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;align-items:flex-start"><p style="margin:0;font-size:14.5px;line-height:1.55;color:var(--mu);max-width:480px">The record you are looking for may have been deleted, or the link is wrong.</p><a href="#overview" onClick="{{ goHome }}" style="padding:10px 18px;border-radius:14px;background:var(--ac);color:#fff;font-size:14px">Back to overview</a></div>
+</sc-if>
+</main>
+<footer style="padding:18px 24px 28px;text-align:center;font-size:13px;color:var(--mu)">{{ footer }}</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;}}">
+const K=()=>window.KEDI;
+const ALLOWED=['pdf','png','jpg','jpeg','gif','webp','svg','txt','csv','md','json','zip','doc','docx','xls','xlsx','ppt','pptx'];
+class Component extends DCLogic {
+  state={db:window.KEDI?window.KEDI.seed():null,route:'overview',id:null,w:window.innerWidth,ui:{},err:{},themeO:null};
+  componentDidMount(){
+    const boot=()=>{if(!window.KEDI)return setTimeout(boot,30);if(!this.state.db)this.setState({db:K().seed()});this.fromHash();};boot();
+    this.onR=()=>this.setState({w:window.innerWidth});window.addEventListener('resize',this.onR);
+    this.onH=()=>this.fromHash();window.addEventListener('hashchange',this.onH);this.applyTheme();
+  }
+  componentWillUnmount(){window.removeEventListener('resize',this.onR);window.removeEventListener('hashchange',this.onH);document.body.classList.remove('dark');}
+  componentDidUpdate(){this.applyTheme();}
+  dark(){return (this.state.themeO||this.props.theme||'light')==='dark';}
+  applyTheme(){document.body.classList.toggle('dark',this.dark());}
+  fromHash(){const h=decodeURIComponent(location.hash.slice(1));if(!h)return;const [p,...fl]=h.split('~');const [route,id]=(p||'').split('/');const s={route:route||'overview',id:id||null,ui:{},err:{}};if(fl.includes('dark'))s.themeO='dark';else if(fl.includes('light'))s.themeO='light';if(fl.includes('empty'))s.db={...K().seed(),projects:[],invoices:[],files:[],tasks:[]};this.setState(s);}
+  go(route,id=null){const fl=location.hash.split('~').slice(1).filter(x=>/^(dark|light|empty)$/.test(x));try{history.pushState(null,'','#'+route+(id?'/'+id:'')+(fl.length?'~'+fl.join('~'):''));}catch(e){}this.setState({route,id,ui:{},err:{}});window.scrollTo(0,0);}
+  lk(r,id){return e=>{if(e&&e.preventDefault)e.preventDefault();this.go(r,id);};}
+  form(e){e.preventDefault();const fd=new FormData(e.currentTarget);const o={};for(const [k,v] of fd.entries())o[k]=typeof v==='string'?v.trim():v;return o;}
+  renderVals(){
+    if(!this.state.db||!window.KEDI)return {is:{overview:true},L:{px:'32px',bandPad:'22px 0 96px',g3:'repeat(3,1fr)',g2:'1fr 1fr',h1:'34px',showName:true},ov:{},tabs:[],user:{}};
+    const k=K(),db=this.state.db,w=this.state.w,CID='c1';
+    const user=db.portalUsers.find(u=>u.id==='pu1')||{name:'Dana Whitfield',email:'dana@northwind.co'};
+    const client=db.clients.find(c=>c.id===CID),owner=db.users.find(u=>u.id===client.owner);
+    const projects=db.projects.filter(p=>p.client===CID),pMap=Object.fromEntries(projects.map(p=>[p.id,p]));
+    const invoices=db.invoices.filter(i=>i.client===CID&&i.status!=='DRAFT');
+    const files=db.files.filter(f=>f.client===CID).sort((a,b)=>b.at-a.at);
+    const L={px:w<720?'16px':'32px',bandPad:w<720?'16px 0 84px':'22px 0 96px',g3:w<720?'minmax(0,1fr)':'repeat(3,minmax(0,1fr))',g2:w<900?'minmax(0,1fr)':'minmax(0,1fr) minmax(0,1fr)',side:w<900?'minmax(0,1fr)':'minmax(0,1fr) 320px',h1:w<720?'26px':'34px',showName:w>=720,themeMl:w>=720?'0':'auto',docPad:w<720?'18px':'28px'};
+    const known=['overview','projects','project','invoices','invoice','files','account'];let route=known.includes(this.state.route)?this.state.route:'404';
+    if(route==='project'&&!pMap[this.state.id])route='404';if(route==='invoice'&&!invoices.some(i=>i.id===this.state.id))route='404';
+    const tabKey=route==='project'?'projects':route==='invoice'?'invoices':route;
+    const tabs=[['overview','Overview'],['projects','Projects'],['invoices','Invoices'],['files','Files'],['account','Account']].map(([key,label])=>{const a=tabKey===key;return {label,href:'#'+key,go:this.lk(key),bg:a?'#fff':'transparent',fg:a?'#2c46b0':'#fff',fw:a?500:400};});
+    const is={overview:route==='overview',projects:route==='projects',project:route==='project',invoices:route==='invoices',invoice:route==='invoice',files:route==='files',account:route==='account',notFound:route==='404'};
+    const prog=p=>{const ts=db.tasks.filter(t=>t.project===p.id),done=ts.filter(t=>t.status==='DONE').length,ip=ts.filter(t=>t.status==='IN_PROGRESS').length;return {n:ts.length,done,ip,pct:ts.length?Math.round(done/ts.length*100):0,ts};};
+    const fileRow=f=>{const staff=f.by==='STAFF',up=(db.users.find(u=>u.id===f.uploader)||db.portalUsers.find(u=>u.id===f.uploader)||{}).name;return {name:f.filename,ext:f.filename.split('.').pop(),note:f.note||'',hasNote:!!f.note,origin:staff?'Shared with you':`Sent by ${f.uploader==='pu1'?'you':up||'you'}`,size:k.size(f.bytes),when:k.rel(f.at),meta:[k.size(f.bytes),k.rel(f.at),f.project&&pMap[f.project]?pMap[f.project].name:null].filter(Boolean).join(' · '),dl:e=>e.preventDefault(),del:()=>{if(window.confirm(`Delete ${f.filename}? This removes the file for everyone.`))this.setState(s=>({db:{...s.db,files:s.db.files.filter(x=>x.id!==f.id)}}));}};};
+    const invRow=i=>({no:i.no,project:i.project&&pMap[i.project]?pMap[i.project].name:'—',st:k.badge(k.eff(i)),issue:k.fd(i.issue),due:k.fd(i.due),total:k.money(k.tot(i).total),open:this.lk('invoice',i.id),href:'#invoice/'+i.id});
+    const b=k.buckets(invoices);
+    let v={},title='',sub='',crumb=null,heroBadge={show:false};
+    if(is.overview){title=`Hello, ${user.name.split(' ')[0]}`;
+      const plist=projects.filter(p=>['ACTIVE','PLANNING'].includes(p.status));
+      v.ov={active:String(projects.filter(p=>p.status==='ACTIVE').length),balance:k.money(b.out),balC:b.out?'var(--tx)':'var(--grn)',past:b.over?`${k.money(b.over)} past due`:'Nothing past due',pastBg:b.over?'var(--rose-b)':'var(--emerald-b)',pastFg:b.over?'var(--rose-f)':'var(--emerald-f)',paid:k.money(b.paid),
+        projects:plist.map(p=>{const g=prog(p);return {name:p.name,sub:(g.n?`${g.done} of ${k.plural(g.n,'step')} complete`:'Not broken down yet')+(p.end?` · target ${k.fd(p.end)}`:''),pct:g.pct+'%',pctLabel:g.pct+'% complete',hasLive:!!p.live,live:p.live||'',open:this.lk('project',p.id),href:'#project/'+p.id};}),noProjects:!plist.length,
+        invoices:invoices.filter(i=>['SENT','OVERDUE'].includes(k.eff(i))).sort((a,b)=>k.ts(a.due)-k.ts(b.due)).slice(0,4).map(invRow),files:files.slice(0,5).map(fileRow),noFiles:!files.length};
+      v.ov.noInvoices=!v.ov.invoices.length;}
+    if(is.projects){title='Projects';sub='Everything we are working on for you.';const order=['ACTIVE','PLANNING','ON_HOLD','COMPLETED','CANCELLED'];
+      v.pj={empty:!projects.length,list:projects.slice().sort((a,b)=>order.indexOf(a.status)-order.indexOf(b.status)||b.created-a.created).map(p=>{const g=prog(p);return {name:p.name,desc:p.description||'',hasDesc:!!p.description,dates:(p.start?`Started ${k.fd(p.start)}`:'Not started')+(p.end?` · target ${k.fd(p.end)}`:''),st:k.badge(p.status),hasLive:!!p.live,live:p.live||'',pct:g.pct+'%',progress:g.n?`${g.pct}% complete · ${g.done} of ${k.plural(g.n,'step')} · ${g.ip} in progress`:'No steps published yet',open:this.lk('project',p.id),href:'#project/'+p.id};})};}
+    if(is.project){const p=pMap[this.state.id],g=prog(p);title=p.name;sub=p.description||'';crumb={label:'Projects',href:'#projects',go:this.lk('projects')};heroBadge={show:true,label:k.lab(p.status),f:'#2c46b0'};
+      const next=g.ts.filter(t=>t.status!=='DONE').sort((a,b)=>(a.status==='IN_PROGRESS'?0:1)-(b.status==='IN_PROGRESS'?0:1)||(a.due?k.ts(a.due):9e15)-(b.due?k.ts(b.due):9e15));
+      const done=g.ts.filter(t=>t.status==='DONE').sort((a,b)=>(b.completedAt||0)-(a.completedAt||0));const pf=files.filter(f=>f.project===p.id);const pi=invoices.filter(i=>i.project===p.id);
+      v.pd={pct:g.pct+'%',progress:g.n?`${g.done} of ${k.plural(g.n,'step')} complete · ${g.ip} in progress`:'No steps published yet',next:next.map(t=>({title:t.title,target:t.due?`Target ${k.fd(t.due)}`:'',dot:t.status==='IN_PROGRESS'?'var(--sky-d)':'var(--slate-d)'})),allDone:!next.length,done:done.map(t=>({title:t.title})),noneDone:!done.length,
+        files:pf.map(fileRow),noFiles:!pf.length,details:[['Status',k.lab(p.status)],['Started',p.start?k.fd(p.start):'Not started'],['Target finish',k.fd(p.end)]].map(([a,c])=>({k:a,v:c})),hasLive:!!p.live,live:p.live||'',invoices:pi.map(invRow),noInvoices:!pi.length};}
+    if(is.invoices){title='Invoices';sub=b.out?`${k.money(b.out)} outstanding`:'Everything is settled';
+      v.iv={rows:invoices.slice().sort((a,b)=>k.ts(b.issue)-k.ts(a.issue)).map(invRow),count:k.plural(invoices.length,'invoice'),out:k.money(b.out),empty:!invoices.length};}
+    if(is.invoice){const i=invoices.find(x=>x.id===this.state.id),e=k.eff(i),t=k.tot(i);title=i.no;sub=`Issued ${k.fd(i.issue)} · due ${k.fd(i.due)}`;crumb={label:'Invoices',href:'#invoices',go:this.lk('invoices')};heroBadge={show:true,label:k.lab(e),f:e==='OVERDUE'?'#9c2534':e==='PAID'?'#1f6a3f':'#2c46b0'};
+      const addr=[client.addressLine,[client.city,client.state].filter(Boolean).join(', ')+(client.postalCode?' '+client.postalCode:''),client.country].filter(Boolean).join('\n');
+      v.inv={billName:client.company||client.name,billAddr:addr,amountLabel:e==='PAID'?'Amount paid':'Amount due',amount:k.money(t.total),isPaid:e==='PAID',paidAt:k.fd(i.paidAt),lines:i.lines.map(l=>({d:l.d,q:String(l.q),p:k.money(l.p),amount:k.money(Math.round(l.q*l.p))})),sub:k.money(t.sub),tax:k.money(t.tax),taxRate:String(i.tax),total:k.money(t.total),hasNotes:!!i.notes,notes:i.notes||'',
+        details:[['Status',k.lab(e)],['Issued',k.fd(i.issue)],['Due',k.fd(i.due)]].map(([a,c])=>({k:a,v:c})),hasProject:!!(i.project&&pMap[i.project]),project:i.project&&pMap[i.project]?pMap[i.project].name:'',projectHref:'#project/'+i.project,openProject:this.lk('project',i.project)};}
+    if(is.files){title='Files';sub='Everything we have shared, and everything you have sent us.';const ui=this.state.ui;const shared=files.filter(f=>f.by==='STAFF'),sent=files.filter(f=>f.by==='CLIENT');
+      v.fl={shared:shared.map(fileRow),noShared:!shared.length,sharedSub:k.plural(shared.length,'file'),sent:sent.map(fileRow),noSent:!sent.length,sentSub:`${k.plural(sent.length,'file')} · you can remove your own uploads`,projOpts:projects.map(p=>({v:p.id,l:p.name})),pick:ui.pick||'',pickC:ui.pickErr?'var(--red)':'var(--mu)',sentFlash:!!ui.sent,
+        upload:e=>{const form=e.currentTarget;const f=this.form(e);const file=f.file;let er=null;if(!file||!file.name||!file.size)er='Choose a file to upload.';else if(file.size>25*1048576)er='That file is larger than 25 MB.';else if(!ALLOWED.includes(file.name.split('.').pop().toLowerCase()))er='That file type is not accepted. Allowed: documents, spreadsheets, presentations, PDFs, images, text, CSV, JSON and ZIP.';
+          if(er)return this.setState(s=>({ui:{...s.ui,pick:er,pickErr:true,sent:false}}));const rec={id:'f'+Date.now(),client:CID,project:pMap[f.project]?f.project:null,filename:file.name.split(/[\\/]/).pop().replace(/[^\w.\- ]/g,'_').slice(0,180),mime:file.type,bytes:file.size,by:'CLIENT',uploader:'pu1',note:(f.note||'').slice(0,500)||null,at:k.NOW};
+          this.setState(s=>({db:{...s.db,files:[rec,...s.db.files]},ui:{sent:true}}));form.reset();}};}
+    if(is.account){title='Account';sub='Your sign-in details.';const err=this.state.err;
+      v.ac={details:[['Name',user.name],['Email',user.email],['Account',client.name],['Last sign-in',user.last?k.fdt(user.last):'This is your first visit']].map(([a,c])=>({k:a,v:c})),help:owner?`Need your name or email changed? Ask ${owner.name} (${owner.email}).`:'Need your name or email changed? Reply to your latest email from us.',hasErr:!!err.form,ok:!!this.state.ui.pwOk,
+        change:e=>{const form=e.currentTarget;const f=this.form(e);const er={};if(!f.current)er.current='Enter your current password';if((f.next||'').length<8)er.next='Use at least 8 characters';else if(f.next!==f.confirm)er.confirm='Passwords do not match';else if(f.next===f.current)er.next='Choose a password different from your current one';
+          if(!Object.keys(er).length&&f.current!=='demo-password')er.form='That is not your current password.';if(Object.keys(er).length)return this.setState({err:er,ui:{}});form.reset();this.setState({err:{},ui:{pwOk:true}});}};}
+    if(is.notFound)title='Page not found';
+    return {is,L,tabs,user,title,sub,hasSub:!!sub,crumb:crumb||{},hasCrumb:!!crumb,heroBadge,...v,err:this.state.err,
+      footer:owner?`Questions? Your account manager is ${owner.name} (${owner.email}).`:"Questions? Reply to your latest email from us and we'll pick it up.",
+      toggleTheme:()=>this.setState({themeO:this.dark()?'light':'dark'}),themeLabel:this.dark()?'Light':'Dark',goFiles:this.lk('files'),goInvoices:this.lk('invoices'),goHome:this.lk('overview'),
+      pickFile:e=>{const f=e.target.files[0];if(!f)return;let er=null;if(f.size>25*1048576)er='That file is larger than 25 MB.';this.setState(s=>({ui:{...s.ui,pick:er||`${f.name} · ${k.size(f.size)}`,pickErr:!!er,sent:false}}));}};
+  }
+}
+</script>
+</body>
+</html>

@@ -15,6 +15,8 @@ export default tseslint.config(
       "node_modules/**",
       "next-env.d.ts",
       "prisma/migrations/**",
+      // Static HTML prototypes from the designer, not app code.
+      "design/**",
     ],
   },
 

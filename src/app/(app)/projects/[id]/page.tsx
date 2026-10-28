@@ -8,32 +8,37 @@ import {
   Badge,
   Card,
   CardHeader,
+  Crumbs,
   DetailList,
   DetailRow,
-  EmptyState,
+  EmptyRow,
   LinkButton,
   PageHeader,
+  ProgressBar,
 } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { formatDate, formatMoney } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoice";
+import { projectProgress } from "@/lib/progress";
 import { requireUser } from "@/lib/session";
+import { viaClient } from "@/server/scope";
 import { deleteProjectAction } from "@/server/actions/projects";
 
 type Params = Promise<{ id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { id } = await params;
-  const project = await prisma.project.findUnique({ where: { id }, select: { name: true } });
+  const user = await requireUser();
+  const project = await prisma.project.findFirst({ where: { id, ...viaClient(user) }, select: { name: true } });
   return { title: project?.name ?? "Project" };
 }
 
 export default async function ProjectDetailPage({ params }: { params: Params }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
-  const project = await prisma.project.findUnique({
-    where: { id },
+  const project = await prisma.project.findFirst({
+    where: { id, ...viaClient(user) },
     include: {
       client: { select: { id: true, name: true, status: true } },
       tasks: {
@@ -56,11 +61,10 @@ export default async function ProjectDetailPage({ params }: { params: Params }) 
     .filter((i) => i.effectiveStatus !== "VOID" && i.effectiveStatus !== "DRAFT")
     .reduce((sum, i) => sum + i.totals.totalCents, 0);
 
-  const doneTasks = project.tasks.filter((task) => task.status === "DONE").length;
-  const progress =
-    project.tasks.length > 0 ? Math.round((doneTasks / project.tasks.length) * 100) : 0;
+  const progress = projectProgress(project.tasks);
   const budgetUsed =
     project.budgetCents > 0 ? Math.min(Math.round((invoicedCents / project.budgetCents) * 100), 999) : 0;
+  const budgetColor = budgetUsed > 100 ? "var(--red)" : "var(--ac)";
 
   return (
     <>
@@ -68,40 +72,29 @@ export default async function ProjectDetailPage({ params }: { params: Params }) 
         title={project.name}
         description={project.description ?? undefined}
         breadcrumb={
-          <span className="flex flex-wrap items-center gap-1">
-            <Link href="/projects" className="hover:text-indigo-600 hover:underline">
-              Projects
-            </Link>
-            <span>/</span>
-            <Link href={`/clients/${project.client.id}`} className="hover:text-indigo-600 hover:underline">
-              {project.client.name}
-            </Link>
-          </span>
+          <Crumbs
+            items={[
+              { href: "/projects", label: "Projects" },
+              { href: `/clients/${project.client.id}`, label: project.client.name },
+            ]}
+          />
         }
         actions={
           <>
-            <Badge value={project.status} className="self-center" />
             {project.liveUrl ? (
               <a
                 href={project.liveUrl}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="rounded-[4px] border border-inpb bg-pn px-3 py-1.5 whitespace-nowrap text-tx hover:bg-hov hover:text-tx"
               >
-                Visit project
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  className="size-4"
-                  aria-hidden
-                >
-                  <path d="M14 4h6v6M20 4l-8 8M10 6H5v13h13v-5" />
-                </svg>
+                Visit project ↗
               </a>
             ) : null}
-            <LinkButton href={`/invoices/new?clientId=${project.clientId}&projectId=${project.id}`} variant="secondary">
+            <LinkButton
+              href={`/invoices/new?clientId=${project.client.id}&projectId=${project.id}`}
+              variant="secondary"
+            >
               New invoice
             </LinkButton>
             <LinkButton href={`/projects/${project.id}/edit`}>Edit</LinkButton>
@@ -109,151 +102,103 @@ export default async function ProjectDetailPage({ params }: { params: Params }) 
         }
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="grid grid-cols-1 items-start gap-4 min-[1100px]:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-4">
           <Card>
             <CardHeader
               title="Tasks"
-              description={`${doneTasks} of ${project.tasks.length} complete`}
-              action={
-                <Link
-                  href={`/tasks?projectId=${project.id}`}
-                  className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  Manage tasks
-                </Link>
-              }
+              description={`${progress.done} of ${progress.total} done`}
+              action={<Link href={`/tasks?projectId=${project.id}`}>Manage tasks</Link>}
             />
-            <div className="px-5 pt-4">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{progress}% complete</p>
-            </div>
-            {project.tasks.length === 0 ? (
-              <EmptyState
-                title="No tasks yet"
-                description="Break the project down so the next step is always visible."
-                action={<LinkButton href={`/tasks?projectId=${project.id}`}>Add tasks</LinkButton>}
-              />
-            ) : (
-              <ul className="mt-3 divide-y divide-slate-100 border-t border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-                {project.tasks.map((task) => (
-                  <TaskRow key={task.id} task={task} showClient={false} />
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <Card>
-            <CardHeader title="Invoices" description={`${formatMoney(invoicedCents)} invoiced`} />
-            {invoices.length === 0 ? (
-              <EmptyState
-                title="No invoices for this project"
-                action={
-                  <LinkButton href={`/invoices/new?clientId=${project.clientId}&projectId=${project.id}`}>
-                    New invoice
-                  </LinkButton>
-                }
-              />
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {invoices.map((invoice) => (
-                  <li key={invoice.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/invoices/${invoice.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {invoice.number}
-                      </Link>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Due {formatDate(invoice.dueDate)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                        {formatMoney(invoice.totals.totalCents)}
-                      </span>
-                      <Badge value={invoice.effectiveStatus} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader title="Overview" />
-            <DetailList>
-              <DetailRow term="Client">
-                <Link
-                  href={`/clients/${project.client.id}`}
-                  className="text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  {project.client.name}
-                </Link>
-              </DetailRow>
-              <DetailRow term="Status">
-                <Badge value={project.status} />
-              </DetailRow>
-              <DetailRow term="Budget">{formatMoney(project.budgetCents)}</DetailRow>
-              <DetailRow term="Invoiced">{formatMoney(invoicedCents)}</DetailRow>
-              <DetailRow term="Project link">
-                {project.liveUrl ? (
-                  <a
-                    href={project.liveUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="text-indigo-600 hover:underline dark:text-indigo-400"
-                  >
-                    {project.liveUrl.replace(/^https?:\/\//, "")}
-                  </a>
-                ) : (
-                  <span className="text-slate-500 dark:text-slate-400">Not set</span>
-                )}
-              </DetailRow>
-              <DetailRow term="Start">{formatDate(project.startDate)}</DetailRow>
-              <DetailRow term="End">{formatDate(project.endDate)}</DetailRow>
-            </DetailList>
-
-            {project.budgetCents > 0 ? (
-              <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Budget used
-                </p>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                  <div
-                    className={
-                      budgetUsed > 100
-                        ? "h-full rounded-full bg-rose-500"
-                        : "h-full rounded-full bg-indigo-500"
-                    }
-                    style={{ width: `${Math.min(budgetUsed, 100)}%` }}
-                  />
-                </div>
-                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                  {budgetUsed}% of {formatMoney(project.budgetCents)}
-                </p>
+            {project.tasks.length > 0 ? (
+              <div className="flex items-center gap-3 border-b border-l2 px-3.5 py-3">
+                <ProgressBar percent={progress.percent} />
+                <span className="font-mono text-[12px] whitespace-nowrap text-mu">
+                  {progress.percent}% complete
+                </span>
               </div>
             ) : null}
+            {project.tasks.length === 0 ? (
+              <div className="px-3.5 py-[22px] text-[13px] text-mu">
+                Break the project down so the next step is always visible.
+              </div>
+            ) : (
+              project.tasks.map((task) => <TaskRow key={task.id} task={task} variant="project" />)
+            )}
+          </Card>
 
-            <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-              <ConfirmForm
-                action={deleteProjectAction}
-                hidden={{ projectId: project.id }}
-                confirmMessage={`Delete ${project.name}? Its tasks will be removed too.`}
-              >
-                Delete project
-              </ConfirmForm>
-            </div>
+          <Card>
+            <CardHeader title="Invoices" />
+            {invoices.length === 0 ? (
+              <EmptyRow>No invoices for this project yet.</EmptyRow>
+            ) : (
+              invoices.map((invoice) => (
+                <Link
+                  key={invoice.id}
+                  href={`/invoices/${invoice.id}`}
+                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-l2 px-3.5 py-[9px] text-tx last:border-b-0 hover:bg-hov hover:text-tx"
+                >
+                  <span>
+                    <span className="block font-mono text-[12.5px]">{invoice.number}</span>
+                    <span className="block text-[12px] text-fa">Due {formatDate(invoice.dueDate)}</span>
+                  </span>
+                  <span className="font-mono text-[12.5px]">{formatMoney(invoice.totals.totalCents)}</span>
+                  <Badge value={invoice.effectiveStatus} />
+                </Link>
+              ))
+            )}
           </Card>
         </div>
+
+        <Card>
+          <CardHeader title="Details" />
+          <DetailList className="pb-0">
+            <DetailRow term="Client">
+              <Link href={`/clients/${project.client.id}`}>{project.client.name}</Link>
+            </DetailRow>
+            <DetailRow term="Status">
+              <Badge value={project.status} />
+            </DetailRow>
+            <DetailRow term="Budget">
+              <span className="font-mono">{formatMoney(project.budgetCents)}</span>
+            </DetailRow>
+            <DetailRow term="Invoiced">
+              <span className="font-mono">{formatMoney(invoicedCents)}</span>
+            </DetailRow>
+            <DetailRow term="Project link">
+              {project.liveUrl ? (
+                <a href={project.liveUrl} target="_blank" rel="noreferrer noopener">
+                  {project.liveUrl.replace(/^https?:\/\//, "")}
+                </a>
+              ) : (
+                <span className="text-fa">Not set</span>
+              )}
+            </DetailRow>
+            <DetailRow term="Start">{formatDate(project.startDate)}</DetailRow>
+            <DetailRow term="End">{formatDate(project.endDate)}</DetailRow>
+          </DetailList>
+          <div className="flex flex-col items-start px-3.5 pb-3.5">
+            {project.budgetCents > 0 ? (
+              <div className="mt-3 flex w-full flex-col gap-1.5">
+                <div className="flex justify-between text-[12px]">
+                  <span className="text-mu">Budget used</span>
+                  <span className="font-mono" style={{ color: budgetColor }}>
+                    {budgetUsed}%
+                  </span>
+                </div>
+                <ProgressBar percent={budgetUsed} color={budgetColor} />
+              </div>
+            ) : null}
+            <ConfirmForm
+              action={deleteProjectAction}
+              hidden={{ projectId: project.id }}
+              confirmMessage={`Delete ${project.name}? Its tasks will be removed too.`}
+              className="mt-3.5"
+            >
+              Delete project
+            </ConfirmForm>
+          </div>
+        </Card>
       </div>
     </>
   );

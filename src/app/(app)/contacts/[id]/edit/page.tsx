@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { PageHeader } from "@/components/ui";
+import { BackLink, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { clientScope, viaClient } from "@/server/scope";
 import { updateContactAction } from "@/server/actions/contacts";
 import { ContactForm } from "./contact-form";
 
@@ -15,12 +15,12 @@ export default async function EditContactPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
   const [contact, clients] = await Promise.all([
-    prisma.contact.findUnique({ where: { id }, include: { client: true } }),
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.contact.findFirst({ where: { id, ...viaClient(user) }, include: { client: true } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   if (!contact) notFound();
@@ -28,17 +28,11 @@ export default async function EditContactPage({
   const updateWithId = updateContactAction.bind(null, contact.id);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
       <PageHeader
-        title={`${contact.firstName} ${contact.lastName}`}
-        description={`Contact at ${contact.client.name}`}
+        title="Edit contact"
         breadcrumb={
-          <Link
-            href={`/clients/${contact.clientId}`}
-            className="hover:text-indigo-600 hover:underline"
-          >
-            ← {contact.client.name}
-          </Link>
+          <BackLink href={`/clients/${contact.clientId}`}>{contact.client.name}</BackLink>
         }
       />
       <ContactForm
@@ -55,6 +49,6 @@ export default async function EditContactPage({
           isPrimary: contact.isPrimary,
         }}
       />
-    </div>
+    </>
   );
 }

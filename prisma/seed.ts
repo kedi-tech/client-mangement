@@ -336,7 +336,9 @@ async function main() {
         completedAt: seed.status === "DONE" ? seed.dueDate : null,
         clientId: seed.client ? byName(seed.client).id : null,
         projectId: seed.project ? projectByName(seed.project).id : null,
-        assigneeId: seed.assignee,
+        // Staff see only their own clients, so a client's tasks belong to its owner.
+        assigneeId: seed.client ? byName(seed.client).ownerId : null,
+        createdById: seed.client ? byName(seed.client).ownerId : null,
       },
     });
   }

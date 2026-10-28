@@ -10,7 +10,7 @@ import type { FormState } from "@/lib/validation";
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
+    <Button type="submit" size="lg" className="w-full py-[9px] text-[14px] font-medium" disabled={pending}>
       {pending ? "Signing in…" : "Sign in"}
     </Button>
   );
@@ -20,10 +20,10 @@ export function LoginForm() {
   const [state, formAction] = useActionState<FormState, FormData>(loginAction, {});
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="flex flex-col gap-3.5">
       <FormError message={state.error} />
 
-      <Field label="Email" htmlFor="email" errors={state.fieldErrors?.email} required>
+      <Field label="Email" htmlFor="email" errors={state.fieldErrors?.email}>
         <Input
           id="email"
           name="email"
@@ -35,7 +35,7 @@ export function LoginForm() {
         />
       </Field>
 
-      <Field label="Password" htmlFor="password" errors={state.fieldErrors?.password} required>
+      <Field label="Password" htmlFor="password" errors={state.fieldErrors?.password}>
         <Input
           id="password"
           name="password"
@@ -47,11 +47,6 @@ export function LoginForm() {
       </Field>
 
       <SubmitButton />
-{/* 
-      <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-        Demo credentials from <code>npm run db:seed</code> are pre-filled:
-        admin@example.com / password123
-      </p> */}
     </form>
   );
 }

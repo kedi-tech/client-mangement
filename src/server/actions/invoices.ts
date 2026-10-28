@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { invoiceSchema, toFieldErrors, type FormState } from "@/lib/validation";
 import { logActivity } from "@/server/activity";
+import { ownedClient, ownedInvoice } from "@/server/scope";
 
 /**
  * Line items arrive as parallel arrays (`itemDescription[]`, `itemQuantity[]`,
@@ -55,7 +56,7 @@ export async function createInvoiceAction(
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
   const data = parsed.data;
-  const client = await prisma.client.findUnique({ where: { id: data.clientId } });
+  const client = await ownedClient(user, data.clientId);
   if (!client) return { error: "That client no longer exists." };
 
   const duplicate = await prisma.invoice.findUnique({ where: { number: data.number } });
@@ -114,8 +115,11 @@ export async function updateInvoiceAction(
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
   const data = parsed.data;
-  const existing = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  const existing = await ownedInvoice(user, invoiceId);
   if (!existing) return { error: "That invoice no longer exists." };
+  if (!(await ownedClient(user, data.clientId))) {
+    return { fieldErrors: { clientId: ["Choose one of your clients."] } };
+  }
 
   const duplicate = await prisma.invoice.findFirst({
     where: { number: data.number, id: { not: invoiceId } },
@@ -181,7 +185,7 @@ export async function setInvoiceStatusAction(formData: FormData): Promise<void> 
   const status = String(formData.get("status") ?? "");
   if (!["DRAFT", "SENT", "PAID", "VOID"].includes(status)) return;
 
-  const existing = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  const existing = await ownedInvoice(user, invoiceId);
   if (!existing) return;
 
   const invoice = await prisma.invoice.update({
@@ -210,10 +214,10 @@ export async function setInvoiceStatusAction(formData: FormData): Promise<void> 
 export async function deleteInvoiceAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const invoiceId = String(formData.get("invoiceId") ?? "");
-  const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  const invoice = await ownedInvoice(user, invoiceId);
   if (!invoice) redirect("/invoices");
 
-  await prisma.invoice.delete({ where: { id: invoiceId } });
+  await prisma.invoice.delete({ where: { id: invoice.id } });
 
   await logActivity({
     type: "INVOICE_DELETED",

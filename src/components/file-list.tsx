@@ -1,9 +1,8 @@
 import Link from "next/link";
 
 import { ConfirmForm } from "@/components/confirm-form";
-import { EmptyState } from "@/components/ui";
+import { EmptyRow, Pill } from "@/components/ui";
 import { humanFileSize, relativeTime } from "@/lib/format";
-
 import { deleteFileAction } from "@/server/actions/files";
 
 export type FileListItem = {
@@ -18,130 +17,176 @@ export type FileListItem = {
   project?: { id: string; name: string } | null;
 };
 
-function FileIcon({ mimeType }: { mimeType: string }) {
-  const isImage = mimeType.startsWith("image/");
+function extensionOf(filename: string): string {
+  const dot = filename.lastIndexOf(".");
+  return dot > 0 ? filename.slice(dot + 1, dot + 5) : "file";
+}
+
+/**
+ * Admin file rows: name, origin pill, message and meta, with Download and Delete.
+ * Staff may delete anything.
+ */
+export function FileList({
+  files,
+  showProject = true,
+  emptyText = "No files yet.",
+}: {
+  files: FileListItem[];
+  showProject?: boolean;
+  emptyText?: string;
+}) {
+  if (files.length === 0) return <EmptyRow>{emptyText}</EmptyRow>;
+
+  return (
+    <div>
+      {files.map((file) => {
+        const fromClient = file.uploadedBy === "CLIENT";
+        const origin = fromClient
+          ? `Sent by ${file.uploader?.name ?? "the client"}`
+          : `Shared by ${file.uploader?.name ?? "your team"}`;
+        return (
+          <div
+            key={file.id}
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-l2 px-3.5 py-[9px]"
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <a href={`/api/files/${file.id}`} className="text-[13px] font-medium break-all">
+                  {file.filename}
+                </a>
+                <Pill tone={fromClient ? "sky" : "slate"} className="px-1.5">
+                  {origin}
+                </Pill>
+              </div>
+              {file.note ? <div className="mt-0.5 text-[12.5px] text-mu">{file.note}</div> : null}
+              <div className="mt-0.5 text-[11.5px] text-fa">
+                {humanFileSize(file.sizeBytes)} · {relativeTime(file.createdAt)}
+                {showProject && file.project ? (
+                  <>
+                    {" · "}
+                    <Link href={`/projects/${file.project.id}`} className="text-fa hover:text-ac">
+                      {file.project.name}
+                    </Link>
+                  </>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 text-[12px]">
+              <a href={`/api/files/${file.id}`}>Download</a>
+              <ConfirmForm
+                action={deleteFileAction}
+                hidden={{ attachmentId: file.id }}
+                confirmMessage={`Delete ${file.filename}? This removes the file for everyone.`}
+                variant="subtle"
+              >
+                Delete
+              </ConfirmForm>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The rounded file-type chip in front of portal file rows. */
+function ExtChip({ filename, fromClient }: { filename: string; fromClient: boolean }) {
   return (
     <span
-      className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+      className="grid size-9 place-items-center rounded-[11px] font-mono text-[10px] uppercase"
+      style={
+        fromClient
+          ? { background: "var(--sky-b)", color: "var(--sky-f)" }
+          : { background: "var(--chip)", color: "var(--mu)" }
+      }
       aria-hidden
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="size-5">
-        {isImage ? (
-          <>
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <circle cx="8.5" cy="9.5" r="1.5" />
-            <path d="M21 16l-5-5-6 6" />
-          </>
-        ) : (
-          <>
-            <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" />
-            <path d="M14 3v5h5" />
-          </>
-        )}
-      </svg>
+      {extensionOf(filename)}
     </span>
   );
 }
 
 /**
- * Shared file list. `perspective` decides the wording and who may delete:
- * staff see everything and can remove anything, a portal user can only withdraw
- * their own uploads.
+ * Portal file rows (design 1f).
+ *
+ * - `compact`: overview "Recent files" — origin · size, time on the right
+ * - `shared`: files from the team, with a Download link
+ * - `sent`: the client's own uploads, which they may delete
  */
-export function FileList({
+export function PortalFileList({
   files,
-  perspective,
-  showProject = true,
-  emptyTitle = "No files yet",
-  emptyDescription,
+  mode,
+  emptyText,
 }: {
   files: FileListItem[];
-  perspective: "staff" | "portal";
-  showProject?: boolean;
-  emptyTitle?: string;
-  emptyDescription?: string;
+  mode: "compact" | "shared" | "sent";
+  emptyText: string;
 }) {
   if (files.length === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+    return <div className="border-t border-ln pt-3.5 pb-2.5 text-[14px] text-mu">{emptyText}</div>;
   }
 
   return (
-    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+    <div>
       {files.map((file) => {
         const fromClient = file.uploadedBy === "CLIENT";
-        const origin =
-          perspective === "staff"
-            ? fromClient
-              ? `Sent by ${file.uploader?.name ?? "the client"}`
-              : `Shared by ${file.uploader?.name ?? "your team"}`
-            : fromClient
-              ? `Sent by ${file.uploader?.name ?? "you"}`
-              : "Shared with you";
+        const origin = fromClient ? `Sent by ${file.uploader?.name ?? "you"}` : "Shared with you";
+        const meta = [
+          humanFileSize(file.sizeBytes),
+          relativeTime(file.createdAt),
+          file.project?.name ?? null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
 
-        const canDelete = perspective === "staff" || fromClient;
+        if (mode === "compact") {
+          return (
+            <div key={file.id} className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 py-[7px]">
+              <ExtChip filename={file.filename} fromClient={false} />
+              <div className="min-w-0">
+                <a href={`/api/files/${file.id}`} className="block truncate text-[14px] text-tx">
+                  {file.filename}
+                </a>
+                <div className="text-[12px] text-fa">
+                  {origin} · {humanFileSize(file.sizeBytes)}
+                </div>
+              </div>
+              <span className="text-[12px] whitespace-nowrap text-fa">{relativeTime(file.createdAt)}</span>
+            </div>
+          );
+        }
 
         return (
-          <li key={file.id} className="flex items-start gap-3 px-5 py-3">
-            <FileIcon mimeType={file.mimeType} />
-
-            <div className="min-w-0 flex-1">
-              <a
-                href={`/api/files/${file.id}`}
-                className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
-              >
+          <div
+            key={file.id}
+            className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-t border-ln py-2.5"
+          >
+            <ExtChip filename={file.filename} fromClient={mode === "sent"} />
+            <div className="min-w-0">
+              <a href={`/api/files/${file.id}`} className="block truncate text-[14px] font-medium">
                 {file.filename}
               </a>
-              {file.note ? (
-                <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">{file.note}</p>
-              ) : null}
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                <span
-                  className={
-                    fromClient
-                      ? "rounded-full bg-sky-50 px-2 py-0.5 font-medium text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"
-                      : "rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                  }
-                >
-                  {origin}
-                </span>
-                <span>{humanFileSize(file.sizeBytes)}</span>
-                <span>{relativeTime(file.createdAt)}</span>
-                {showProject && file.project ? (
-                  perspective === "staff" ? (
-                    <Link
-                      href={`/projects/${file.project.id}`}
-                      className="hover:text-indigo-600 hover:underline"
-                    >
-                      {file.project.name}
-                    </Link>
-                  ) : (
-                    <span>{file.project.name}</span>
-                  )
-                ) : null}
-              </div>
+              {file.note ? <div className="text-[13px] text-mu">{file.note}</div> : null}
+              <div className="text-[12px] text-fa">{meta}</div>
             </div>
-
-            <div className="flex shrink-0 items-center gap-1">
-              <a
-                href={`/api/files/${file.id}`}
-                className="rounded-lg px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+            {mode === "sent" ? (
+              <ConfirmForm
+                action={deleteFileAction}
+                hidden={{ attachmentId: file.id }}
+                confirmMessage={`Delete ${file.filename}? This removes the file for everyone.`}
+                variant="subtle"
+                buttonTextClass="text-[13px]"
               >
+                Delete
+              </ConfirmForm>
+            ) : (
+              <a href={`/api/files/${file.id}`} className="text-[13px]">
                 Download
               </a>
-              {canDelete ? (
-                <ConfirmForm
-                  action={deleteFileAction}
-                  hidden={{ attachmentId: file.id }}
-                  confirmMessage={`Delete ${file.filename}? This removes the file for everyone.`}
-                  variant="subtle"
-                >
-                  Delete
-                </ConfirmForm>
-              ) : null}
-            </div>
-          </li>
+            )}
+          </div>
         );
       })}
-    </ul>
+    </div>
   );
 }

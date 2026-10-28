@@ -36,9 +36,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Self-contained server bundle for the Docker image — see Dockerfile.
-  output: "standalone",
-
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
 
   // Do not advertise the framework and version to anyone scanning for targets.

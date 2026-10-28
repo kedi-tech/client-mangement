@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { PageHeader } from "@/components/ui";
+import { BackLink, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { centsToInput, dateToInput } from "@/lib/format";
 import { requireUser } from "@/lib/session";
+import { clientScope, viaClient } from "@/server/scope";
 import { updateInvoiceAction } from "@/server/actions/invoices";
 import { InvoiceForm } from "../../invoice-form";
 
@@ -16,16 +16,17 @@ export default async function EditInvoicePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
   const [invoice, clients, projects] = await Promise.all([
-    prisma.invoice.findUnique({
-      where: { id },
+    prisma.invoice.findFirst({
+      where: { id, ...viaClient(user) },
       include: { items: { orderBy: { position: "asc" } } },
     }),
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.project.findMany({
+      where: viaClient(user),
       orderBy: { name: "asc" },
       select: { id: true, name: true, clientId: true },
     }),
@@ -36,20 +37,18 @@ export default async function EditInvoicePage({
   const updateWithId = updateInvoiceAction.bind(null, invoice.id);
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <>
       <PageHeader
         title={`Edit ${invoice.number}`}
         breadcrumb={
-          <Link href={`/invoices/${invoice.id}`} className="hover:text-indigo-600 hover:underline">
-            ← {invoice.number}
-          </Link>
+          <BackLink href={`/invoices/${invoice.id}`}>{invoice.number}</BackLink>
         }
       />
       <InvoiceForm
         action={updateWithId}
         clients={clients}
         projects={projects}
-        submitLabel="Save changes"
+        submitLabel="Save invoice"
         cancelHref={`/invoices/${invoice.id}`}
         values={{
           clientId: invoice.clientId,
@@ -67,6 +66,6 @@ export default async function EditInvoicePage({
           })),
         }}
       />
-    </div>
+    </>
   );
 }

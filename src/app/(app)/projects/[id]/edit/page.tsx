@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { PageHeader } from "@/components/ui";
+import { BackLink, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { centsToInput, dateToInput } from "@/lib/format";
 import { requireUser } from "@/lib/session";
+import { clientScope, viaClient } from "@/server/scope";
 import { updateProjectAction } from "@/server/actions/projects";
 import { ProjectForm } from "../../project-form";
 
@@ -16,12 +16,12 @@ export default async function EditProjectPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
   const [project, clients] = await Promise.all([
-    prisma.project.findUnique({ where: { id } }),
-    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.project.findFirst({ where: { id, ...viaClient(user) } }),
+    prisma.client.findMany({ where: clientScope(user), orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   if (!project) notFound();
@@ -29,13 +29,11 @@ export default async function EditProjectPage({
   const updateWithId = updateProjectAction.bind(null, project.id);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <PageHeader
         title={`Edit ${project.name}`}
         breadcrumb={
-          <Link href={`/projects/${project.id}`} className="hover:text-indigo-600 hover:underline">
-            ← {project.name}
-          </Link>
+          <BackLink href={`/projects/${project.id}`}>{project.name}</BackLink>
         }
       />
       <ProjectForm
@@ -54,6 +52,6 @@ export default async function EditProjectPage({
           endDate: dateToInput(project.endDate),
         }}
       />
-    </div>
+    </>
   );
 }

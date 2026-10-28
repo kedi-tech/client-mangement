@@ -3,16 +3,54 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { portalButtonClass } from "@/components/portal-ui";
 import type { FormState } from "@/lib/validation";
 import { changePasswordAction } from "@/server/actions/account";
+
+const inputClass = "rounded-[12px] border border-inpb bg-inp px-3 py-[9px] text-[14px] text-tx";
 
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "Saving…" : "Change password"}
-    </Button>
+    <button type="submit" disabled={pending} className={`${portalButtonClass} self-start`}>
+      {pending ? "Saving…" : "Update password"}
+    </button>
+  );
+}
+
+function PasswordField({
+  id,
+  name,
+  label,
+  autoComplete,
+  placeholder,
+  errors,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  autoComplete: string;
+  placeholder?: string;
+  errors?: string[];
+}) {
+  return (
+    <label htmlFor={id} className="flex flex-col gap-1.5 text-[13px] font-medium">
+      {label}
+      <input
+        id={id}
+        name={name}
+        type="password"
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        required
+        className={inputClass}
+      />
+      {errors?.length ? (
+        <span className="font-normal text-red" role="alert">
+          {errors[0]}
+        </span>
+      ) : null}
+    </label>
   );
 }
 
@@ -28,65 +66,55 @@ export function ChangePasswordForm() {
   const errors = state.fieldErrors ?? {};
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4 px-5 py-5">
-      <FormError message={state.error} />
+    <form
+      ref={formRef}
+      action={formAction}
+      className="flex flex-col gap-3 rounded-[20px] bg-card p-[22px] shadow-soft"
+    >
+      <h2 className="m-0 text-[17px] font-semibold">Change password</h2>
+      <div className="-mt-1 text-[13px] text-fa">Changing it signs you out on every other device.</div>
 
-      {state.ok ? (
-        <p
-          role="status"
-          className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+      {state.error ? (
+        <div
+          role="alert"
+          className="rounded-[12px] px-3.5 py-2.5 text-[13.5px]"
+          style={{ background: "var(--rose-b)", color: "var(--rose-f)" }}
         >
-          Password changed. You are still signed in here; any other device has been signed out.
-        </p>
+          {state.error}
+        </div>
+      ) : null}
+      {state.ok ? (
+        <div
+          role="status"
+          className="rounded-[12px] px-3.5 py-2.5 text-[13.5px]"
+          style={{ background: "var(--emerald-b)", color: "var(--emerald-f)" }}
+        >
+          Password changed. Your other devices were signed out.
+        </div>
       ) : null}
 
-      <Field
+      <PasswordField
+        id="currentPassword"
+        name="currentPassword"
         label="Current password"
-        htmlFor="currentPassword"
+        autoComplete="current-password"
         errors={errors.currentPassword}
-        required
-      >
-        <Input
-          id="currentPassword"
-          name="currentPassword"
-          type="password"
-          autoComplete="current-password"
-          required
-        />
-      </Field>
-
-      <Field
+      />
+      <PasswordField
+        id="newPassword"
+        name="newPassword"
         label="New password"
-        htmlFor="newPassword"
+        autoComplete="new-password"
+        placeholder="At least 8 characters"
         errors={errors.newPassword}
-        hint="At least 8 characters. Use something you have not reused elsewhere."
-        required
-      >
-        <Input
-          id="newPassword"
-          name="newPassword"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
-      </Field>
-
-      <Field
+      />
+      <PasswordField
+        id="confirmPassword"
+        name="confirmPassword"
         label="Confirm new password"
-        htmlFor="confirmPassword"
+        autoComplete="new-password"
         errors={errors.confirmPassword}
-        required
-      >
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
-      </Field>
+      />
 
       <Submit />
     </form>

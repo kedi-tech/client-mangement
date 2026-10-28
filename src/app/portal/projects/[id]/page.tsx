@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import clsx from "clsx";
 
-import { FileList } from "@/components/file-list";
-import { ProgressBar } from "@/components/progress-bar";
+import { PortalFileList } from "@/components/file-list";
 import {
-  Badge,
-  Card,
-  CardHeader,
-  DetailList,
-  DetailRow,
-  EmptyState,
-  PageHeader,
-} from "@/components/ui";
+  BandBadge,
+  PortalCard,
+  PortalDetail,
+  PortalEmpty,
+  PortalH2,
+  PortalHero,
+  PortalMain,
+  PortalPill,
+  PortalProgress,
+} from "@/components/portal-ui";
+import { label } from "@/lib/constants";
 import { formatDate, formatMoney, plural } from "@/lib/format";
 import { requirePortalUser } from "@/lib/session";
 import { getPortalProject } from "@/server/queries";
@@ -27,6 +28,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return { title: project?.name ?? "Project" };
 }
 
+const FAR_FUTURE = 9e15;
+
 export default async function PortalProjectPage({ params }: { params: Params }) {
   const user = await requirePortalUser();
   const { id } = await params;
@@ -35,207 +38,154 @@ export default async function PortalProjectPage({ params }: { params: Params }) 
   const project = await getPortalProject(user.clientId, id);
   if (!project) notFound();
 
-  const upcoming = project.tasks.filter((task) => task.status !== "DONE");
-  const completed = project.tasks.filter((task) => task.status === "DONE");
+  // In-progress steps lead, then the soonest target date.
+  const upcoming = project.tasks
+    .filter((task) => task.status !== "DONE")
+    .sort(
+      (a, b) =>
+        (a.status === "IN_PROGRESS" ? 0 : 1) - (b.status === "IN_PROGRESS" ? 0 : 1) ||
+        (a.dueDate?.getTime() ?? FAR_FUTURE) - (b.dueDate?.getTime() ?? FAR_FUTURE),
+    );
+  const completed = project.tasks
+    .filter((task) => task.status === "DONE")
+    .sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0));
+
+  const { progress } = project;
 
   return (
     <>
-      <PageHeader
+      <PortalHero
         title={project.name}
-        description={project.description ?? undefined}
-        breadcrumb={
-          <Link href="/portal/projects" className="hover:text-indigo-600 hover:underline">
-            ← Projects
-          </Link>
-        }
-        actions={
-          <>
-            <Badge value={project.status} className="self-center" />
-            {project.liveUrl ? (
-              <a
-                href={project.liveUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-              >
-                Visit project
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  className="size-4"
-                  aria-hidden
-                >
-                  <path d="M14 4h6v6M20 4l-8 8M10 6H5v13h13v-5" />
-                </svg>
-              </a>
-            ) : null}
-          </>
-        }
+        sub={project.description ?? undefined}
+        crumb={{ href: "/portal/projects", label: "Projects" }}
+        action={<BandBadge value={project.status} />}
       />
+      <PortalMain>
+        <PortalCard raised className="flex flex-col gap-2.5">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[14px] text-mu">Overall progress</span>
+            <span className="text-[28px] font-semibold">{progress.percent}%</span>
+          </div>
+          <PortalProgress percent={progress.percent} height={12} />
+          <div className="text-[12.5px] text-mu">
+            {progress.total > 0
+              ? `${progress.done} of ${plural(progress.total, "step")} complete · ${progress.inProgress} in progress`
+              : "No steps published yet"}
+          </div>
+        </PortalCard>
 
-      <Card className="p-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Overall progress</p>
-          <p className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            {project.progress.percent}%
-          </p>
-        </div>
-        <ProgressBar
-          className="mt-3"
-          percent={project.progress.percent}
-          label={
-            project.progress.total > 0
-              ? `${project.progress.done} of ${plural(project.progress.total, "step")} complete${
-                  project.progress.inProgress > 0
-                    ? ` · ${project.progress.inProgress} in progress`
-                    : ""
-                }`
-              : "No steps published yet"
-          }
-        />
-      </Card>
-
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader
-              title="What's next"
-              description={`${plural(upcoming.length, "step")} remaining`}
-            />
-            {upcoming.length === 0 ? (
-              <EmptyState
-                title="Nothing outstanding"
-                description="Every published step is done. We'll add more as the work moves on."
-              />
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {upcoming.map((task) => (
-                  <li key={task.id} className="flex items-center gap-3 px-5 py-3">
-                    <span
-                      className={clsx(
-                        "size-2 shrink-0 rounded-full",
-                        task.status === "IN_PROGRESS" ? "bg-sky-500" : "bg-slate-300 dark:bg-slate-600",
-                      )}
-                      aria-hidden
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-slate-900 dark:text-slate-100">{task.title}</p>
-                      {task.dueDate ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Target {formatDate(task.dueDate)}
-                        </p>
-                      ) : null}
-                    </div>
-                    <Badge value={task.status} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          {completed.length > 0 ? (
-            <Card>
-              <CardHeader title="Completed" description={plural(completed.length, "step")} />
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {completed.map((task) => (
-                  <li key={task.id} className="flex items-center gap-3 px-5 py-3">
-                    <span
-                      className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"
-                      aria-hidden
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="size-2.5">
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    <p className="flex-1 text-sm text-slate-500 line-through dark:text-slate-400">
-                      {task.title}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
-
-          <Card>
-            <CardHeader title="Project files" />
-            <FileList
-              files={project.attachments}
-              perspective="portal"
-              showProject={false}
-              emptyTitle="No files for this project"
-              emptyDescription="Files attached to this project will show up here."
-            />
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader title="Details" />
-            <DetailList>
-              <DetailRow term="Status">
-                <Badge value={project.status} />
-              </DetailRow>
-              <DetailRow term="Started">{formatDate(project.startDate)}</DetailRow>
-              <DetailRow term="Target finish">{formatDate(project.endDate)}</DetailRow>
-              {project.liveUrl ? (
-                <DetailRow term="Link">
-                  {/* Labelled rather than raw: a long URL wraps badly in this column. */}
-                  <a
-                    href={project.liveUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    title={project.liveUrl}
-                    className="inline-flex items-center gap-1 whitespace-nowrap text-indigo-600 hover:underline dark:text-indigo-400"
+        <div className="grid grid-cols-1 items-start gap-4 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="flex min-w-0 flex-col gap-4">
+            <PortalCard className="pb-3">
+              <PortalH2>What&rsquo;s next</PortalH2>
+              {upcoming.length === 0 ? (
+                <PortalEmpty>Every published step is done. We&rsquo;ll add more as the work moves on.</PortalEmpty>
+              ) : (
+                upcoming.map((task) => (
+                  <div
+                    key={task.id}
+                    className="grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-3 border-t border-ln py-2.5"
                   >
-                    Open project
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1.8}
-                      className="size-3.5"
+                    <span
+                      className="size-2.5 rounded-full"
+                      style={{ background: task.status === "IN_PROGRESS" ? "var(--sky-d)" : "var(--slate-d)" }}
+                      aria-label={label(task.status)}
+                    />
+                    <span className="text-[14px]">{task.title}</span>
+                    <span className="text-[12.5px] whitespace-nowrap text-fa">
+                      {task.dueDate ? `Target ${formatDate(task.dueDate)}` : ""}
+                    </span>
+                  </div>
+                ))
+              )}
+              <div className="flex gap-3.5 pt-2.5 pb-1 text-[12px] text-fa">
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full" style={{ background: "var(--sky-d)" }} aria-hidden />
+                  In progress
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-full" style={{ background: "var(--slate-d)" }} aria-hidden />
+                  To do
+                </span>
+              </div>
+            </PortalCard>
+
+            <PortalCard className="pb-3">
+              <PortalH2>Completed</PortalH2>
+              {completed.length === 0 ? (
+                <PortalEmpty>Nothing completed yet.</PortalEmpty>
+              ) : (
+                completed.map((task) => (
+                  <div
+                    key={task.id}
+                    className="grid grid-cols-[18px_minmax(0,1fr)] items-center gap-2.5 border-t border-ln py-[9px]"
+                  >
+                    <span
+                      className="grid size-[18px] place-items-center rounded-full text-[11px]"
+                      style={{ background: "var(--emerald-b)", color: "var(--emerald-f)" }}
                       aria-hidden
                     >
-                      <path d="M14 4h6v6M20 4l-8 8M10 6H5v13h13v-5" />
-                    </svg>
-                  </a>
-                </DetailRow>
-              ) : null}
-            </DetailList>
-          </Card>
+                      ✓
+                    </span>
+                    <span className="text-[14px] text-mu">{task.title}</span>
+                  </div>
+                ))
+              )}
+            </PortalCard>
 
-          {project.invoices.length > 0 ? (
-            <Card>
-              <CardHeader title="Invoices for this project" />
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {project.invoices.map((invoice) => (
-                  <li key={invoice.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/portal/invoices/${invoice.id}`}
-                        className="text-sm font-medium text-slate-900 hover:text-indigo-600 dark:text-slate-100"
-                      >
-                        {invoice.number}
-                      </Link>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Due {formatDate(invoice.dueDate)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
-                        {formatMoney(invoice.totals.totalCents)}
-                      </span>
-                      <Badge value={invoice.effectiveStatus} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
+            <PortalCard className="pb-3">
+              <PortalH2>Files for this project</PortalH2>
+              <PortalFileList
+                files={project.attachments}
+                mode="shared"
+                emptyText="No files for this project yet."
+              />
+            </PortalCard>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <PortalCard>
+              <PortalH2>Details</PortalH2>
+              <PortalDetail term="Status">{label(project.status)}</PortalDetail>
+              <PortalDetail term="Started">
+                {project.startDate ? formatDate(project.startDate) : "Not started"}
+              </PortalDetail>
+              <PortalDetail term="Target finish">{formatDate(project.endDate)}</PortalDetail>
+              {project.liveUrl ? (
+                <a
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mt-3 block rounded-[14px] bg-acs px-3.5 py-2.5 text-center text-[14px] font-medium"
+                >
+                  Open project ↗
+                </a>
+              ) : null}
+            </PortalCard>
+
+            <PortalCard className="pb-3">
+              <PortalH2>Invoices</PortalH2>
+              {project.invoices.length === 0 ? (
+                <PortalEmpty bordered={false}>No invoices yet.</PortalEmpty>
+              ) : (
+                project.invoices.map((invoice) => (
+                  <Link
+                    key={invoice.id}
+                    href={`/portal/invoices/${invoice.id}`}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 border-t border-ln py-2.5 text-tx hover:text-tx"
+                  >
+                    <span>
+                      <span className="block text-[14px] font-medium">{invoice.number}</span>
+                      <span className="block text-[12.5px] text-fa">{formatMoney(invoice.totals.totalCents)}</span>
+                    </span>
+                    <PortalPill value={invoice.effectiveStatus} />
+                  </Link>
+                ))
+              )}
+            </PortalCard>
+          </div>
         </div>
-      </div>
+      </PortalMain>
     </>
   );
 }
