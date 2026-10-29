@@ -466,10 +466,12 @@ Next 16 — revisit it whenever Next.js is bumped.
   administration only. Ownership is fixed at creation; there is no transfer in
   the app. Oversight shows what each person did, with client details replaced
   by generic text. Existing data is migrated with `npm run owners:backfill`.
-- **Uploads are on local disk.** Fine for a single server. Running
-  more than one app replica means putting the files on shared storage, or
-  reimplementing `saveUpload`, `uploadPath` and `deleteUpload` in
-  `src/lib/storage.ts` against object storage — nothing else touches the disk.
+- **Where uploads live.** With `STORAGE_BUCKET` set, files go to object storage
+  (Neon Object Storage or any S3-compatible bucket, using the `AWS_*`
+  credentials); otherwise to `UPLOAD_DIR` on local disk. Postgres keeps only
+  each file's key and metadata, and downloads always pass through the
+  authorised `/api/files/[id]` route. `npm run uploads:to-bucket` copies
+  existing local files into the bucket.
 - **No email.** Passwords for new teammates and portal users are set by an admin
   and handed over out of band. A signed-in client can change their own password
   at `/portal/account`, but someone who has *forgotten* theirs still needs an

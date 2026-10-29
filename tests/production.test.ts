@@ -31,6 +31,21 @@ describe("environment validation", () => {
     assert.deepEqual(checkEnv(validEnv()), []);
   });
 
+  it("needs the storage credentials once a bucket is configured", () => {
+    const env = validEnv({ STORAGE_BUCKET: "files" });
+    assert.ok(problemFor(env, "AWS_ACCESS_KEY_ID"));
+    assert.ok(problemFor(env, "AWS_SECRET_ACCESS_KEY"));
+    assert.ok(problemFor(env, "AWS_ENDPOINT_URL_S3"));
+
+    const complete = validEnv({
+      STORAGE_BUCKET: "files",
+      AWS_ACCESS_KEY_ID: "key",
+      AWS_SECRET_ACCESS_KEY: "secret",
+      AWS_ENDPOINT_URL_S3: "https://storage.example",
+    });
+    assert.deepEqual(checkEnv(complete), []);
+  });
+
   it("requires a database URL", () => {
     assert.ok(problemFor(validEnv({ DATABASE_URL: undefined }), "DATABASE_URL"));
     assert.ok(problemFor(validEnv({ DATABASE_URL: "   " }), "DATABASE_URL"));

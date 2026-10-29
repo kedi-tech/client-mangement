@@ -18,7 +18,8 @@
     "setup": "prisma generate && prisma migrate deploy && npm run db:seed",
     "postinstall": "prisma generate",
     "superadmin": "tsx scripts/ensure-superadmin.ts",
-    "owners:backfill": "tsx scripts/assign-client-owners.ts"
+    "owners:backfill": "tsx scripts/assign-client-owners.ts",
+    "uploads:to-bucket": "tsx scripts/move-uploads-to-bucket.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -29,6 +30,7 @@
     "deepmerge-ts": "^8.0.1"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1159.0",
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",

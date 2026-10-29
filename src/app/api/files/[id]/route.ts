@@ -1,11 +1,6 @@
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
-import type { ReadableStream as NodeWebReadableStream } from "node:stream/web";
-import { Readable } from "node:stream";
-
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import { etagFor, uploadPath } from "@/lib/storage";
+import { etagFor, readUpload } from "@/lib/storage";
 import { isInlineSafe } from "@/lib/upload-rules";
 
 /**
@@ -42,21 +37,15 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  let filePath: string;
-  try {
-    filePath = uploadPath(attachment.storedName);
-  } catch {
-    return new Response("Not found", { status: 404 });
-  }
-
-  const stats = await stat(filePath).catch(() => null);
-  if (!stats?.isFile()) {
-    return new Response("This file is no longer available on the server.", { status: 410 });
-  }
-
+  // Answer a cache revalidation before fetching any bytes from storage.
   const etag = etagFor(attachment.storedName, attachment.sizeBytes);
   if (request.headers.get("if-none-match") === etag) {
     return new Response(null, { status: 304, headers: { ETag: etag } });
+  }
+
+  const stored = await readUpload(attachment.storedName);
+  if (!stored) {
+    return new Response("This file is no longer available on the server.", { status: 410 });
   }
 
   // Only render types that cannot carry script inline. SVG in particular is
@@ -65,13 +54,12 @@ export async function GET(
     request.headers.get("sec-fetch-dest") === "document" && isInlineSafe(attachment.mimeType)
       ? "inline"
       : "attachment";
-  const body = Readable.toWeb(createReadStream(filePath)) as NodeWebReadableStream<Uint8Array>;
 
-  return new Response(body as unknown as ReadableStream, {
+  return new Response(stored.body, {
     headers: {
       // Types are constrained by the upload allowlist, so echoing it back is safe.
       "Content-Type": attachment.mimeType || "application/octet-stream",
-      "Content-Length": String(stats.size),
+      "Content-Length": String(stored.size || attachment.sizeBytes),
       "Content-Disposition": `${inline}; filename="${attachment.filename.replace(/"/g, "")}"; filename*=UTF-8''${encodeURIComponent(attachment.filename)}`,
       "Cache-Control": "private, max-age=0, must-revalidate",
       "X-Content-Type-Options": "nosniff",

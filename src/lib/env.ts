@@ -116,6 +116,19 @@ export function checkEnv(env: NodeJS.ProcessEnv = process.env): EnvProblem[] {
     }
   }
 
+  // Object storage for uploads (Neon Object Storage or any S3-compatible bucket).
+  if (env.STORAGE_BUCKET?.trim()) {
+    for (const variable of ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_ENDPOINT_URL_S3"] as const) {
+      if (!env[variable]?.trim()) {
+        problems.push({
+          variable,
+          message:
+            "is required when STORAGE_BUCKET is set. Copy it from your Neon project's Object Storage credentials.",
+        });
+      }
+    }
+  }
+
   if (production && parseBoolean(env.ALLOW_OPEN_REGISTRATION)) {
     problems.push({
       variable: "ALLOW_OPEN_REGISTRATION",
