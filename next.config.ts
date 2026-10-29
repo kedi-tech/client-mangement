@@ -36,6 +36,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  distDir: process.env.PREVIEW_DIST_DIR || ".next",
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
 
   // Do not advertise the framework and version to anyone scanning for targets.

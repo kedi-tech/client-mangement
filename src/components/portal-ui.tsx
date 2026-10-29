@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
-import { label, toneFor } from "@/lib/constants";
+import { SERVICE_KIND_LABELS, label, toneFor } from "@/lib/constants";
+import { formatMoney } from "@/lib/format";
+import { RENEWAL_COLOR, renewalStatus } from "@/lib/services";
 
 /*
  * Client portal kit — design direction 1f ("soft"): a blue band behind the page
@@ -173,3 +175,52 @@ export function BandBadge({ value }: { value: string }) {
 /** Primary portal button style (rounded 14px). */
 export const portalButtonClass =
   "rounded-[14px] border-0 bg-ac px-[18px] py-2.5 text-[14px] font-medium text-white hover:text-white disabled:opacity-60";
+
+/** Domain and hosting rows in the portal (read-only; notes stay internal). */
+export function PortalServiceList({
+  services,
+}: {
+  services: {
+    id: string;
+    kind: string;
+    name: string;
+    providedBy: string;
+    provider: string | null;
+    renewsAt: Date | null;
+    priceCents: number;
+    project?: { id: string; name: string } | null;
+  }[];
+}) {
+  return (
+    <>
+      {services.map((service) => {
+        const renewal = renewalStatus(service.renewsAt);
+        return (
+          <div key={service.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-ln py-2.5">
+            <div className="min-w-0">
+              <div className="truncate text-[14px] font-medium">{service.name}</div>
+              <div className="text-[12.5px] text-fa">
+                {SERVICE_KIND_LABELS[service.kind]}
+                {service.provider ? ` · ${service.provider}` : ""}
+                {" · "}
+                {service.providedBy === "US" ? "Managed by us" : "Provided by you"}
+                {service.project ? (
+                  <>
+                    {" · "}
+                    <Link href={`/portal/projects/${service.project.id}`}>{service.project.name}</Link>
+                  </>
+                ) : null}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className={cn("text-[12.5px]", RENEWAL_COLOR[renewal.state])}>{renewal.label}</div>
+              {service.providedBy === "US" && service.priceCents > 0 ? (
+                <div className="text-[12px] text-fa">{formatMoney(service.priceCents)} per renewal</div>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}

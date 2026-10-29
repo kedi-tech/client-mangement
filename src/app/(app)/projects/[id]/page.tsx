@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ConfirmForm } from "@/components/confirm-form";
+import { ServicesPanel } from "@/components/services-panel";
 import { TaskRow } from "@/components/task-row";
 import {
   Badge,
@@ -20,6 +21,7 @@ import { prisma } from "@/lib/db";
 import { formatDate, formatMoney } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoice";
 import { projectProgress } from "@/lib/progress";
+import { toServiceRow } from "@/lib/services";
 import { requireUser } from "@/lib/session";
 import { viaClient } from "@/server/scope";
 import { deleteProjectAction } from "@/server/actions/projects";
@@ -46,6 +48,7 @@ export default async function ProjectDetailPage({ params }: { params: Params }) 
         include: { assignee: { select: { id: true, name: true } } },
       },
       invoices: { include: { items: true }, orderBy: { issueDate: "desc" } },
+      services: { orderBy: [{ kind: "asc" }, { renewsAt: "asc" }] },
     },
   });
 
@@ -125,6 +128,10 @@ export default async function ProjectDetailPage({ params }: { params: Params }) 
             ) : (
               project.tasks.map((task) => <TaskRow key={task.id} task={task} variant="project" />)
             )}
+          </Card>
+
+          <Card>
+            <ServicesPanel projectId={project.id} services={project.services.map(toServiceRow)} />
           </Card>
 
           <Card>

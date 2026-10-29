@@ -11,10 +11,9 @@ import {
   PortalMain,
   PortalPill,
   PortalProgress,
+  PortalServiceList,
 } from "@/components/portal-ui";
-import { SERVICE_KIND_LABELS } from "@/lib/constants";
 import { formatDate, formatMoney, plural } from "@/lib/format";
-import { renewalStatus } from "@/lib/services";
 import { requirePortalUser } from "@/lib/session";
 import { getPortalOverview } from "@/server/queries";
 
@@ -106,35 +105,7 @@ export default async function PortalHomePage() {
           {data.services.length > 0 ? (
             <PortalCard className="pb-3 min-[900px]:col-span-2">
               <PortalCardHead title="Your domain & hosting" />
-              {data.services.map((service) => {
-                const renewal = renewalStatus(service.renewsAt);
-                return (
-                  <div
-                    key={service.id}
-                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-ln py-2.5"
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate text-[14px] font-medium">{service.name}</div>
-                      <div className="text-[12.5px] text-fa">
-                        {SERVICE_KIND_LABELS[service.kind]}
-                        {service.provider ? ` · ${service.provider}` : ""}
-                        {" · "}
-                        {service.providedBy === "US" ? "Managed by us" : "Provided by you"}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div
-                        className={`text-[12.5px] ${renewal.state === "expired" ? "text-red" : renewal.state === "soon" ? "text-[var(--amber-f)]" : "text-mu"}`}
-                      >
-                        {renewal.label}
-                      </div>
-                      {service.providedBy === "US" && service.priceCents > 0 ? (
-                        <div className="text-[12px] text-fa">{formatMoney(service.priceCents)} per renewal</div>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
+              <PortalServiceList services={data.services} />
             </PortalCard>
           ) : null}
 

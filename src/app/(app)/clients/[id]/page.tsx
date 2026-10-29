@@ -22,20 +22,19 @@ import {
   PageHeader,
   Pill,
 } from "@/components/ui";
-import { ACTIVITY_CATEGORY_TONES, activityCategory } from "@/lib/constants";
+import { ACTIVITY_CATEGORY_TONES, PROVIDED_BY_LABELS, SERVICE_KIND_LABELS, activityCategory } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { centsToInput, dateToInput, formatDate, formatDateTime, formatMoney, initials, relativeTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatMoney, initials, relativeTime } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
 import { requireUser } from "@/lib/session";
 import { clientScope } from "@/server/scope";
-import { renewalStatus } from "@/lib/services";
+import { RENEWAL_COLOR, toServiceRow } from "@/lib/services";
 import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 import { deleteClientAction, deleteNoteAction } from "@/server/actions/clients";
 import { deleteContactAction } from "@/server/actions/contacts";
 import { uploadStaffFileAction } from "@/server/actions/files";
 import { AddNoteForm, ContactsHeader } from "./client-panels";
 import { PortalAccessPanel } from "./portal-access";
-import { ServicesPanel } from "./services-panel";
 
 type Params = Promise<{ id: string }>;
 
@@ -76,7 +75,10 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
         orderBy: { createdAt: "asc" },
         select: { id: true, name: true, email: true, role: true, lastLoginAt: true, createdAt: true },
       },
-      services: { orderBy: [{ kind: "asc" }, { renewsAt: "asc" }] },
+      services: {
+        orderBy: [{ kind: "asc" }, { renewsAt: "asc" }],
+        include: { project: { select: { id: true, name: true } } },
+      },
       attachments: {
         orderBy: { createdAt: "desc" },
         include: {
@@ -214,25 +216,42 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
           </Card>
 
           <Card>
-            <ServicesPanel
-              clientId={client.id}
-              services={client.services.map((service) => {
-                const renewal = renewalStatus(service.renewsAt);
-                return {
-                  id: service.id,
-                  kind: service.kind,
-                  name: service.name,
-                  providedBy: service.providedBy,
-                  provider: service.provider ?? "",
-                  notes: service.notes ?? "",
-                  renewsAtInput: dateToInput(service.renewsAt),
-                  renewalLabel: renewal.label,
-                  renewalState: renewal.state,
-                  price: service.priceCents > 0 ? formatMoney(service.priceCents) : "",
-                  priceInput: service.priceCents > 0 ? centsToInput(service.priceCents) : "",
-                };
-              })}
+            <CardHeader
+              title="Domain & hosting"
+              description={`${client.services.length} across projects`}
             />
+            {client.services.length === 0 ? (
+              <EmptyRow>None yet. Add a domain or hosting plan from a project&rsquo;s page.</EmptyRow>
+            ) : (
+              client.services.map((service) => {
+                const row = toServiceRow(service);
+                return (
+                  <Link
+                    key={service.id}
+                    href={`/projects/${service.project.id}`}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-l2 px-3.5 py-[9px] text-tx last:border-b-0 hover:bg-hov hover:text-tx"
+                  >
+                    <span className="min-w-0">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className={service.kind === "DOMAIN" ? "font-mono text-[13px]" : "text-[13px] font-medium"}>
+                          {service.name}
+                        </span>
+                        <Pill tone={service.kind === "DOMAIN" ? "indigo" : "sky"}>
+                          {SERVICE_KIND_LABELS[service.kind]}
+                        </Pill>
+                        <Pill tone={service.providedBy === "US" ? "emerald" : "slate"}>
+                          {PROVIDED_BY_LABELS[service.providedBy]}
+                        </Pill>
+                      </span>
+                      <span className="mt-0.5 block text-[11.5px] text-fa">{service.project.name}</span>
+                    </span>
+                    <span className={`text-[12px] whitespace-nowrap ${RENEWAL_COLOR[row.renewalState]}`}>
+                      {row.renewalLabel}
+                    </span>
+                  </Link>
+                );
+              })
+            )}
           </Card>
 
           <Card>

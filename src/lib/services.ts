@@ -1,9 +1,17 @@
-import { formatDate } from "@/lib/format";
+import { centsToInput, dateToInput, formatDate, formatMoney } from "@/lib/format";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** How far ahead a renewal counts as "coming up". */
 export const RENEWAL_WARNING_DAYS = 30;
+
+/** Text colour per renewal state; expired is red, coming up is amber. */
+export const RENEWAL_COLOR: Record<RenewalStatus["state"], string> = {
+  none: "text-fa",
+  ok: "text-mu",
+  soon: "text-[var(--amber-f)]",
+  expired: "text-red",
+};
 
 export type RenewalStatus = {
   label: string;
@@ -21,4 +29,31 @@ export function renewalStatus(renewsAt: Date | null, now: Date = new Date()): Re
     return { label: `Renews ${formatDate(renewsAt)} · ${when}`, state: "soon" };
   }
   return { label: `Renews ${formatDate(renewsAt)}`, state: "ok" };
+}
+
+/** Shape a Service row for the panel and summaries. */
+export function toServiceRow(service: {
+  id: string;
+  kind: string;
+  name: string;
+  providedBy: string;
+  provider: string | null;
+  notes: string | null;
+  renewsAt: Date | null;
+  priceCents: number;
+}) {
+  const renewal = renewalStatus(service.renewsAt);
+  return {
+    id: service.id,
+    kind: service.kind,
+    name: service.name,
+    providedBy: service.providedBy,
+    provider: service.provider ?? "",
+    notes: service.notes ?? "",
+    renewsAtInput: dateToInput(service.renewsAt),
+    renewalLabel: renewal.label,
+    renewalState: renewal.state,
+    price: service.priceCents > 0 ? formatMoney(service.priceCents) : "",
+    priceInput: service.priceCents > 0 ? centsToInput(service.priceCents) : "",
+  };
 }

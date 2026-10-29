@@ -6,10 +6,11 @@ import { useFormStatus } from "react-dom";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Button, CardHeader, EmptyRow, Field, FormError, Input, Pill, Select } from "@/components/ui";
 import { PROVIDED_BY_LABELS, SERVICE_KIND_LABELS, SERVICE_KINDS, SERVICE_PROVIDERS } from "@/lib/constants";
+import { RENEWAL_COLOR } from "@/lib/services";
 import type { FormState } from "@/lib/validation";
 import { createServiceAction, deleteServiceAction, updateServiceAction } from "@/server/actions/services";
 
-/** A domain or hosting plan, pre-formatted on the server. */
+/** A domain or hosting plan, pre-formatted on the server (see `toServiceRow`). */
 export type ServiceRow = {
   id: string;
   kind: string;
@@ -37,11 +38,11 @@ function Submit({ label }: { label: string }) {
 }
 
 function ServiceForm({
-  clientId,
+  projectId,
   service,
   onDone,
 }: {
-  clientId: string;
+  projectId: string;
   service?: ServiceRow;
   onDone: () => void;
 }) {
@@ -62,7 +63,7 @@ function ServiceForm({
       action={formAction}
       className="grid grid-cols-1 gap-2.5 border-b border-l2 bg-hov px-3.5 py-3 min-[720px]:grid-cols-2"
     >
-      <input type="hidden" name="clientId" value={clientId} />
+      <input type="hidden" name="projectId" value={projectId} />
       {state.error ? (
         <div className="col-span-full">
           <FormError message={state.error} />
@@ -161,15 +162,8 @@ function ServiceForm({
   );
 }
 
-const RENEWAL_COLOR: Record<ServiceRow["renewalState"], string> = {
-  none: "text-fa",
-  ok: "text-mu",
-  soon: "text-[var(--amber-f)]",
-  expired: "text-red",
-};
-
-/** "Domain & hosting" panel on a client's page. */
-export function ServicesPanel({ clientId, services }: { clientId: string; services: ServiceRow[] }) {
+/** "Domain & hosting" panel on a project's page. */
+export function ServicesPanel({ projectId, services }: { projectId: string; services: ServiceRow[] }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
 
@@ -191,13 +185,13 @@ export function ServicesPanel({ clientId, services }: { clientId: string; servic
           </Button>
         }
       />
-      {adding ? <ServiceForm clientId={clientId} onDone={() => setAdding(false)} /> : null}
+      {adding ? <ServiceForm projectId={projectId} onDone={() => setAdding(false)} /> : null}
       {services.length === 0 && !adding ? (
         <EmptyRow>No domain or hosting recorded yet.</EmptyRow>
       ) : null}
       {services.map((service) =>
         editing === service.id ? (
-          <ServiceForm key={service.id} clientId={clientId} service={service} onDone={() => setEditing(null)} />
+          <ServiceForm key={service.id} projectId={projectId} service={service} onDone={() => setEditing(null)} />
         ) : (
           <div
             key={service.id}

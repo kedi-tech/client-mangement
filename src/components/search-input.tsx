@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Debounced search box that pushes the query into the URL, so results stay
@@ -27,14 +27,12 @@ export function SearchInput({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get(paramName) ?? "");
-  const initial = useRef(true);
 
   useEffect(() => {
-    // Skip the first run so mounting never triggers a navigation.
-    if (initial.current) {
-      initial.current = false;
-      return;
-    }
+    // Only navigate when the typed text differs from what the URL already says.
+    // Other URL changes (Next/Previous page, a filter) also re-run this effect,
+    // and must not reset the page back to 1.
+    if (value.trim() === (searchParams.get(paramName) ?? "")) return;
 
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());

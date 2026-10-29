@@ -13,6 +13,7 @@ import {
   PortalMain,
   PortalPill,
   PortalProgress,
+  PortalServiceList,
 } from "@/components/portal-ui";
 import { label } from "@/lib/constants";
 import { formatDate, formatMoney, plural } from "@/lib/format";
@@ -132,6 +133,13 @@ export default async function PortalProjectPage({ params }: { params: Params }) 
                 ))
               )}
             </PortalCard>
+
+            {project.services.length > 0 ? (
+              <PortalCard className="pb-3">
+                <PortalH2>Domain &amp; hosting</PortalH2>
+                <PortalServiceList services={project.services} />
+              </PortalCard>
+            ) : null}
 
             <PortalCard className="pb-3">
               <PortalH2>Files for this project</PortalH2>

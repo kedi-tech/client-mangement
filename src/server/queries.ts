@@ -212,7 +212,16 @@ export async function getPortalOverview(clientId: string) {
     prisma.service.findMany({
       where: { clientId },
       orderBy: [{ kind: "asc" }, { renewsAt: "asc" }],
-      select: { id: true, kind: true, name: true, providedBy: true, provider: true, renewsAt: true, priceCents: true },
+      select: {
+        id: true,
+        kind: true,
+        name: true,
+        providedBy: true,
+        provider: true,
+        renewsAt: true,
+        priceCents: true,
+        project: { select: { id: true, name: true } },
+      },
     }),
   ]);
 
@@ -254,6 +263,11 @@ export async function getPortalProject(clientId: string, projectId: string) {
       attachments: {
         orderBy: { createdAt: "desc" },
         include: { uploader: { select: { name: true } } },
+      },
+      // Notes are left out: they are for the team (logins, DNS details).
+      services: {
+        orderBy: [{ kind: "asc" }, { renewsAt: "asc" }],
+        select: { id: true, kind: true, name: true, providedBy: true, provider: true, renewsAt: true, priceCents: true },
       },
     },
   });

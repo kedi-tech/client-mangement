@@ -152,7 +152,7 @@ export const invoiceSchema = z.object({
 });
 
 export const serviceSchema = z.object({
-  clientId: z.string().min(1, "Client is required"),
+  projectId: z.string().min(1, "Project is required"),
   kind: z.enum(SERVICE_KINDS),
   name: z.string().trim().min(1, "Enter the domain or plan name").max(200),
   providedBy: z.enum(SERVICE_PROVIDERS),

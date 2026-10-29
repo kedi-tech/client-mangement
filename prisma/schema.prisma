@@ -130,6 +130,7 @@ model Project {
   tasks       Task[]
   invoices    Invoice[]
   attachments Attachment[]
+  services    Service[]
 
   @@index([clientId])
   @@index([status])
@@ -241,11 +242,13 @@ model Attachment {
   @@index([createdAt])
 }
 
-/// A domain or hosting plan we manage for a client — either bought by us
-/// (and usually re-billed on renewal) or provided by the client.
+/// A domain or hosting plan for a project — either bought by us (and usually
+/// re-billed on renewal) or provided by the client. `clientId` is the
+/// project's client, kept on the row so ownership checks stay one join.
 model Service {
   id         String    @id @default(cuid())
   clientId   String
+  projectId  String
   kind       String // DOMAIN | HOSTING
   /// The domain name, or the hosting plan / server name.
   name       String
@@ -259,9 +262,11 @@ model Service {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
+  @@index([projectId])
   @@index([renewsAt])
 }
 
