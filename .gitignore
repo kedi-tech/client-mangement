@@ -5,6 +5,8 @@
 
 # next.js
 /.next/
+# local preview builds
+/.next-preview/
 /out/
 next-env.d.ts
 
