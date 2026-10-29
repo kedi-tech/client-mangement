@@ -6,7 +6,7 @@
 // `prisma migrate deploy` on boot. Money is integer cents so totals never drift.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   // Loads `include`d relations with one SQL query (LATERAL joins) instead of one
   // query per relation. Every query is a ~200ms round trip to Neon, so the client
   // page went from 16 queries (~6s) to 1 (~0.2s).
@@ -87,6 +87,7 @@ model Client {
   noteLog     Note[]
   activities  Activity[]
   attachments Attachment[]
+  services    Service[]
 
   @@index([status])
   @@index([ownerId])
@@ -238,6 +239,30 @@ model Attachment {
   @@index([clientId])
   @@index([projectId])
   @@index([createdAt])
+}
+
+/// A domain or hosting plan we manage for a client — either bought by us
+/// (and usually re-billed on renewal) or provided by the client.
+model Service {
+  id         String    @id @default(cuid())
+  clientId   String
+  kind       String // DOMAIN | HOSTING
+  /// The domain name, or the hosting plan / server name.
+  name       String
+  providedBy String    @default("US") // US | CLIENT
+  /// Registrar or hosting company, e.g. Namecheap, Hostinger.
+  provider   String?
+  renewsAt   DateTime?
+  /// What the renewal costs the client, when we bought it.
+  priceCents Int       @default(0)
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([renewsAt])
 }
 
 /// One failed sign-in attempt, used to throttle password guessing.

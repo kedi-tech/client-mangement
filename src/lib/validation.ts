@@ -4,6 +4,8 @@ import {
   CLIENT_STATUSES,
   INVOICE_STATUSES,
   PROJECT_STATUSES,
+  SERVICE_KINDS,
+  SERVICE_PROVIDERS,
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/constants";
@@ -147,6 +149,17 @@ export const invoiceSchema = z.object({
     }),
   notes: optionalText,
   items: z.array(invoiceItemSchema).min(1, "Add at least one line item"),
+});
+
+export const serviceSchema = z.object({
+  clientId: z.string().min(1, "Client is required"),
+  kind: z.enum(SERVICE_KINDS),
+  name: z.string().trim().min(1, "Enter the domain or plan name").max(200),
+  providedBy: z.enum(SERVICE_PROVIDERS),
+  provider: optionalText,
+  renewsAt: optionalDate,
+  price: moneyText,
+  notes: optionalText,
 });
 
 export const noteSchema = z.object({

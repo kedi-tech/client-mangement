@@ -185,7 +185,7 @@ export async function getClientRollups(user: Staff) {
 const PORTAL_HIDDEN_INVOICE_STATUSES = ["DRAFT"];
 
 export async function getPortalOverview(clientId: string) {
-  const [client, projects, invoices, files] = await Promise.all([
+  const [client, projects, invoices, files, services] = await Promise.all([
     prisma.client.findUnique({
       where: { id: clientId },
       include: { owner: { select: { name: true, email: true } } },
@@ -208,6 +208,12 @@ export async function getPortalOverview(clientId: string) {
         project: { select: { id: true, name: true } },
       },
     }),
+    // Notes are left out: they are for the team (logins, DNS details).
+    prisma.service.findMany({
+      where: { clientId },
+      orderBy: [{ kind: "asc" }, { renewsAt: "asc" }],
+      select: { id: true, kind: true, name: true, providedBy: true, provider: true, renewsAt: true, priceCents: true },
+    }),
   ]);
 
   const outstandingCents = invoices
@@ -223,6 +229,7 @@ export async function getPortalOverview(clientId: string) {
     })),
     invoices,
     files,
+    services,
     totals: {
       outstandingCents,
       overdueCents: overdue.reduce((sum, invoice) => sum + invoice.totals.totalCents, 0),

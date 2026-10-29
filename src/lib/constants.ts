@@ -23,6 +23,19 @@ export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 export const INVOICE_STATUSES = ["DRAFT", "SENT", "PAID", "OVERDUE", "VOID"] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
+export const SERVICE_KINDS = ["DOMAIN", "HOSTING"] as const;
+export type ServiceKind = (typeof SERVICE_KINDS)[number];
+
+/** Who paid for a domain or hosting plan. */
+export const SERVICE_PROVIDERS = ["US", "CLIENT"] as const;
+export type ServiceProvidedBy = (typeof SERVICE_PROVIDERS)[number];
+
+export const SERVICE_KIND_LABELS: Record<string, string> = { DOMAIN: "Domain", HOSTING: "Hosting" };
+export const PROVIDED_BY_LABELS: Record<string, string> = {
+  US: "Bought by us",
+  CLIENT: "Client provided",
+};
+
 export const USER_ROLES = ["SUPER_ADMIN", "ADMIN", "MEMBER", "CLIENT"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
@@ -166,6 +179,9 @@ export const ACTIVITY_CATEGORIES = {
       "INVOICE_CREATED",
       "INVOICE_STATUS_CHANGED",
       "NOTE_ADDED",
+      "SERVICE_ADDED",
+      "SERVICE_UPDATED",
+      "SERVICE_REMOVED",
     ],
   },
 } as const;
@@ -200,6 +216,9 @@ export const OVERSIGHT_GENERIC_MESSAGES: Record<string, string> = {
   PORTAL_ACCESS_GRANTED: "Gave a client portal access",
   PORTAL_ACCESS_REVOKED: "Revoked a client's portal access",
   PORTAL_PASSWORD_RESET: "Reset a client's portal password",
+  SERVICE_ADDED: "Added a domain or hosting plan",
+  SERVICE_UPDATED: "Updated a domain or hosting plan",
+  SERVICE_REMOVED: "Removed a domain or hosting plan",
 };
 
 export function oversightMessage(entry: { type: string; message: string; clientId: string | null }): string {

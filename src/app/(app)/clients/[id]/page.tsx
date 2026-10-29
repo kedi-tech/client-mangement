@@ -24,16 +24,18 @@ import {
 } from "@/components/ui";
 import { ACTIVITY_CATEGORY_TONES, activityCategory } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { formatDate, formatDateTime, formatMoney, initials, relativeTime } from "@/lib/format";
+import { centsToInput, dateToInput, formatDate, formatDateTime, formatMoney, initials, relativeTime } from "@/lib/format";
 import { effectiveInvoiceStatus, invoiceTotals, isOutstanding } from "@/lib/invoice";
 import { requireUser } from "@/lib/session";
 import { clientScope } from "@/server/scope";
+import { renewalStatus } from "@/lib/services";
 import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 import { deleteClientAction, deleteNoteAction } from "@/server/actions/clients";
 import { deleteContactAction } from "@/server/actions/contacts";
 import { uploadStaffFileAction } from "@/server/actions/files";
 import { AddNoteForm, ContactsHeader } from "./client-panels";
 import { PortalAccessPanel } from "./portal-access";
+import { ServicesPanel } from "./services-panel";
 
 type Params = Promise<{ id: string }>;
 
@@ -74,6 +76,7 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
         orderBy: { createdAt: "asc" },
         select: { id: true, name: true, email: true, role: true, lastLoginAt: true, createdAt: true },
       },
+      services: { orderBy: [{ kind: "asc" }, { renewsAt: "asc" }] },
       attachments: {
         orderBy: { createdAt: "desc" },
         include: {
@@ -208,6 +211,28 @@ export default async function ClientDetailPage({ params }: { params: Params }) {
                 </Link>
               ))
             )}
+          </Card>
+
+          <Card>
+            <ServicesPanel
+              clientId={client.id}
+              services={client.services.map((service) => {
+                const renewal = renewalStatus(service.renewsAt);
+                return {
+                  id: service.id,
+                  kind: service.kind,
+                  name: service.name,
+                  providedBy: service.providedBy,
+                  provider: service.provider ?? "",
+                  notes: service.notes ?? "",
+                  renewsAtInput: dateToInput(service.renewsAt),
+                  renewalLabel: renewal.label,
+                  renewalState: renewal.state,
+                  price: service.priceCents > 0 ? formatMoney(service.priceCents) : "",
+                  priceInput: service.priceCents > 0 ? centsToInput(service.priceCents) : "",
+                };
+              })}
+            />
           </Card>
 
           <Card>

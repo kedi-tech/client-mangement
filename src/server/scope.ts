@@ -76,6 +76,11 @@ export function ownedAttachment(user: Staff, id: string) {
   return prisma.attachment.findFirst({ where: { id, ...viaClient(user) } });
 }
 
+export function ownedService(user: Staff, id: string) {
+  if (!id) return Promise.resolve(null);
+  return prisma.service.findFirst({ where: { id, ...viaClient(user) } });
+}
+
 export function ownedTask(user: Staff, id: string) {
   if (!id) return Promise.resolve(null);
   return prisma.task.findFirst({ where: { AND: [{ id }, taskScope(user)] } });
